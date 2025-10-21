@@ -1,0 +1,53 @@
+% PLANTILLA APA7
+% Creado por: Isaac Palma Medina
+% Última actualización: 25/07/2021
+% @COPYLEFT
+
+% Fuentes consultadas (todos los derechos reservados):  
+% Normas APA. (2019). Guía Normas APA. https://normas-apa.org/wp-content/uploads/Guia-Normas-APA-7ma-edicion.pdf
+% Tecnológico de Costa Rica [Richmond]. (2020, 16 abril). LaTeX desde cero con Overleaf (1 de 3) [Vídeo]. YouTube. https://www.youtube.com/watch?v=kM1KvHVuaTY Weiss, D. (2021). 
+% Formatting documents in APA style (7th Edition) with the apa7 LATEX class. https://ctan.math.washington.edu/tex-archive/macros/latex/contrib/apa7/apa7.pdf @COPYLEFT
+
+\documentclass[stu,12pt,letterpaper,donotrepeattitle,floatsintext,natbib]{apa7}
+
+% Preámbulo
+\input{tex/config.tex}
+
+% Portada
+\title{\Large Desarrollo de una aplicación educativa 3D para la gamificación de tareas en contextos educativos secundarios, institucionales y universitarios}
+\author{Fernando Marcos Chocce Janampa \\ Abel Mauricio Santisteban Gamboa}
+\authorsaffiliations{INSTITUTO SUPERIOR TECNOLÓGICO TECSUP - DEPARTAMENTO DE TECNOLOGÍA DIGITAL}
+\course{Diseño y desarrollo de software: Proyecto de fin de carrera}
+\professor{Elliot Garamendi - Jaime Gómez}
+\duedate{Lima - Perú, 2025}
+
+\begin{document}
+\maketitle
+
+% Índices
+\pagenumbering{roman}
+\renewcommand\contentsname{\largeÍndice}
+\tableofcontents
+\setcounter{tocdepth}{2}
+\newpage
+\renewcommand{\listfigurename}{\largeÍndice de fíguras}
+\listoffigures
+\newpage
+\renewcommand{\listtablename}{\largeÍndice de tablas}
+\listoftables
+\newpage
+\pagenumbering{arabic}
+
+% Incluir capítulos
+\include{tex/chapters/01-resumen}
+\include{tex/chapters/02-introduccion}
+\include{tex/chapters/03-diagnostico}
+\include{tex/chapters/04-marco}
+\include{tex/chapters/05-propuesta}
+\include{tex/chapters/06-desarrollo}
+\include{tex/chapters/07-producto-final}
+\include{tex/chapters/08-conclusiones}
+\renewcommand\refname{\large\textbf{Referencias}}
+\bibliography{bib/references}
+
+\end{document}

@@ -1,0 +1,255 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  password   String
+  username   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  sessions     sessions[]
+  inscriptions inscriptions[]
+  invitations  invitations[]
+}
+
+model sessions {
+  id         String   @id @default(uuid())
+  user_id    String
+  token      String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model teachers {
+  id          String   @id @default(uuid())
+  name        String
+  internal_id String
+  school_id   String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  courses          courses[]
+  teachers_courses teachers_courses[]
+}
+
+model courses {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  teacher_id  String
+
+  teacher          teachers           @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  groups           groups[]
+  invitations      invitations[]
+  inscriptions     inscriptions[]
+  teachers_courses teachers_courses[]
+}
+
+model teachers_courses {
+  id         String @id @default(uuid())
+  teacher_id String
+  course_id  String
+
+  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  course  courses  @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([teacher_id, course_id])
+}
+
+model groups {
+  id         String   @id @default(uuid())
+  name       String
+  course_id  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  course  courses   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  members members[]
+  quizzes quizzes[]
+}
+
+model invitations {
+  id         String   @id @default(uuid())
+  name       String
+  code       String   @unique
+  used       Boolean  @default(false)
+  user_id    String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  course_id  String
+
+  user   users?  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  course courses @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
+model inscriptions {
+  id         String   @id @default(uuid())
+  user_id    String
+  course_id  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user   users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course courses @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, course_id])
+}
+
+model members {
+  id         String   @id @default(uuid())
+  name       String
+  experience Int      @default(0)
+  gold       Int      @default(0)
+  energy     Int      @default(100)
+  group_id   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  group                   groups                    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  characters              characters?
+  events                  events[]
+  quizzes_history         quizzes_history[]
+  teachers_courses_events teachers_courses_events[]
+}
+
+model characters {
+  id           String   @id @default(uuid())
+  name         String
+  experience   Int      @default(0)
+  gold         Int      @default(0)
+  energy       Int      @default(100)
+  character_id String   @unique
+  class_id     String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  member    members                @relation(fields: [character_id], references: [id], onDelete: Cascade)
+  class     classes                @relation(fields: [class_id], references: [id])
+  abilities characters_abilities[]
+  events    characters_events[]
+}
+
+model classes {
+  id    String @id @default(uuid())
+  name  String
+  speed Int
+
+  characters characters[]
+}
+
+model abilities {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  gold        Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  characters_abilities characters_abilities[]
+}
+
+model characters_abilities {
+  id           String @id @default(uuid())
+  character_id String
+  ability_id   String
+
+  character characters @relation(fields: [character_id], references: [id], onDelete: Cascade)
+  ability   abilities  @relation(fields: [ability_id], references: [id], onDelete: Cascade)
+
+  @@unique([character_id, ability_id])
+}
+
+model quizzes {
+  id         String   @id @default(uuid())
+  question   String
+  answers    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  groups          groups[]
+  quizzes_history quizzes_history[]
+}
+
+model quizzes_history {
+  id                 String  @id @default(uuid())
+  course_id          String
+  character_quest_id String
+  is_on_quest        Boolean @default(false)
+
+  member members @relation(fields: [character_quest_id], references: [id], onDelete: Cascade)
+  quiz   quizzes @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([course_id, character_quest_id])
+}
+
+model events {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  experience  Int      @default(0)
+  gold        Int      @default(0)
+  health      Int      @default(0)
+  energy      Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  members                 members[]
+  characters_events       characters_events[]
+  teachers_courses_events teachers_courses_events[]
+}
+
+model characters_events {
+  id           String @id @default(uuid())
+  character_id String
+  event_id     String
+
+  character characters @relation(fields: [character_id], references: [id], onDelete: Cascade)
+  event     events     @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@unique([character_id, event_id])
+}
+
+model teachers_courses_events {
+  id                String @id @default(uuid())
+  teacher_course_id String
+  event_id          String
+
+  member members @relation(fields: [teacher_course_id], references: [id], onDelete: Cascade)
+  event  events  @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@unique([teacher_course_id, event_id])
+}
+
+model institutions {
+  id           String   @id @default(uuid())
+  name         String
+  phone_number String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+}
+
+model accesories {
+  id             String   @id @default(uuid())
+  name           String
+  provider       String
+  probability_id String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+}

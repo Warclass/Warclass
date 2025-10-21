@@ -1,0 +1,189 @@
+\section{CAPÍTULO IV: Desarrollo del proyecto}
+
+\subsection{4.1 Metodología de desarrollo}
+
+Para el desarrollo de la plataforma de gamificación educativa se adoptó la metodología Kanban, seleccionada por su flexibilidad para equipos pequeños y su capacidad de adaptación a flujos de trabajo variables. Esta metodología permite gestionar el desarrollo iterativo mediante un tablero visual que facilita el seguimiento del progreso y la identificación de cuellos de botella.
+
+\subsubsection{4.1.1 Configuración del tablero Kanban}
+
+El tablero Kanban se estructuró en las siguientes columnas para optimizar el flujo de trabajo del proyecto:
+
+\begin{itemize}
+\item \textbf{Backlog}: Tareas identificadas y priorizadas pendientes de inicio
+\item \textbf{En análisis}: Tareas en proceso de definición técnica y diseño
+\item \textbf{En desarrollo}: Implementación activa de funcionalidades
+\item \textbf{En pruebas}: Validación y testing de componentes desarrollados  
+\item \textbf{En revisión}: Revisión de código y documentación
+\item \textbf{Finalizado}: Tareas completadas e integradas al sistema
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Tablero Kanban del Proyecto}\\ \vspace{1cm} Figura mostrando la configuración del tablero Kanban con las columnas definidas y ejemplos de tarjetas de trabajo en diferentes estados del flujo.}}
+	\caption{Configuración del tablero Kanban para el desarrollo del proyecto (Figura 14).}
+	\label{fig:kanban-board}
+\end{figure}
+
+\subsubsection{4.1.2 Límites de trabajo en progreso (WIP)}
+
+Se establecieron límites WIP para mantener la eficiencia del flujo y evitar la sobrecarga de trabajo:
+
+\begin{itemize}
+\item \textbf{En análisis}: Máximo 3 elementos
+\item \textbf{En desarrollo}: Máximo 4 elementos  
+\item \textbf{En pruebas}: Máximo 2 elementos
+\item \textbf{En revisión}: Máximo 2 elementos
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Métricas de Flujo Kanban}\\ \vspace{1cm} Gráfico mostrando el tiempo de ciclo, throughput y distribución del trabajo a lo largo del desarrollo del proyecto.}}
+	\caption{Métricas de rendimiento del flujo Kanban durante el desarrollo (Figura 15).}
+	\label{fig:kanban-metrics}
+\end{figure}
+
+\subsection{4.2 Entregables del proyecto}
+
+El desarrollo se organizó en iteraciones incrementales, con entregables específicos que aportan valor funcional al sistema. Cada entregable fue gestionado a través del tablero Kanban, desde su conceptualización hasta su implementación completa.
+
+\subsubsection{4.2.1 Sprint 0: Configuración inicial}
+
+\paragraph{Entregables}
+\begin{itemize}
+\item Configuración del entorno de desarrollo (Node.js, PostgreSQL, Docker)
+\item Estructura base del proyecto con Next.js y TypeScript
+\item Configuración de Prisma ORM y esquema inicial de base de datos
+\item Pipeline de CI/CD básico
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Arquitectura del Entorno de Desarrollo}\\ \vspace{1cm} Diagrama mostrando la configuración del entorno local y cloud, incluyendo bases de datos, servicios y herramientas de desarrollo.}}
+	\caption{Configuración del entorno de desarrollo del proyecto (Figura 16).}
+	\label{fig:dev-environment}
+\end{figure}
+
+\subsubsection{4.2.2 Sprint 1: Sistema de autenticación}
+
+\paragraph{Entregables}
+\begin{itemize}
+\item Implementación de autenticación JWT con NextAuth.js
+\item Integración con proveedores OAuth2 (Google, Microsoft)
+\item Sistema de roles y permisos (estudiante, docente, administrador)
+\item Interfaces de login y registro de usuarios
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Flujo de Autenticación}\\ \vspace{1cm} Diagrama de secuencia mostrando el proceso de autenticación desde el login hasta la obtención del token JWT y acceso a recursos protegidos.}}
+	\caption{Diagrama de flujo del sistema de autenticación implementado (Figura 17).}
+	\label{fig:auth-flow}
+\end{figure}
+
+\subsubsection{4.2.3 Sprint 2: Gestión de usuarios y perfiles}
+
+\paragraph{Entregables}
+\begin{itemize}
+\item CRUD completo para gestión de usuarios
+\item Sistema de perfiles con avatares personalizables
+\item Dashboard diferenciado por rol de usuario
+\item Configuraciones de privacidad y notificaciones
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Dashboard de Gestión de Usuarios}\\ \vspace{1cm} Captura de pantalla del panel administrativo mostrando la gestión de usuarios, asignación de roles y configuración de perfiles.}}
+	\caption{Panel de administración para gestión de usuarios y perfiles (Figura 18).}
+	\label{fig:user-management}
+\end{figure}
+
+\subsubsection{4.2.4 Sprint 3: Motor de gamificación}
+
+\paragraph{Entregables}
+\begin{itemize}
+\item Sistema de puntos y niveles
+\item Gestión de logros e insignias
+\item Algoritmo de progresión basado en actividades
+\item API para tracking de eventos de gamificación
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Arquitectura del Motor de Gamificación}\\ \vspace{1cm} Diagrama de componentes mostrando el motor de gamificación, sistema de puntos, logros y su integración con el sistema académico.}}
+	\caption{Arquitectura del motor de gamificación y sistema de progresión (Figura 19).}
+	\label{fig:gamification-engine}
+\end{figure}
+
+\subsubsection{4.2.5 Sprint 4: Entorno 3D con Three.js}
+
+\paragraph{Entregables}
+\begin{itemize}
+\item Integración de Three.js en el frontend React
+\item Escena 3D básica con mundo medieval
+\item Sistema de avatares tridimensionales
+\item Controles de navegación e interacción
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Entorno 3D Medieval}\\ \vspace{1cm} Captura del mundo virtual 3D mostrando el ambiente medieval, avatares de estudiantes y elementos interactivos de gamificación.}}
+	\caption{Vista del entorno virtual 3D implementado con Three.js (Figura 20).}
+	\label{fig:3d-environment}
+\end{figure}
+
+\subsubsection{4.2.6 Sprint 5: Sistema de misiones educativas}
+
+\paragraph{Entregables}
+\begin{itemize}
+\item Creador de misiones para docentes
+\item Sistema de asignación automática y manual
+\item Tracking de progreso en tiempo real
+\item Integración con el motor de gamificación
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Creador de Misiones}\\ \vspace{1cm} Interfaz del sistema de creación de misiones mostrando formularios, configuración de objetivos y asignación de recompensas.}}
+	\caption{Sistema de creación y gestión de misiones educativas (Figura 21).}
+	\label{fig:mission-creator}
+\end{figure}
+
+\subsection{4.3 Gestión de riesgos y contingencias}
+
+Durante el desarrollo se implementaron estrategias de mitigación de riesgos basadas en la flexibilidad de Kanban para adaptar el flujo de trabajo ante contingencias.
+
+\subsubsection{4.3.1 Identificación de riesgos técnicos}
+
+\begin{itemize}
+\item \textbf{Rendimiento del entorno 3D}: Optimización de mallas y texturas
+\item \textbf{Escalabilidad de la base de datos}: Implementación de índices y consultas optimizadas  
+\item \textbf{Compatibilidad cross-browser}: Testing en múltiples navegadores
+\item \textbf{Seguridad de autenticación}: Implementación de buenas prácticas de seguridad
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Matriz de Riesgos del Proyecto}\\ \vspace{1cm} Matriz mostrando la identificación, probabilidad, impacto y estrategias de mitigación de los principales riesgos técnicos del proyecto.}}
+	\caption{Matriz de análisis de riesgos y estrategias de mitigación (Figura 22).}
+	\label{fig:risk-matrix}
+\end{figure}
+
+\subsection{4.4 Control de versiones y colaboración}
+
+Se estableció un flujo de trabajo con Git que facilita la colaboración y el control de versiones del código fuente.
+
+\subsubsection{4.4.1 Estrategia de branching}
+
+\begin{itemize}
+\item \textbf{main}: Rama principal con código estable en producción
+\item \textbf{develop}: Rama de desarrollo con últimas características integradas
+\item \textbf{feature/*}: Ramas para desarrollo de funcionalidades específicas
+\item \textbf{hotfix/*}: Ramas para correcciones críticas en producción
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\fbox{\parbox{0.8\textwidth}{\centering \textbf{Placeholder: Flujo de Git Branching}\\ \vspace{1cm} Diagrama mostrando la estrategia de ramificación Git utilizada, con ejemplos de merge requests y flujo de integración continua.}}
+	\caption{Estrategia de branching y flujo de trabajo con Git (Figura 23).}
+	\label{fig:git-workflow}
+\end{figure}

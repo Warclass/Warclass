@@ -1,0 +1,16 @@
+{
+  "day": {
+    "skyColor": "linear-gradient(to top, #bae6fd 60%, #0ea5e9 100%)",
+    "ambientLightColor": "#fffbeb",
+    "sunLightColor": "#fef3c7",
+    "frontLightColor": "#fffbeb",
+    "exposure": 2.5
+  },
+  "night": {
+    "skyColor": "linear-gradient(to top, #0a0933 60%, #09081c 100%)",
+    "ambientLightColor": "#373768",
+    "sunLightColor": "#5f5f9a",
+    "frontLightColor": "#5f5f9a",
+    "exposure": 4
+  }
+}
