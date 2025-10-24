@@ -14,15 +14,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import GuestLayout from "@/app/layouts/GuestLayout";
+import AuthHeader from "@/components/auth/AuthHeader";
 import { useRegister } from "@/hooks/auth/useRegister";
 import { useAuth } from "@/hooks/auth/useAuth";
 
@@ -107,43 +101,27 @@ export default function RegisterPage() {
 
   return (
     <GuestLayout>
-      <div className="bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900 text-white py-12 px-6 text-center border-b-4 border-neutral-600">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-neutral-200 to-neutral-400 bg-clip-text text-transparent">
-            Únete a Warclass
-          </h1>
-          <p className="text-lg text-neutral-300 mb-6">
-            Comienza tu aventura de aprendizaje
-          </p>
-          <div className="flex justify-center items-center gap-4 flex-wrap">
-            <span className="text-neutral-300">¿Ya tienes una cuenta?</span>
-            <Link href="/auth/login">
-              <Button
-                variant="outline"
-                className="bg-neutral-700 hover:bg-neutral-600 text-white border-neutral-500"
-              >
-                Iniciar Sesión
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <AuthHeader
+        preText="¿Ya tienes una cuenta?"
+        ctaHref="/auth/login"
+        ctaLabel="INICIAR SESIÓN"
+      />
 
-      <div className="flex justify-center items-center flex-grow p-6 bg-neutral-50 dark:bg-neutral-950">
-        <Card className="w-full max-w-3xl shadow-2xl border-neutral-200 dark:border-neutral-800">
+      <main className="grid h-[calc(100vh-56px)] place-items-center bg-[#0b0b0b] px-4">
+        <Card className="w-full max-w-3xl border-neutral-800 bg-[#1a1a1a] shadow-2xl">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-neutral-700 to-neutral-900 dark:from-neutral-200 dark:to-neutral-400 bg-clip-text text-transparent">
+            <CardTitle className="text-2xl font-bold tracking-tight text-neutral-100">
               Crear Cuenta
             </CardTitle>
-            <CardDescription className="text-neutral-600 dark:text-neutral-400">
+            <CardDescription className="text-neutral-400">
               Completa el formulario para unirte a nuestra comunidad
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             {status && (
-              <Alert className="mb-4 bg-green-50 dark:bg-green-900/20 border-green-500">
-                <AlertDescription className="text-green-700 dark:text-green-400">
+              <Alert className="mb-4 bg-green-900/20 border-green-500">
+                <AlertDescription className="text-green-400">
                   {status}
                 </AlertDescription>
               </Alert>
@@ -169,18 +147,14 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                  <span className="text-2xl">👤</span>
+                <h3 className="text-lg font-semibold text-neutral-100">
                   Información Personal
                 </h3>
                 <Separator />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="name"
-                      className="text-neutral-700 dark:text-neutral-300"
-                    >
+                    <Label htmlFor="name" className="text-neutral-300">
                       Nombre Completo <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -193,21 +167,18 @@ export default function RegisterPage() {
                       required
                       autoFocus
                       autoComplete="name"
-                      className="border-neutral-300 dark:border-neutral-700"
+                      className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
                       disabled={isLoading}
                     />
                     {validationErrors.name && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
+                      <p className="text-sm text-red-400">
                         {validationErrors.name}
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="username"
-                      className="text-neutral-700 dark:text-neutral-300"
-                    >
+                    <Label htmlFor="username" className="text-neutral-300">
                       Nombre de Usuario <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -219,11 +190,11 @@ export default function RegisterPage() {
                       onChange={handleChange}
                       required
                       autoComplete="username"
-                      className="border-neutral-300 dark:border-neutral-700"
+                      className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
                       disabled={isLoading}
                     />
                     {validationErrors.username && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
+                      <p className="text-sm text-red-400">
                         {validationErrors.username}
                       </p>
                     )}
@@ -232,17 +203,13 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                  <span className="text-2xl">📧</span>
+                <h3 className="text-lg font-semibold text-neutral-100">
                   Información de Contacto
                 </h3>
                 <Separator />
 
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="email"
-                    className="text-neutral-700 dark:text-neutral-300"
-                  >
+                  <Label htmlFor="email" className="text-neutral-300">
                     Email <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -254,11 +221,11 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     required
                     autoComplete="email"
-                    className="border-neutral-300 dark:border-neutral-700"
+                    className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
                     disabled={isLoading}
                   />
                   {validationErrors.email && (
-                    <p className="text-sm text-red-600 dark:text-red-400">
+                    <p className="text-sm text-red-400">
                       {validationErrors.email}
                     </p>
                   )}
@@ -266,18 +233,14 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                  <span className="text-2xl">🔒</span>
+                <h3 className="text-lg font-semibold text-neutral-100">
                   Seguridad
                 </h3>
                 <Separator />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="password"
-                      className="text-neutral-700 dark:text-neutral-300"
-                    >
+                    <Label htmlFor="password" className="text-neutral-300">
                       Contraseña <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -289,24 +252,21 @@ export default function RegisterPage() {
                       onChange={handleChange}
                       required
                       autoComplete="new-password"
-                      className="border-neutral-300 dark:border-neutral-700"
+                      className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
                       disabled={isLoading}
                     />
                     <p className="text-xs text-neutral-500">
                       Mínimo 6 caracteres
                     </p>
                     {validationErrors.password && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
+                      <p className="text-sm text-red-400">
                         {validationErrors.password}
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="password_confirmation"
-                      className="text-neutral-700 dark:text-neutral-300"
-                    >
+                    <Label htmlFor="password_confirmation" className="text-neutral-300">
                       Confirmar Contraseña{" "}
                       <span className="text-red-500">*</span>
                     </Label>
@@ -319,11 +279,11 @@ export default function RegisterPage() {
                       onChange={handleChange}
                       required
                       autoComplete="new-password"
-                      className="border-neutral-300 dark:border-neutral-700"
+                      className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
                       disabled={isLoading}
                     />
                     {validationErrors.password_confirmation && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
+                      <p className="text-sm text-red-400">
                         {validationErrors.password_confirmation}
                       </p>
                     )}
@@ -336,19 +296,16 @@ export default function RegisterPage() {
               <div className="flex flex-col gap-4">
                 <Button
                   type="submit"
-                  className="w-full bg-neutral-700 hover:bg-neutral-800 dark:bg-neutral-600 dark:hover:bg-neutral-700 text-white font-semibold py-6 text-lg"
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold py-6 text-lg"
                   disabled={isLoading}
                 >
                   {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
                 </Button>
 
                 <div className="text-center">
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                  <p className="text-sm text-neutral-400">
                     ¿Ya tienes una cuenta?{" "}
-                    <Link
-                      href="/auth/login"
-                      className="text-neutral-700 dark:text-neutral-300 font-semibold hover:underline"
-                    >
+                    <Link href="/auth/login" className="font-semibold text-amber-400 hover:text-amber-300 underline">
                       Inicia sesión aquí
                     </Link>
                   </p>
@@ -357,7 +314,7 @@ export default function RegisterPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
+      </main>
     </GuestLayout>
   );
 }
