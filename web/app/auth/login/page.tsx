@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import GuestLayout from "@/app/layouts/GuestLayout";
-import AuthHeader from "@/components/auth/AuthHeader";
 import { useLogin } from "@/hooks/auth/useLogin";
 import { useAuth } from "@/hooks/auth/useAuth";
 
@@ -88,27 +87,43 @@ export default function LoginPage() {
 
   return (
     <GuestLayout>
-      <AuthHeader
-        preText="¿No tienes cuenta aún?"
-        ctaHref="/auth/type-users"
-        ctaLabel="REGISTRARSE"
-      />
+      {/* <div className="bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900 text-white py-12 px-6 text-center border-b-4 border-neutral-600">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-neutral-200 to-neutral-400 bg-clip-text text-transparent">
+            Bienvenido a Warclass
+          </h1>
+          <p className="text-lg text-neutral-300 mb-6">
+            Accede a tu mundo virtual de aprendizaje
+          </p>
+          <div className="flex justify-center items-center gap-4 flex-wrap">
+            <span className="text-neutral-300">¿No tienes cuenta aún?</span>
+            <Link href="/auth/type-users">
+              <Button
+                variant="outline"
+                className="bg-neutral-700 hover:bg-neutral-600 text-white border-neutral-500"
+              >
+                Registrarse
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div> */}
 
-      <main className="grid h-[calc(100vh-56px)] place-items-center bg-[#0b0b0b] px-4">
-        <Card className="w-full max-w-md border-neutral-800 bg-[#1a1a1a] shadow-2xl">
+      <div className="flex justify-center items-center flex-grow p-6 bg-transparent">
+        <Card className="w-full max-w-md shadow-2xl border-neutral-200 dark:border-neutral-800">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold tracking-tight text-neutral-100">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-neutral-700 to-neutral-900 dark:from-neutral-200 dark:to-neutral-400 bg-clip-text text-transparent">
               Iniciar Sesión
             </CardTitle>
-            <CardDescription className="text-neutral-400">
+            <CardDescription className="text-neutral-600 dark:text-neutral-400">
               Ingresa tus credenciales para acceder a tu cuenta
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             {status && (
-              <Alert className="mb-4 bg-green-900/20 border-green-500">
-                <AlertDescription className="text-green-400">
+              <Alert className="mb-4 bg-green-50 dark:bg-green-900/20 border-green-500">
+                <AlertDescription className="text-green-700 dark:text-green-400">
                   {status}
                 </AlertDescription>
               </Alert>
@@ -134,7 +149,10 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-neutral-300">
+                <Label
+                  htmlFor="email"
+                  className="text-neutral-700 dark:text-neutral-300"
+                >
                   Email <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -147,18 +165,21 @@ export default function LoginPage() {
                   required
                   autoFocus
                   autoComplete="username"
-                  className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
+                  className="border-neutral-300 dark:border-neutral-700 focus:ring-neutral-500"
                   disabled={isLoading}
                 />
                 {validationErrors.email && (
-                  <p className="text-sm text-red-400">
+                  <p className="text-sm text-red-600 dark:text-red-400">
                     {validationErrors.email}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-neutral-300">
+                <Label
+                  htmlFor="password"
+                  className="text-neutral-700 dark:text-neutral-300"
+                >
                   Contraseña <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -170,11 +191,11 @@ export default function LoginPage() {
                   onChange={handleChange}
                   required
                   autoComplete="current-password"
-                  className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
+                  className="border-neutral-300 dark:border-neutral-700 focus:ring-neutral-500"
                   disabled={isLoading}
                 />
                 {validationErrors.password && (
-                  <p className="text-sm text-red-400">
+                  <p className="text-sm text-red-600 dark:text-red-400">
                     {validationErrors.password}
                   </p>
                 )}
@@ -192,14 +213,17 @@ export default function LoginPage() {
                       }))
                     }
                   />
-                  <Label htmlFor="remember" className="text-sm text-neutral-400 cursor-pointer">
+                  <Label
+                    htmlFor="remember"
+                    className="text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer"
+                  >
                     Recordarme
                   </Label>
                 </div>
 
                 <Link
                   href="/auth/forgot-password"
-                  className="text-sm text-amber-400 hover:text-amber-300 underline transition-colors"
+                  className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 underline transition-colors"
                 >
                   ¿Olvidaste tu contraseña?
                 </Link>
@@ -207,16 +231,19 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold py-6 text-lg"
+                className="w-full bg-neutral-700 hover:bg-neutral-800 dark:bg-neutral-600 dark:hover:bg-neutral-700 text-white font-semibold py-6 text-lg"
                 disabled={isLoading}
               >
                 {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
 
-              <div className="text-center pt-4 border-t border-neutral-800">
-                <p className="text-sm text-neutral-400">
+              <div className="text-center pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">
                   ¿Primera vez aquí?{" "}
-                  <Link href="/auth/register" className="font-semibold text-amber-400 hover:text-amber-300 underline">
+                  <Link
+                    href="/auth/register"
+                    className="text-neutral-700 dark:text-neutral-300 font-semibold hover:underline"
+                  >
                     Crea una cuenta
                   </Link>
                 </p>
@@ -224,7 +251,7 @@ export default function LoginPage() {
             </form>
           </CardContent>
         </Card>
-      </main>
+      </div>
     </GuestLayout>
   );
 }
