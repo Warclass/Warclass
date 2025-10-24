@@ -87,7 +87,7 @@ export default function LoginPage() {
 
   return (
     <GuestLayout>
-      <div className="bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900 text-white py-12 px-6 text-center border-b-4 border-neutral-600">
+      {/* <div className="bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900 text-white py-12 px-6 text-center border-b-4 border-neutral-600">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-neutral-200 to-neutral-400 bg-clip-text text-transparent">
             Bienvenido a Warclass
@@ -107,9 +107,9 @@ export default function LoginPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="flex justify-center items-center flex-grow p-6 bg-neutral-50 dark:bg-neutral-950">
+      <div className="flex justify-center items-center flex-grow p-6 bg-transparent">
         <Card className="w-full max-w-md shadow-2xl border-neutral-200 dark:border-neutral-800">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-neutral-700 to-neutral-900 dark:from-neutral-200 dark:to-neutral-400 bg-clip-text text-transparent">
