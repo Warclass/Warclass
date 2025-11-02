@@ -23,117 +23,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/auth/useAuth";
-
-// Tipos
-interface Course {
-  id: string;
-  name: string;
-  code: string;
-  color: string;
-  students: number;
-  quests: number;
-  level: number;
-  image?: string;
-}
-
-interface EnrolledCourse {
-  id: string;
-  name: string;
-  instructor: string;
-  progress: number;
-  color: string;
-  nextQuest?: string;
-  level: number;
-  image?: string;
-}
+import { useDashboard } from "@/hooks/dashboard/useDashboard";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { data: dashboardData, isLoading, error } = useDashboard();
 
-  // Datos de ejemplo - En producción vendrían de una API
-  const teachingCourses: Course[] = [
-    {
-      id: "1",
-      name: "Programación Web",
-      code: "CS-101",
-      color: "bg-blue-500",
-      students: 32,
-      quests: 12,
-      level: 3,
-      image: "/img/courses/web.jpg"
-    },
-    {
-      id: "2",
-      name: "Base de Datos",
-      code: "CS-201",
-      color: "bg-green-500",
-      students: 28,
-      quests: 8,
-      level: 2,
-      image: "/img/courses/db.jpg"
-    },
-    {
-      id: "3",
-      name: "Algoritmos",
-      code: "CS-301",
-      color: "bg-purple-500",
-      students: 25,
-      quests: 15,
-      level: 4,
-      image: "/img/courses/algo.jpg"
-    }
-  ];
-
-  const enrolledCourses: EnrolledCourse[] = [
-    {
-      id: "4",
-      name: "Inteligencia Artificial",
-      instructor: "Dr. García",
-      progress: 65,
-      color: "bg-red-500",
-      nextQuest: "Redes Neuronales",
-      level: 12,
-      image: "/img/courses/ai.jpg"
-    },
-    {
-      id: "5",
-      name: "Matemáticas Discretas",
-      instructor: "Prof. Martínez",
-      progress: 40,
-      color: "bg-yellow-500",
-      nextQuest: "Teoría de Grafos",
-      level: 8,
-      image: "/img/courses/math.jpg"
-    }
-  ];
-
-  const recentActivity = [
-    {
-      id: "1",
-      type: "quest_completed",
-      course: "Programación Web",
-      description: "Juan Pérez completó 'Diseño Responsivo'",
-      time: "Hace 2 horas",
-      avatar: "/img/user01.jpeg"
-    },
-    {
-      id: "2",
-      type: "new_submission",
-      course: "Base de Datos",
-      description: "5 nuevas entregas en 'Normalización'",
-      time: "Hace 3 horas",
-      avatar: "/img/user02.jpg"
-    },
-    {
-      id: "3",
-      type: "level_up",
-      course: "Inteligencia Artificial",
-      description: "¡Subiste al nivel 13!",
-      time: "Hace 5 horas",
-      avatar: user?.name || ""
-    }
-  ];
+  // Usar datos del API o valores por defecto
+  const teachingCourses = dashboardData?.teachingCourses || [];
+  const enrolledCourses = dashboardData?.enrolledCourses || [];
+  const recentActivity = dashboardData?.recentActivity || [];
+  const stats = dashboardData?.stats || {
+    enrolledCourses: 0,
+    teachingCourses: 0,
+    totalStudents: 0,
+    averageLevel: 0,
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -148,6 +54,40 @@ export default function DashboardPage() {
       .toUpperCase()
       .substring(0, 2);
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+          <p className="mt-4 text-neutral-400 text-lg">Cargando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
+        <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
+          <CardHeader>
+            <CardTitle className="text-red-400">Error al cargar dashboard</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-neutral-400 mb-4">{error}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black"
+            >
+              Reintentar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -236,7 +176,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
-                {enrolledCourses.length}
+                {stats.enrolledCourses}
               </div>
             </CardContent>
           </Card>
@@ -250,7 +190,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
-                {teachingCourses.length}
+                {stats.teachingCourses}
               </div>
             </CardContent>
           </Card>
@@ -264,7 +204,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
-                {teachingCourses.reduce((acc, c) => acc + c.students, 0)}
+                {stats.totalStudents}
               </div>
             </CardContent>
           </Card>
@@ -278,10 +218,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
-                {Math.round(
-                  enrolledCourses.reduce((acc, c) => acc + c.level, 0) /
-                    enrolledCourses.length
-                )}
+                {stats.averageLevel || 0}
               </div>
             </CardContent>
           </Card>
@@ -309,7 +246,20 @@ export default function DashboardPage() {
 
               {/* Enrolled Courses Tab */}
               <TabsContent value="enrolled" className="space-y-4 mt-6">
-                {enrolledCourses.map((course) => (
+                {enrolledCourses.length === 0 ? (
+                  <Card className="bg-[#1a1a1a] border-neutral-800">
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <BookOpen className="h-16 w-16 text-neutral-600 mb-4" />
+                      <p className="text-neutral-400 text-center mb-2">
+                        No estás inscrito en ningún curso
+                      </p>
+                      <p className="text-neutral-500 text-sm text-center">
+                        Solicita un código de invitación a tu docente para unirte a un curso
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  enrolledCourses.map((course) => (
                   <Card
                     key={course.id}
                     className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
@@ -370,19 +320,38 @@ export default function DashboardPage() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  ))
+                )}
               </TabsContent>
 
               {/* Teaching Courses Tab */}
               <TabsContent value="teaching" className="space-y-4 mt-6">
-                <Card className="bg-[#1a1a1a] border-neutral-800 border-dashed hover:border-[#D89216] transition-colors cursor-pointer">
-                  <CardContent className="flex flex-col items-center justify-center py-8">
-                    <Plus className="h-12 w-12 text-neutral-600 mb-2" />
-                    <p className="text-neutral-400 text-sm">Crear nuevo curso</p>
-                  </CardContent>
-                </Card>
+                {teachingCourses.length === 0 ? (
+                  <Card className="bg-[#1a1a1a] border-neutral-800">
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <GraduationCap className="h-16 w-16 text-neutral-600 mb-4" />
+                      <p className="text-neutral-400 text-center mb-2">
+                        No estás enseñando ningún curso
+                      </p>
+                      <p className="text-neutral-500 text-sm text-center mb-4">
+                        Crea tu primer curso para comenzar a enseñar
+                      </p>
+                      <Button className="bg-[#D89216] hover:bg-[#b6770f] text-black">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Crear Curso
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    <Card className="bg-[#1a1a1a] border-neutral-800 border-dashed hover:border-[#D89216] transition-colors cursor-pointer">
+                      <CardContent className="flex flex-col items-center justify-center py-8">
+                        <Plus className="h-12 w-12 text-neutral-600 mb-2" />
+                        <p className="text-neutral-400 text-sm">Crear nuevo curso</p>
+                      </CardContent>
+                    </Card>
 
-                {teachingCourses.map((course) => (
+                    {teachingCourses.map((course) => (
                   <Card
                     key={course.id}
                     className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
@@ -435,7 +404,9 @@ export default function DashboardPage() {
                       </Link>
                     </CardContent>
                   </Card>
-                ))}
+                    ))}
+                  </>
+                )}
               </TabsContent>
             </Tabs>
           </div>

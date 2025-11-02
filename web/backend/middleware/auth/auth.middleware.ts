@@ -52,6 +52,9 @@ export async function authenticateToken(request: NextRequest): Promise<NextRespo
     }
 
     (request as AuthenticatedRequest).user = payload;
+    
+    // Add user ID to headers for use in route handlers
+    request.headers.set('x-user-id', payload.userId);
 
     return null;
   } catch (error) {
