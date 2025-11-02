@@ -64,7 +64,7 @@ export default function RegisterPage() {
       setStatus("¡Registro exitoso! Redirigiendo...");
 
       setTimeout(() => {
-        router.push("/character");
+        router.push("/dashboard");
       }, 1000);
     } else if (result.error === "VALIDATION_ERROR" && "details" in result) {
       const errors: Record<string, string> = {};
