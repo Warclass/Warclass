@@ -123,13 +123,15 @@ export default function DashboardPage() {
             >
               <Bell className="h-5 w-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-neutral-400 hover:text-neutral-100"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
+            <Link href="/dashboard/profile">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-neutral-400 hover:text-neutral-100"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
 
             {/* User Avatar */}
             <div className="flex items-center gap-2">
