@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 type AuthHeaderProps = {
   preText: string;
@@ -13,7 +14,8 @@ export default function AuthHeader({ preText, ctaHref, ctaLabel }: AuthHeaderPro
     <header className="w-full bg-[#141414] border-b border-neutral-800">
       <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
         <Link href="/" className="inline-flex items-center gap-2">
-          <span className="text-2xl font-black tracking-tight text-amber-400">WC</span>
+          {/* Usar logo desde public/assets para compatibilidad con Turbopack */}
+          <Image src="/assets/logo-wow.svg" alt="Warclass" width={28} height={28} className="opacity-90" />
           <span className="sr-only">Warclass</span>
         </Link>
 

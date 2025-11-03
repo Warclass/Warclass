@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import GuestLayout from "@/app/layouts/GuestLayout";
+import AuthNavButtons from "@/components/auth/AuthNavButtons";
+import GameVignette from "@/components/layout/GameVignette";
 import { useLogin } from "@/hooks/auth/useLogin";
 import { useAuth } from "@/hooks/auth/useAuth";
 
@@ -109,13 +111,13 @@ export default function LoginPage() {
         </div>
       </div> */}
 
-      <div className="flex justify-center items-center flex-grow p-6 bg-transparent">
-        <Card className="w-full max-w-md shadow-2xl border-neutral-200 dark:border-neutral-800">
+      <main className="grid min-h-screen place-items-center px-4 py-8">
+        <Card className="w-full max-w-md rounded-xl border border-amber-400/20 bg-black/40 backdrop-blur-[2px] shadow-[0_0_40px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/20">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-neutral-700 to-neutral-900 dark:from-neutral-200 dark:to-neutral-400 bg-clip-text text-transparent">
+            <CardTitle className="text-2xl font-bold tracking-tight text-neutral-100">
               Iniciar Sesión
             </CardTitle>
-            <CardDescription className="text-neutral-600 dark:text-neutral-400">
+            <CardDescription className="text-neutral-400">
               Ingresa tus credenciales para acceder a tu cuenta
             </CardDescription>
           </CardHeader>
@@ -231,7 +233,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-neutral-700 hover:bg-neutral-800 dark:bg-neutral-600 dark:hover:bg-neutral-700 text-white font-semibold py-6 text-lg"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold py-6 text-lg shadow-[0_0_30px_rgba(245,158,11,0.25)]"
                 disabled={isLoading}
               >
                 {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
@@ -251,7 +253,11 @@ export default function LoginPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
+      </main>
+      {/* Fixed nav buttons (left: 3 auth links, right: exit) */}
+      <AuthNavButtons />
+      {/* Atmospheric overlay */}
+      <GameVignette />
     </GuestLayout>
   );
 }

@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useRegister } from '@/hooks/auth/useRegister';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '../ui/alert';
 
 export default function RegisterExample() {
   const router = useRouter();
@@ -19,9 +21,12 @@ export default function RegisterExample() {
     email: '',
     username: '',
     password: '',
+    password_confirmation: '',
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [errorMessage, setErrorMessage] = useState('');
+  const [status, setStatus] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -33,46 +38,87 @@ export default function RegisterExample() {
         return newErrors;
       });
     }
+    if (errorMessage) setErrorMessage('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationErrors({});
+    setErrorMessage('');
+    setStatus('');
 
-    const result = await register(formData);
+    if (formData.password !== formData.password_confirmation) {
+      setValidationErrors({
+        password_confirmation: 'Las contraseñas no coinciden',
+      });
+      return;
+    }
+
+    // Simular llamada a register (ajusta según tu lógica real)
+    const result = await register({
+      name: formData.name,
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+    });
 
     if (result.success && result.data) {
       authLogin(result.data.token, result.data.user);
-      
-      router.push('/dashboard');
+      setStatus('¡Registro exitoso! Redirigiendo...');
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
     } else if (result.error === 'VALIDATION_ERROR' && 'details' in result) {
       const errors: Record<string, string> = {};
       (result as any).details?.forEach((detail: any) => {
         errors[detail.field] = detail.message;
       });
       setValidationErrors(errors);
+    } else {
+      setErrorMessage(result.message || 'Error al registrar usuario');
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Crear Cuenta</CardTitle>
-          <CardDescription>
+    <main className="grid min-h-screen place-items-center px-4 py-8">
+      <Card className="w-full max-w-md border-neutral-700/40 bg-transparent backdrop-blur-[2px] shadow-none">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold tracking-tight text-neutral-100">
+            Crear Cuenta
+          </CardTitle>
+          <CardDescription className="text-neutral-400">
             Ingresa tus datos para registrarte en Warclass
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-                {error}
-              </div>
-            )}
-
+          {status && (
+            <Alert className="mb-4 bg-green-50 dark:bg-green-900/20 border-green-500">
+              <AlertDescription className="text-green-700 dark:text-green-400">
+                {status}
+              </AlertDescription>
+            </Alert>
+          )}
+          {errorMessage && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+          {Object.keys(validationErrors).length > 0 && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                <ul className="list-disc list-inside space-y-1">
+                  {Object.values(validationErrors).map((error, idx) => (
+                    <li key={idx}>{error}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre Completo</Label>
+              <Label htmlFor="name" className="text-neutral-700 dark:text-neutral-300">
+                Nombre Completo <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="name"
                 name="name"
@@ -80,15 +126,21 @@ export default function RegisterExample() {
                 placeholder="Juan Pérez"
                 value={formData.name}
                 onChange={handleChange}
+                required
+                autoFocus
+                autoComplete="name"
+                className="border-neutral-300 dark:border-neutral-700 focus:ring-neutral-500"
                 disabled={isLoading}
               />
               {validationErrors.name && (
-                <p className="text-sm text-red-500">{validationErrors.name}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{validationErrors.name}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="username">Nombre de Usuario</Label>
+              <Label htmlFor="username" className="text-neutral-700 dark:text-neutral-300">
+                Nombre de Usuario <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="username"
                 name="username"
@@ -96,31 +148,41 @@ export default function RegisterExample() {
                 placeholder="juanperez"
                 value={formData.username}
                 onChange={handleChange}
+                required
+                autoComplete="username"
+                className="border-neutral-300 dark:border-neutral-700 focus:ring-neutral-500"
                 disabled={isLoading}
               />
               {validationErrors.username && (
-                <p className="text-sm text-red-500">{validationErrors.username}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{validationErrors.username}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-neutral-700 dark:text-neutral-300">
+                Email <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="juan@example.com"
+                placeholder="tu@email.com"
                 value={formData.email}
                 onChange={handleChange}
+                required
+                autoComplete="email"
+                className="border-neutral-300 dark:border-neutral-700 focus:ring-neutral-500"
                 disabled={isLoading}
               />
               {validationErrors.email && (
-                <p className="text-sm text-red-500">{validationErrors.email}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{validationErrors.email}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password" className="text-neutral-700 dark:text-neutral-300">
+                Contraseña <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="password"
                 name="password"
@@ -128,19 +190,59 @@ export default function RegisterExample() {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
+                required
+                autoComplete="new-password"
+                className="border-neutral-300 dark:border-neutral-700 focus:ring-neutral-500"
                 disabled={isLoading}
               />
               {validationErrors.password && (
-                <p className="text-sm text-red-500">{validationErrors.password}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{validationErrors.password}</p>
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Registrando...' : 'Registrarse'}
+            <div className="space-y-2">
+              <Label htmlFor="password_confirmation" className="text-neutral-700 dark:text-neutral-300">
+                Confirmar Contraseña <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="password_confirmation"
+                name="password_confirmation"
+                type="password"
+                placeholder="••••••••"
+                value={formData.password_confirmation}
+                onChange={handleChange}
+                required
+                autoComplete="new-password"
+                className="border-neutral-300 dark:border-neutral-700 focus:ring-neutral-500"
+                disabled={isLoading}
+              />
+              {validationErrors.password_confirmation && (
+                <p className="text-sm text-red-600 dark:text-red-400">{validationErrors.password_confirmation}</p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold py-6 text-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? "Registrando..." : "Registrarse"}
             </Button>
+
+            <div className="text-center pt-4 border-t border-neutral-200 dark:border-neutral-800">
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                ¿Ya tienes una cuenta?{' '}
+                <Link
+                  href="/auth/login"
+                  className="text-neutral-700 dark:text-neutral-300 font-semibold hover:underline"
+                >
+                  Inicia sesión aquí
+                </Link>
+              </p>
+            </div>
           </form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

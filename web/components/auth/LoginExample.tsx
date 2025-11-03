@@ -53,24 +53,24 @@ export default function LoginExample() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Iniciar Sesión</CardTitle>
-          <CardDescription>
+    <div className="flex items-center justify-center p-4">
+      <Card className="w-full max-w-md border-neutral-700/40 bg-transparent backdrop-blur-[2px] shadow-none">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold tracking-tight text-neutral-100">Iniciar Sesión</CardTitle>
+          <CardDescription className="text-neutral-400">
             Ingresa tus credenciales para acceder a Warclass
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+              <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-500 rounded-md">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-neutral-300">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -79,14 +79,15 @@ export default function LoginExample() {
                 value={formData.email}
                 onChange={handleChange}
                 disabled={isLoading}
+                className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
               />
               {validationErrors.email && (
-                <p className="text-sm text-red-500">{validationErrors.email}</p>
+                <p className="text-sm text-red-400">{validationErrors.email}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password" className="text-neutral-300">Contraseña</Label>
               <Input
                 id="password"
                 name="password"
@@ -95,13 +96,14 @@ export default function LoginExample() {
                 value={formData.password}
                 onChange={handleChange}
                 disabled={isLoading}
+                className="border-neutral-700 bg-neutral-900 text-neutral-100 placeholder:text-neutral-500 focus-visible:ring-amber-500"
               />
               {validationErrors.password && (
-                <p className="text-sm text-red-500">{validationErrors.password}</p>
+                <p className="text-sm text-red-400">{validationErrors.password}</p>
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold" disabled={isLoading}>
               {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>
