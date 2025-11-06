@@ -19,7 +19,7 @@ export async function getPendingInvitations(userId: string): Promise<PendingInvi
     const invitations = await prisma.invitations.findMany({
       where: {
         user_id: userId,
-        used: false
+        // Quitamos el filtro 'used: false' para mostrar todas las invitaciones
       },
       include: {
         course: {
@@ -30,9 +30,10 @@ export async function getPendingInvitations(userId: string): Promise<PendingInvi
           }
         }
       },
-      orderBy: {
-        created_at: 'desc'
-      }
+      orderBy: [
+        { used: 'asc' },  // Primero las no usadas
+        { created_at: 'desc' }
+      ]
     });
 
     return invitations.map(inv => ({

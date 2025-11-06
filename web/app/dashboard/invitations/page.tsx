@@ -148,10 +148,10 @@ export default function InvitationsPage() {
           <CardHeader>
             <CardTitle className="text-3xl font-bold text-neutral-100 flex items-center gap-3">
               <Mail className="h-8 w-8 text-[#D89216]" />
-              Invitaciones Pendientes
+              Mis Invitaciones
             </CardTitle>
             <CardDescription className="text-neutral-400 text-lg">
-              Tienes {invitations.length} invitación{invitations.length !== 1 ? 'es' : ''} pendiente{invitations.length !== 1 ? 's' : ''}
+              {invitations.filter(i => !i.used).length} pendiente{invitations.filter(i => !i.used).length !== 1 ? 's' : ''} • {invitations.filter(i => i.used).length} aceptada{invitations.filter(i => i.used).length !== 1 ? 's' : ''}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -160,7 +160,7 @@ export default function InvitationsPage() {
           <Card className="bg-[#1a1a1a] border-neutral-800">
             <CardContent className="pt-6 text-center py-12">
               <div className="text-6xl mb-4">🎓</div>
-              <CardTitle className="text-xl mb-2 text-neutral-100">No tienes invitaciones pendientes</CardTitle>
+              <CardTitle className="text-xl mb-2 text-neutral-100">No tienes invitaciones</CardTitle>
               <CardDescription className="text-neutral-400">
                 Cuando recibas invitaciones a cursos, aparecerán aquí
               </CardDescription>
@@ -178,61 +178,80 @@ export default function InvitationsPage() {
               {invitations.map((invitation) => (
                 <Card 
                   key={invitation.id}
-                  className="bg-[#1a1a1a] border-neutral-800 hover:border-neutral-700 transition-colors"
+                  className={`transition-colors ${
+                    invitation.used
+                      ? 'bg-green-950/20 border-green-800/50 opacity-75'
+                      : 'bg-[#1a1a1a] border-neutral-800 hover:border-neutral-700'
+                  }`}
                 >
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <CardTitle className="text-xl mb-2 text-neutral-100">
+                        <CardTitle className="text-xl mb-2 text-neutral-100 flex items-center gap-2">
                           {invitation.courseName}
+                          {invitation.used && (
+                            <Check className="h-5 w-5 text-green-500" />
+                          )}
                         </CardTitle>
                         <CardDescription className="text-base text-neutral-400">
                           {invitation.courseDescription || 'Sin descripción'}
                         </CardDescription>
                       </div>
-                      <Badge variant="secondary" className="ml-4 bg-yellow-900/30 text-yellow-500 border-yellow-700/50">
-                        📧 Pendiente
-                      </Badge>
+                      {invitation.used ? (
+                        <Badge className="ml-4 bg-green-900/50 text-green-400 border-green-700/50">
+                          ✓ Aceptada
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="ml-4 bg-yellow-900/30 text-yellow-500 border-yellow-700/50">
+                          📧 Pendiente
+                        </Badge>
+                      )}
                     </div>
                   </CardHeader>
                   
                   <CardContent>
                     <div className="flex items-center gap-2 text-sm text-neutral-400">
                       <span>Código:</span>
-                      <code className="bg-[#0a0a0a] px-3 py-1 rounded font-mono border border-neutral-800 text-[#D89216]">
+                      <code className={`px-3 py-1 rounded font-mono border ${
+                        invitation.used
+                          ? 'bg-green-950/20 border-green-800/50 text-green-500'
+                          : 'bg-[#0a0a0a] border-neutral-800 text-[#D89216]'
+                      }`}>
                         {invitation.code}
                       </code>
                     </div>
                   </CardContent>
 
-                  <CardFooter className="flex gap-3">
-                    <Button
-                      onClick={() => handleAccept(invitation.id)}
-                      disabled={processingId === invitation.id}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      {processingId === invitation.id ? (
-                        <>
-                          <span className="animate-spin mr-2">⏳</span>
-                          Procesando...
-                        </>
-                      ) : (
-                        <>
-                          <Check className="h-4 w-4 mr-2" />
-                          Aceptar Invitación
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      onClick={() => handleReject(invitation.id)}
-                      disabled={processingId === invitation.id}
-                      variant="destructive"
-                      className="flex-1"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Rechazar
-                    </Button>
-                  </CardFooter>
+                  {!invitation.used && (
+                    <CardFooter className="flex gap-3">
+                      <Button
+                        onClick={() => handleAccept(invitation.id)}
+                        disabled={processingId === invitation.id}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        {processingId === invitation.id ? (
+                          <>
+                            <span className="animate-spin mr-2">⏳</span>
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            Aceptar Invitación
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleReject(invitation.id)}
+                        disabled={processingId === invitation.id}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Rechazar
+                      </Button>
+                    </CardFooter>
+                  )}
                 </Card>
               ))}
             </div>
