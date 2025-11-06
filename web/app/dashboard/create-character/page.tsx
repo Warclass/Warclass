@@ -184,11 +184,11 @@ export default function CreateCharacterPage() {
       })
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('Personaje creado:', data);
+        const data = await response.json()
+        console.log('Personaje creado:', data)
         
-        // Redirigir al dashboard de player
-        router.push('/main/dashboard/player');
+        // Redirigir al dashboard
+        router.push('/dashboard')
       } else {
         const errorData = await response.json()
         alert(errorData.error || 'Error al crear personaje')
@@ -227,10 +227,10 @@ export default function CreateCharacterPage() {
         <nav className="flex w-full justify-between px-6 items-center">
           <Link href="/dashboard" className="flex items-center gap-2 text-neutral-400 hover:text-neutral-100 transition">
             <ArrowLeft className="h-5 w-5" />
-            <span>Volver al Dashboard</span>
+            <span>Volver</span>
           </Link>
           <p className="text-[#D89216] font-bold text-lg">CREAR PERSONAJE</p>
-          <div className="w-40" /> {/* Spacer for centering */}
+          <div className="w-20" /> {/* Spacer for centering */}
         </nav>
       </header>
 

@@ -1,113 +1,221 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
+import { useSearchParams } from 'next/navigation'
+import { useAuth } from '@/hooks/auth/useAuth'
+import PlayerLayout from '@/app/layouts/PlayerLayout'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Trophy, Star, Coins, Zap, Medal } from 'lucide-react'
+import { withAuth } from '@/lib/hoc/withAuth'
 
-export default function ScorePage() {
+interface RankedMember {
+  id: string
+  name: string
+  experience: number
+  gold: number
+  energy: number
+  rank: number
+  group: {
+    id: string
+    name: string
+  }
+  character: {
+    id: string
+    name: string
+    experience: number
+    gold: number
+    energy: number
+    class: {
+      id: string
+      name: string
+      speed: number
+    }
+  } | null
+}
+
+function ScorePage() {
   const searchParams = useSearchParams()
-  const router = useRouter()
-  const result = parseInt(searchParams.get('result') || '0')
-  const [progress, setProgress] = useState(0)
+  const { user } = useAuth()
+  const [isLoading, setIsLoading] = useState(true)
+  const [ranking, setRanking] = useState<RankedMember[]>([])
+  const [error, setError] = useState<string | null>(null)
+  
+  const courseId = searchParams.get('courseId')
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setProgress(result)
-    }, 500)
+    const fetchRanking = async () => {
+      if (!user?.id || !courseId) return
 
-    return () => clearTimeout(timer)
-  }, [result])
+      try {
+        setIsLoading(true)
+        const response = await fetch(`/api/courses/members?courseId=${courseId}`, {
+          headers: {
+            'x-user-id': user.id
+          }
+        })
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 dark:text-green-500'
-    if (score >= 60) return 'text-yellow-600 dark:text-yellow-500'
-    return 'text-red-600 dark:text-red-500'
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            // Ordenar por experiencia del character (o member si no tiene character)
+            const sorted = data.data
+              .map((member: any) => ({
+                ...member,
+                totalExperience: member.character?.experience || member.experience || 0
+              }))
+              .sort((a: any, b: any) => b.totalExperience - a.totalExperience)
+              .map((member: any, index: number) => ({
+                ...member,
+                rank: index + 1
+              }))
+            
+            setRanking(sorted)
+          } else {
+            setError('Error al cargar ranking')
+          }
+        } else {
+          const errorData = await response.json()
+          setError(errorData.error || 'Error al cargar ranking')
+        }
+      } catch (error) {
+        console.error('Error al cargar ranking:', error)
+        setError('Error al cargar datos de ranking')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchRanking()
+  }, [user?.id, courseId])
+
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) return { icon: <Trophy className="h-5 w-5" />, color: 'bg-yellow-500', text: '1º' }
+    if (rank === 2) return { icon: <Medal className="h-5 w-5" />, color: 'bg-gray-400', text: '2º' }
+    if (rank === 3) return { icon: <Medal className="h-5 w-5" />, color: 'bg-orange-600', text: '3º' }
+    return { icon: null, color: 'bg-neutral-700', text: `${rank}º` }
   }
 
-  const getProgressColor = (score: number) => {
-    if (score >= 80) return '[&>div]:bg-green-500'
-    if (score >= 60) return '[&>div]:bg-yellow-500'
-    return '[&>div]:bg-red-500'
+  if (isLoading) {
+    return (
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+        <div className="flex h-full justify-center items-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+            <p className="mt-4 text-neutral-400">Cargando ranking...</p>
+          </div>
+        </div>
+      </PlayerLayout>
+    )
   }
 
-  const getMessage = (score: number) => {
-    if (score >= 90) return '¡Excelente trabajo! 🎉'
-    if (score >= 80) return '¡Muy bien! 👏'
-    if (score >= 60) return 'Buen intento 👍'
-    return 'Sigue practicando 💪'
+  if (error) {
+    return (
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+        <div className="flex h-full justify-center items-center">
+          <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
+            <CardHeader>
+              <CardTitle className="text-red-400">Error</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-neutral-400">{error}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </PlayerLayout>
+    )
   }
 
   return (
-    <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 flex flex-grow h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 shadow-2xl">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold text-neutral-900 dark:text-white">
-            Resultado del Quiz
-          </CardTitle>
-          <p className="text-neutral-600 dark:text-neutral-400 text-lg">{getMessage(result)}</p>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center space-y-6 p-8">
-          <div className="relative w-56 h-56 flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className={`text-7xl font-bold ${getScoreColor(result)} animate-pulse`}
-              >
-                {result}%
-              </div>
-            </div>
-          </div>
-
-          <div className="w-full space-y-2">
-            <Progress
-              value={progress}
-              className={`h-4 ${getProgressColor(result)}`}
-            />
-            <p className="text-center text-sm text-neutral-600 dark:text-neutral-400">
-              Tu puntuación
+    <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-neutral-100 flex items-center gap-3">
+              <Trophy className="h-10 w-10 text-[#D89216]" />
+              Ranking del Curso
+            </h1>
+            <p className="text-neutral-400 mt-2">
+              Clasificación basada en experiencia ganada
             </p>
           </div>
+          <Badge className="bg-[#D89216] text-black text-lg px-4 py-2">
+            {ranking.length} participantes
+          </Badge>
+        </div>
 
-          <div className="text-center space-y-2">
-            {result >= 60 ? (
-              <>
-                <p className="text-green-600 dark:text-green-500 font-semibold">
-                  ✓ Quiz Aprobado
-                </p>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Has ganado experiencia y oro
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-red-600 dark:text-red-500 font-semibold">
-                  ✗ Quiz No Aprobado
-                </p>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  Intenta de nuevo para mejorar tu puntuación
-                </p>
-              </>
-            )}
-          </div>
+        {ranking.length > 0 ? (
+          <div className="space-y-3">
+            {ranking.map((member) => {
+              const badge = getRankBadge(member.rank)
+              const level = member.character 
+                ? Math.floor(member.character.experience / 100) + 1 
+                : Math.floor(member.experience / 100) + 1
+              const isTopThree = member.rank <= 3
 
-          <div className="flex flex-col w-full gap-3 pt-4">
-            <Button
-              onClick={() => router.push('/player/quizzes')}
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-neutral-900 font-semibold"
-            >
-              Volver a Quizzes
-            </Button>
-            <Button
-              onClick={() => router.push('/dashboard')}
-              variant="outline"
-              className="w-full border-neutral-300 dark:border-neutral-700"
-            >
-              Ir al Dashboard
-            </Button>
+              return (
+                <Card
+                  key={member.id}
+                  className={`bg-[#1a1a1a] transition-all hover:scale-[1.02] ${
+                    isTopThree ? 'border-[#D89216]' : 'border-neutral-800'
+                  }`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      {/* Rank Badge */}
+                      <div className={`${badge.color} rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0`}>
+                        {badge.icon ? (
+                          <div className="text-white">{badge.icon}</div>
+                        ) : (
+                          <span className="text-white font-bold text-lg">{badge.text}</span>
+                        )}
+                      </div>
+
+                      {/* Member Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-neutral-100 truncate">
+                              {member.character?.name || member.name}
+                            </h3>
+                            <p className="text-sm text-neutral-400">
+                              {member.character ? member.character.class.name : 'Sin personaje'} • {member.group.name}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <div className="flex items-center gap-2 bg-neutral-900 px-3 py-1.5 rounded-lg">
+                              <Star className="h-4 w-4 text-yellow-500" />
+                              <span className="text-sm font-bold text-neutral-100">
+                                {member.character?.experience || member.experience || 0}
+                              </span>
+                            </div>
+                            <Badge variant="outline" className="border-purple-500 text-purple-400">
+                              Nv. {level}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        ) : (
+          <Card className="bg-[#1a1a1a] border-neutral-800">
+            <CardContent className="py-12 text-center">
+              <Trophy className="h-16 w-16 text-neutral-600 mx-auto mb-4" />
+              <p className="text-neutral-400 text-lg">No hay participantes en el ranking</p>
+              <p className="text-neutral-500 text-sm mt-2">
+                El ranking aparecerá cuando haya miembros con experiencia
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </PlayerLayout>
   )
 }
+
+export default withAuth(ScorePage)
+

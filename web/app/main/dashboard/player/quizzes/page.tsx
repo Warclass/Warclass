@@ -1,98 +1,205 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useAuth } from '@/hooks/auth/useAuth'
 import Link from 'next/link'
 import PlayerLayout from '@/app/layouts/PlayerLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
+import { Clock, FileQuestion, Calendar, CheckCircle, XCircle } from 'lucide-react'
+import { withAuth } from '@/lib/hoc/withAuth'
 
-const availableQuizzes = [
-  {
-    id: 1,
-    title: 'Examen 1',
-    description: 'Evaluación sobre los conceptos básicos del curso',
-    questions: 10,
-    timeLimit: 30,
-  },
-  {
-    id: 2,
-    title: 'Examen 2',
-    description: 'Evaluación intermedia',
-    questions: 15,
-    timeLimit: 45,
-  },
-  {
-    id: 3,
-    title: 'Examen Final',
-    description: 'Evaluación final del curso',
-    questions: 20,
-    timeLimit: 60,
-  },
-]
+interface Quiz {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+  questions: Array<{
+    id: string
+    question: string
+  }>
+}
 
-export default function QuizzesPage() {
-  return (
-    <PlayerLayout name="Quizzes" token="temp-token">
-    <div className="bg-white dark:bg-neutral-950 w-full min-h-screen flex justify-center flex-col gap-6 items-center py-10">
-      <section className="w-full max-w-3xl px-4">
-        <h1 className="text-4xl font-bold text-neutral-900 dark:text-white">Quizzes</h1>
-        <p className="text-neutral-600 dark:text-neutral-400 mt-2">
-          Evalúa tus conocimientos y gana experiencia
-        </p>
-      </section>
+function QuizzesPage() {
+  const searchParams = useSearchParams()
+  const { user } = useAuth()
+  const [isLoading, setIsLoading] = useState(true)
+  const [quizzes, setQuizzes] = useState<Quiz[]>([])
+  const [error, setError] = useState<string | null>(null)
+  
+  const courseId = searchParams.get('courseId')
 
-      <Card className="w-full max-w-3xl border-neutral-200 dark:border-neutral-800">
-        <CardHeader>
-          <CardTitle className="text-xl text-neutral-900 dark:text-white">📋 Instrucciones</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-neutral-700 dark:text-neutral-300">
-            Lee atentamente las preguntas y selecciona una respuesta. El resultado del examen
-            saldrá al terminar de responder.
-          </p>
-          <div className="space-y-2">
-            <Separator className="w-3/6 bg-neutral-300 dark:bg-neutral-700" />
-            <Separator className="w-3/6 bg-neutral-300 dark:bg-neutral-700" />
-            <Separator className="w-3/6 bg-neutral-300 dark:bg-neutral-700" />
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      if (!user?.id || !courseId) return
+
+      try {
+        setIsLoading(true)
+        const response = await fetch(`/api/courses/quizzes?courseId=${courseId}`, {
+          headers: {
+            'x-user-id': user.id
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setQuizzes(data.data)
+          } else {
+            setError('Error al cargar quizzes')
+          }
+        } else {
+          const errorData = await response.json()
+          setError(errorData.error || 'Error al cargar quizzes')
+        }
+      } catch (error) {
+        console.error('Error al cargar quizzes:', error)
+        setError('Error al cargar datos de quizzes')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchQuizzes()
+  }, [user?.id, courseId])
+
+  if (isLoading) {
+    return (
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+        <div className="flex h-full justify-center items-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+            <p className="mt-4 text-neutral-400">Cargando quizzes...</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </PlayerLayout>
+    )
+  }
 
-      <Card className="w-full max-w-3xl border-neutral-200 dark:border-neutral-800">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-neutral-900 dark:text-white">
-            🎯 Quizzes Disponibles
-          </CardTitle>
-          <CardDescription className="text-neutral-600 dark:text-neutral-400">
-            Selecciona un quiz para comenzar
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {availableQuizzes.map((quiz) => (
-            <div
-              key={quiz.id}
-              className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-neutral-200 dark:border-neutral-800 pb-4 last:border-0 last:pb-0 gap-3"
-            >
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">
-                  {quiz.title}
-                </h3>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                  {quiz.description}
-                </p>
-                <div className="flex gap-4 mt-2 text-xs text-neutral-500 dark:text-neutral-500">
-                  <span>📝 {quiz.questions} preguntas</span>
-                  <span>⏱️ {quiz.timeLimit} minutos</span>
-                </div>
-              </div>
-              <Link href={`/player/quizzes/${quiz.id}/start`}>
-                <Button className="bg-yellow-500 hover:bg-yellow-600 text-neutral-900 font-semibold">
-                  Realizar Quiz
-                </Button>
-              </Link>
+  if (error) {
+    return (
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+        <div className="flex h-full justify-center items-center">
+          <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
+            <CardHeader>
+              <CardTitle className="text-red-400">Error</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-neutral-400">{error}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </PlayerLayout>
+    )
+  }
+
+  return (
+    <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-neutral-100">Exámenes</h1>
+            <p className="text-neutral-400 mt-2">
+              Evalúa tus conocimientos y gana experiencia
+            </p>
+          </div>
+          <Badge className="bg-green-600 text-white text-lg px-4 py-2">
+            <FileQuestion className="h-5 w-5 mr-2" />
+            {quizzes.length} disponibles
+          </Badge>
+        </div>
+
+        <Card className="bg-[#1a1a1a] border-neutral-800">
+          <CardHeader>
+            <CardTitle className="text-xl text-neutral-100 flex items-center gap-2">
+              📋 Instrucciones
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-neutral-300">
+              Lee atentamente las preguntas y selecciona una respuesta. El resultado del examen
+              saldrá al terminar de responder.
+            </p>
+            <div className="space-y-2">
+              <Separator className="bg-neutral-700" />
+              <ul className="list-disc list-inside text-neutral-400 space-y-1 text-sm">
+                <li>Cada pregunta tiene una única respuesta correcta</li>
+                <li>No puedes retroceder una vez que avances</li>
+                <li>Tu progreso se guardará automáticamente</li>
+              </ul>
             </div>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#1a1a1a] border-neutral-800">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-neutral-100">
+              🎯 Exámenes Disponibles
+            </CardTitle>
+            <CardDescription className="text-neutral-400">
+              Selecciona un examen para comenzar
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {quizzes.length > 0 ? (
+              quizzes.map((quiz) => {
+                const createdDate = new Date(quiz.created_at).toLocaleDateString('es-ES', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })
+
+                return (
+                  <div
+                    key={quiz.id}
+                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center border border-neutral-800 rounded-lg p-4 hover:border-[#D89216] transition-colors gap-4"
+                  >
+                    <div className="flex-1 space-y-2">
+                      <h3 className="text-xl font-semibold text-neutral-100">
+                        {quiz.name}
+                      </h3>
+                      {quiz.description && (
+                        <p className="text-sm text-neutral-400">
+                          {quiz.description}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-3 text-xs text-neutral-500">
+                        <span className="flex items-center gap-1">
+                          <FileQuestion className="h-3 w-3" />
+                          {quiz.questions.length} preguntas
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Creado: {createdDate}
+                        </span>
+                      </div>
+                    </div>
+                    <Link href={`/main/dashboard/player/quizzes/${quiz.id}/start?courseId=${courseId}`}>
+                      <Button className="bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold">
+                        Realizar Examen
+                      </Button>
+                    </Link>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="text-center py-12">
+                <FileQuestion className="h-16 w-16 text-neutral-600 mx-auto mb-4" />
+                <p className="text-neutral-400 text-lg">No hay exámenes disponibles</p>
+                <p className="text-neutral-500 text-sm mt-2">
+                  Los exámenes aparecerán aquí cuando el profesor los publique
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </PlayerLayout>
   )
 }
+
+export default withAuth(QuizzesPage)
+

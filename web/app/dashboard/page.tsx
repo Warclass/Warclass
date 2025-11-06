@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -13,7 +13,9 @@ import {
   Settings,
   Bell,
   Search,
-  LogOut
+  LogOut,
+  Mail,
+  UserCircle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,12 @@ export default function DashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { data: dashboardData, isLoading, error } = useDashboard();
+  
+  // Estados para invitaciones y personaje
+  const [pendingInvitations, setPendingInvitations] = useState(0);
+  const [hasCharacter, setHasCharacter] = useState(false);
+  const [loadingInvitations, setLoadingInvitations] = useState(true);
+  const [myInscriptions, setMyInscriptions] = useState<any[]>([]);
 
   // Usar datos del API o valores por defecto
   const teachingCourses = dashboardData?.teachingCourses || [];
@@ -40,6 +48,64 @@ export default function DashboardPage() {
     totalStudents: 0,
     averageLevel: 0,
   };
+
+  // Cargar invitaciones y estado del personaje
+  useEffect(() => {
+    const fetchInvitationsAndCharacter = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoadingInvitations(true);
+
+        // Obtener conteo de invitaciones
+        const invitationsResponse = await fetch('/api/invitations/count', {
+          headers: {
+            'x-user-id': user.id
+          }
+        });
+
+        if (invitationsResponse.ok) {
+          const invitationsData = await invitationsResponse.json();
+          setPendingInvitations(invitationsData.count || 0);
+        }
+
+        // Verificar si tiene personaje
+        const characterResponse = await fetch('/api/characters?action=check', {
+          headers: {
+            'x-user-id': user.id
+          }
+        });
+
+        if (characterResponse.ok) {
+          const characterData = await characterResponse.json();
+          setHasCharacter(characterData.hasCharacter);
+        }
+
+        // Obtener cursos inscritos
+        const inscriptionsResponse = await fetch('/api/inscriptions', {
+          headers: {
+            'x-user-id': user.id
+          }
+        });
+
+        if (inscriptionsResponse.ok) {
+          const inscriptionsData = await inscriptionsResponse.json();
+          setMyInscriptions(inscriptionsData.data || []);
+        }
+      } catch (error) {
+        console.error('Error al cargar invitaciones y personaje:', error);
+      } finally {
+        setLoadingInvitations(false);
+      }
+    };
+
+    fetchInvitationsAndCharacter();
+
+    // Actualizar cada 30 segundos
+    const interval = setInterval(fetchInvitationsAndCharacter, 30000);
+    
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   const handleLogout = async () => {
     await logout();
@@ -119,6 +185,22 @@ export default function DashboardPage() {
             <Button
               variant="ghost"
               size="icon"
+              className="text-neutral-400 hover:text-neutral-100 relative"
+              onClick={() => router.push('/dashboard/invitations')}
+            >
+              <Mail className="h-5 w-5" />
+              {pendingInvitations > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center text-xs px-1"
+                >
+                  {pendingInvitations}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               className="text-neutral-400 hover:text-neutral-100"
             >
               <Bell className="h-5 w-5" />
@@ -166,6 +248,63 @@ export default function DashboardPage() {
             Continúa tu viaje de aprendizaje o gestiona tus cursos
           </p>
         </div>
+
+        {/* Alertas - Invitaciones y Personaje */}
+        {(pendingInvitations > 0 || !hasCharacter) && (
+          <div className="space-y-4 mb-8">
+            {pendingInvitations > 0 && (
+              <Card className="bg-gradient-to-r from-yellow-900/20 to-yellow-800/10 border-yellow-700/50">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-3">
+                      <Mail className="h-6 w-6 text-yellow-500 mt-1" />
+                      <div>
+                        <CardTitle className="text-lg mb-1 text-neutral-100">
+                          Tienes {pendingInvitations} invitación{pendingInvitations !== 1 ? 'es' : ''} pendiente{pendingInvitations !== 1 ? 's' : ''}
+                        </CardTitle>
+                        <CardDescription className="text-neutral-400">
+                          Revisa tus invitaciones para unirte a nuevos cursos
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => router.push('/dashboard/invitations')}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-black"
+                    >
+                      Ver Invitaciones
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {!hasCharacter && !loadingInvitations && (
+              <Card className="bg-gradient-to-r from-green-900/20 to-green-800/10 border-green-700/50">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-3">
+                      <UserCircle className="h-6 w-6 text-green-500 mt-1" />
+                      <div>
+                        <CardTitle className="text-lg mb-1 text-neutral-100">
+                          ¡Crea tu personaje!
+                        </CardTitle>
+                        <CardDescription className="text-neutral-400">
+                          Antes de comenzar tu aventura, necesitas crear tu personaje
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => router.push('/dashboard/create-character')}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      Crear Personaje
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -248,7 +387,7 @@ export default function DashboardPage() {
 
               {/* Enrolled Courses Tab */}
               <TabsContent value="enrolled" className="space-y-4 mt-6">
-                {enrolledCourses.length === 0 ? (
+                {myInscriptions.length === 0 ? (
                   <Card className="bg-[#1a1a1a] border-neutral-800">
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <BookOpen className="h-16 w-16 text-neutral-600 mb-4" />
@@ -256,21 +395,22 @@ export default function DashboardPage() {
                         No estás inscrito en ningún curso
                       </p>
                       <p className="text-neutral-500 text-sm text-center">
-                        Solicita un código de invitación a tu docente para unirte a un curso
+                        Acepta invitaciones para unirte a cursos
                       </p>
                     </CardContent>
                   </Card>
                 ) : (
-                  enrolledCourses.map((course) => (
+                  myInscriptions.map((course) => (
                   <Card
                     key={course.id}
                     className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
+                    onClick={() => router.push(`/main/dashboard/player?courseId=${course.id}`)}
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-12 h-12 ${course.color} rounded-lg flex items-center justify-center text-white font-bold text-xl`}
+                            className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl"
                           >
                             {course.name.substring(0, 2).toUpperCase()}
                           </div>
@@ -279,7 +419,7 @@ export default function DashboardPage() {
                               {course.name}
                             </CardTitle>
                             <CardDescription className="text-neutral-500">
-                              {course.instructor}
+                              Profesor: {course.teacher}
                             </CardDescription>
                           </div>
                         </div>
@@ -287,38 +427,26 @@ export default function DashboardPage() {
                           variant="outline"
                           className="border-[#D89216] text-[#D89216]"
                         >
-                          Nivel {course.level}
+                          {course.membersCount} miembros
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {/* Progress Bar */}
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-neutral-400">
-                            <span>Progreso</span>
-                            <span>{course.progress}%</span>
-                          </div>
-                          <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-[#D89216] to-[#f0a726] transition-all"
-                              style={{ width: `${course.progress}%` }}
-                            />
-                          </div>
-                        </div>
+                        <p className="text-sm text-neutral-400">
+                          {course.description || 'Sin descripción'}
+                        </p>
 
-                        {course.nextQuest && (
+                        {course.hasCharacter && course.character && (
                           <div className="flex items-center gap-2 text-sm text-neutral-300 pt-2">
                             <Target className="h-4 w-4 text-[#D89216]" />
-                            <span>Próxima misión: {course.nextQuest}</span>
+                            <span>Personaje: {course.character.name} ({course.character.className})</span>
                           </div>
                         )}
 
-                        <Link href={`/dashboard/player/groups`}>
-                          <Button className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold">
-                            Continuar Aventura
-                          </Button>
-                        </Link>
+                        <Button className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold">
+                          {course.hasCharacter ? 'Continuar Aventura' : 'Crear Personaje'}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
