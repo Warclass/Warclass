@@ -11,8 +11,14 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const groupId = searchParams.get('groupId');
+    const memberId = searchParams.get('memberId');
 
-    if (groupId) {
+    if (groupId && memberId) {
+      // Obtener tasks del grupo con estado de completitud por member
+      const tasks = await TaskService.getTasksByGroupForMember(groupId, memberId);
+      return NextResponse.json({ tasks }, { status: 200 });
+    } else if (groupId) {
+      // Obtener todas las tasks del grupo sin estado específico
       const tasks = await TaskService.getTasksByGroup(groupId);
       return NextResponse.json({ tasks }, { status: 200 });
     }

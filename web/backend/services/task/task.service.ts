@@ -365,4 +365,75 @@ export class TaskService {
       throw error;
     }
   }
+
+  /**
+   * Obtener tasks de un grupo con estado de completitud por member
+   */
+  static async getTasksByGroupForMember(
+    groupId: string,
+    memberId: string
+  ): Promise<TaskWithAssignments[]> {
+    try {
+      const group = await prisma.groups.findUnique({
+        where: { id: groupId },
+        include: {
+          members: {
+            include: {
+              teachers_courses_tasks: {
+                include: {
+                  task: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!group) {
+        throw new Error('Grupo no encontrado');
+      }
+
+      // Obtener todas las tasks asignadas al grupo
+      const taskMap = new Map();
+      
+      group.members.forEach((member) => {
+        member.teachers_courses_tasks.forEach((tce) => {
+          const task = tce.task;
+          if (!taskMap.has(task.id)) {
+            taskMap.set(task.id, {
+              id: task.id,
+              name: task.name,
+              description: task.description,
+              experience: task.experience,
+              gold: task.gold,
+              health: task.health,
+              energy: task.energy,
+              createdAt: task.created_at,
+              updatedAt: task.updated_at,
+              assignedGroups: [{ id: group.id, name: group.name, memberCount: group.members.length }],
+              completedCount: 0,
+              totalAssigned: group.members.length,
+              completed: false, // Se actualizará después
+            });
+          }
+        });
+      });
+
+      // Verificar qué tasks completó este member específico
+      const memberData = group.members.find((m) => m.id === memberId);
+      if (memberData) {
+        memberData.teachers_courses_tasks.forEach((tce) => {
+          const task = taskMap.get(tce.task.id);
+          if (task) {
+            task.completed = true;
+          }
+        });
+      }
+
+      return Array.from(taskMap.values());
+    } catch (error) {
+      console.error('Error getting tasks by group for member:', error);
+      throw error;
+    }
+  }
 }

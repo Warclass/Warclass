@@ -71,7 +71,19 @@ export class QuizService {
         throw new Error('Quiz no encontrado');
       }
 
-      const answers: QuizAnswer[] = JSON.parse(quiz.answers);
+      const parsedAnswers = JSON.parse(quiz.answers);
+      // Manejar tanto string[] como QuizAnswer[] del seed
+      const answers = Array.isArray(parsedAnswers) 
+        ? parsedAnswers.map((answer: any) => {
+            // Si es un objeto con text, extraer solo el text
+            if (typeof answer === 'object' && answer.text) {
+              return { text: answer.text };
+            }
+            // Si es un string, convertirlo a objeto
+            return { text: answer };
+          })
+        : [];
+      
       const history = Array.isArray(quiz.quizzes_history) && quiz.quizzes_history[0];
 
       return {
@@ -449,17 +461,34 @@ export class QuizService {
    * Formatear respuesta de quiz (sin revelar respuesta correcta)
    */
   private static formatQuizResponse(quiz: any): QuizResponse {
-    const answers: QuizAnswer[] = JSON.parse(quiz.answers);
+    const parsedAnswers = JSON.parse(quiz.answers);
+    // Manejar tanto string[] como QuizAnswer[] del seed
+    const answers = Array.isArray(parsedAnswers) 
+      ? parsedAnswers.map((answer: any) => {
+          // Si es un objeto con text, extraer solo el text
+          if (typeof answer === 'object' && answer.text) {
+            return { text: answer.text };
+          }
+          // Si es un string, convertirlo a objeto
+          return { text: answer };
+        })
+      : [];
+    
+    const history = Array.isArray(quiz.quizzes_history) && quiz.quizzes_history[0];
 
     return {
       id: quiz.id,
       question: quiz.question,
-      answers: answers.map((a) => ({ text: a.text })), // Solo el texto, sin isCorrect
+      answers: answers, // Solo el texto, sin isCorrect
       difficulty: quiz.difficulty,
       points: quiz.points,
       timeLimit: quiz.time_limit,
       groupId: quiz.group_id,
       groupName: quiz.group?.name,
+      completed: !!history,
+      score: history ? (history.is_correct ? 100 : 0) : undefined,
+      timeTaken: history?.time_taken,
+      createdAt: quiz.created_at,
     };
   }
 }

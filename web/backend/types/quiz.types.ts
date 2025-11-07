@@ -69,6 +69,10 @@ export interface QuizResponse {
   timeLimit: number;
   groupId: string;
   groupName?: string;
+  completed?: boolean;
+  score?: number;
+  timeTaken?: number;
+  createdAt?: Date;
 }
 
 export interface QuizResultResponse {
@@ -104,7 +108,17 @@ export interface LeaderboardEntry {
   averageTimeTaken: number;
 }
 
-export interface QuizWithHistory extends Quiz {
+export interface QuizWithHistory {
+  id: string;
+  question: string;
+  answers: { text: string }[]; // Sin isCorrect para no revelar la respuesta
+  correctAnswerIndex: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  points: number;
+  timeLimit: number;
+  groupId: string;
+  createdAt: Date;
+  updatedAt: Date;
   completed: boolean;
   userAnswer?: number;
   isCorrect?: boolean;

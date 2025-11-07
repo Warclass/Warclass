@@ -37,11 +37,24 @@ interface RankedMember {
 function ScorePage() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
+  const resultParam = searchParams.get('result')
+  const quizTitleParam = searchParams.get('quiz')
   const [isLoading, setIsLoading] = useState(true)
   const [ranking, setRanking] = useState<RankedMember[]>([])
   const [error, setError] = useState<string | null>(null)
   
   const courseId = searchParams.get('courseId')
+
+  // If the user just finished a quiz, build a history entry so PlayerLayout can show it
+  const recentResult = resultParam ? Number(resultParam) : null
+  const recentQuizTitle = quizTitleParam ? decodeURIComponent(quizTitleParam) : null
+  const historyItems = recentResult !== null ? [
+    {
+      character: { name: user?.name || 'Jugador' },
+      quiz: recentQuizTitle || 'Examen reciente',
+      score: recentResult,
+    }
+  ] : []
 
   useEffect(() => {
     const fetchRanking = async () => {
@@ -98,7 +111,7 @@ function ScorePage() {
 
   if (isLoading) {
     return (
-      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} history={historyItems}>
         <div className="flex h-full justify-center items-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
@@ -111,7 +124,7 @@ function ScorePage() {
 
   if (error) {
     return (
-      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} history={historyItems}>
         <div className="flex h-full justify-center items-center">
           <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
             <CardHeader>
@@ -127,8 +140,22 @@ function ScorePage() {
   }
 
   return (
-    <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+    <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} history={historyItems}>
       <div className="max-w-5xl mx-auto space-y-6">
+        {recentResult !== null && (
+          <Card className="bg-[#16201f] border-neutral-800">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-neutral-100">Resultado del examen</h2>
+                <p className="text-neutral-300">{recentQuizTitle || 'Examen reciente'}</p>
+              </div>
+              <div className="text-center">
+                <span className="text-4xl font-extrabold text-[#D89216]">{recentResult}%</span>
+                <p className="text-sm text-neutral-400">Puntuación</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-neutral-100 flex items-center gap-3">

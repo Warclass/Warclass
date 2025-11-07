@@ -18,6 +18,7 @@ export interface TaskWithAssignments extends Task {
   }[];
   completedCount: number;
   totalAssigned: number;
+  completed?: boolean; // Estado de completitud para un member específico
 }
 
 export interface CreateTaskDTO {

@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ quizzes }, { status: 200 });
+    return NextResponse.json({ success: true, data: quizzes }, { status: 200 });
   } catch (error: any) {
     console.error('Error in GET /api/quizzes:', error);
     return NextResponse.json(

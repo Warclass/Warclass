@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/auth/useAuth";
 import PlayerLayout from "@/app/layouts/PlayerLayout";
 import {
@@ -12,107 +12,109 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, CheckCircle, Clock, Link as LinkIcon } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { FileText, CheckCircle, Clock, Trophy, Coins } from "lucide-react";
 import { withAuth } from "@/lib/hoc/withAuth";
 
 interface Task {
   id: string;
   name: string;
   description: string | null;
-  deadline: string;
-  created_at: string;
+  experience: number;
+  gold: number;
+  health: number;
+  energy: number;
+  completed?: boolean;
 }
 
 function TasksPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [taskLinks, setTaskLinks] = useState<Record<string, string>>({});
-  const [submittedTasks, setSubmittedTasks] = useState<Set<string>>(new Set());
-  const [showSuccess, setShowSuccess] = useState<string | null>(null);
+  const [memberId, setMemberId] = useState<string | null>(null);
+  const [groupId, setGroupId] = useState<string | null>(null);
 
   const courseId = searchParams.get("courseId");
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      if (!user?.id || !courseId) return;
+    if (!courseId || !user?.id) {
+      setIsLoading(false);
+      return;
+    }
 
+    // Obtener memberId y groupId del usuario en el curso
+    const fetchMemberData = async () => {
       try {
-        setIsLoading(true);
         const response = await fetch(
-          `/api/courses/tasks?courseId=${courseId}`,
+          `/api/characters/member?userId=${user.id}&courseId=${courseId}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setMemberId(data.memberId);
+          setGroupId(data.groupId);
+        } else {
+          console.error('Error al obtener member:', response.status);
+        }
+      } catch (error) {
+        console.error('Error al obtener member:', error);
+      }
+    };
+
+    fetchMemberData();
+  }, [courseId, user?.id]);
+
+  useEffect(() => {
+    if (!groupId || !memberId) {
+      return;
+    }
+
+    // Cargar tasks del grupo con estado de completitud
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(
+          `/api/tasks?groupId=${groupId}&memberId=${memberId}`,
           {
             headers: {
-              "x-user-id": user.id,
-            },
+              'x-user-id': user!.id
+            }
           }
         );
 
         if (response.ok) {
           const data = await response.json();
-          if (data.success) {
-            setTasks(data.data);
-          } else {
-            setError("Error al cargar tareas");
-          }
+          setTasks(data.tasks || []);
         } else {
-          const errorData = await response.json();
-          setError(errorData.error || "Error al cargar tareas");
+          console.error('Error al cargar tasks:', response.status);
         }
       } catch (error) {
-        console.error("Error al cargar tareas:", error);
-        setError("Error al cargar datos de tareas");
+        console.error('Error al cargar tasks:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchTasks();
-  }, [user?.id, courseId]);
+  }, [groupId, memberId, user]);
 
-  const handleLinkChange = (taskId: string, link: string) => {
-    setTaskLinks((prev) => ({
-      ...prev,
-      [taskId]: link,
-    }));
-  };
-
-  const handleSubmit = (taskId: string) => {
-    if (!taskLinks[taskId] || taskLinks[taskId].trim() === "") {
-      alert("Por favor ingresa un enlace válido");
-      return;
-    }
-
-    // Aquí deberías hacer un POST a la API para guardar la entrega
-    setSubmittedTasks((prev) => new Set(prev).add(taskId));
-    setShowSuccess(taskId);
-    setTimeout(() => setShowSuccess(null), 3000);
-
-    setTaskLinks((prev) => ({
-      ...prev,
-      [taskId]: "",
-    }));
-
-    console.log(`Tarea ${taskId} entregada con link: ${taskLinks[taskId]}`);
-  };
+  const completedCount = tasks.filter(t => t.completed).length;
 
   if (isLoading) {
     return (
-      <PlayerLayout
-        name={user?.name || "Jugador"}
-        token="temp-token"
-        courseId={courseId || undefined}
-      >
-        <div className="flex h-full justify-center items-center">
+      <PlayerLayout name={user?.name} token="" courseId={courseId || undefined}>
+        <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
             <p className="mt-4 text-neutral-400">Cargando tareas...</p>
           </div>
         </div>
@@ -120,192 +122,159 @@ function TasksPage() {
     );
   }
 
-  if (error) {
+  if (!courseId) {
     return (
-      <PlayerLayout
-        name={user?.name || "Jugador"}
-        token="temp-token"
-        courseId={courseId || undefined}
-      >
-        <div className="flex h-full justify-center items-center">
-          <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
-            <CardHeader>
-              <CardTitle className="text-red-400">Error</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-neutral-400">{error}</p>
-            </CardContent>
-          </Card>
+      <PlayerLayout name={user?.name} token="">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <p className="text-neutral-400">No se especificó un curso</p>
+          </div>
         </div>
       </PlayerLayout>
     );
   }
 
   return (
-    <PlayerLayout
-      name={user?.name || "Jugador"}
-      token="temp-token"
-      courseId={courseId || undefined}
-    >
-      <div className="max-w-4xl mx-auto space-y-6">
+    <PlayerLayout name={user?.name} token="" courseId={courseId || undefined}>
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-neutral-100">Tareas</h1>
-            <p className="text-neutral-400 mt-2">
-              Completa y entrega tus tareas para ganar experiencia
+            <h1 className="text-3xl font-bold text-neutral-100">Tareas</h1>
+            <p className="text-neutral-400 mt-1">
+              Completa las tareas para ganar experiencia y oro
             </p>
           </div>
-          <Badge className="bg-blue-600 text-white text-lg px-4 py-2">
-            <FileText className="h-5 w-5 mr-2" />
-            {tasks.length} tareas
-          </Badge>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-neutral-900 px-4 py-2 rounded-lg border border-neutral-800">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span className="text-neutral-300">
+                {completedCount} / {tasks.length} Completadas
+              </span>
+            </div>
+          </div>
         </div>
 
+        {/* Tasks Table */}
         <Card className="bg-[#1a1a1a] border-neutral-800">
           <CardHeader>
-            <CardTitle className="text-xl text-neutral-100 flex items-center gap-2">
-              📋 Instrucciones
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-neutral-300">
-              Sigue las instrucciones del profesor y carga el enlace de la
-              actividad puesta por el profesor
-            </p>
-            <ul className="list-disc list-inside text-neutral-400 space-y-1 text-sm">
-              <li>Lee cuidadosamente la descripción de cada tarea</li>
-              <li>Entrega antes de la fecha límite</li>
-              <li>Proporciona un enlace válido a tu trabajo</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#1a1a1a] border-neutral-800">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-neutral-100">
-              📝 Tareas Asignadas
+            <CardTitle className="text-neutral-100 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-[#D89216]" />
+              Tareas Disponibles
             </CardTitle>
             <CardDescription className="text-neutral-400">
-              Entrega tus tareas antes de la fecha límite
+              Sube tus archivos para completar las tareas asignadas
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[500px] pr-4">
-              {tasks.length > 0 ? (
-                <div className="space-y-6">
-                  {tasks.map((task) => {
-                    const isSubmitted = submittedTasks.has(task.id);
-                    const deadlineDate = new Date(task.deadline);
-                    const isOverdue = deadlineDate < new Date();
-                    const formattedDeadline = deadlineDate.toLocaleDateString(
-                      "es-ES",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }
-                    );
-
-                    return (
-                      <div
+            {tasks.length === 0 ? (
+              <div className="text-center py-8 text-neutral-400">
+                <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No hay tareas disponibles en este momento</p>
+              </div>
+            ) : (
+              <div className="rounded-md border border-neutral-800">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-neutral-800 hover:bg-neutral-900/50">
+                      <TableHead className="text-neutral-300">Título</TableHead>
+                      <TableHead className="text-neutral-300">
+                        Descripción
+                      </TableHead>
+                      <TableHead className="text-center text-neutral-300">
+                        Recompensas
+                      </TableHead>
+                      <TableHead className="text-center text-neutral-300">
+                        Estado
+                      </TableHead>
+                      <TableHead className="text-center text-neutral-300">
+                        Acciones
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tasks.map((task) => (
+                      <TableRow
                         key={task.id}
-                        className="border border-neutral-800 rounded-lg p-4 space-y-4 hover:border-[#D89216] transition-colors"
+                        className="border-neutral-800 hover:bg-neutral-900/30"
                       >
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between">
-                            <h3 className="text-xl font-semibold text-neutral-100">
-                              {task.name}
-                            </h3>
-                            {isSubmitted ? (
-                              <Badge className="bg-green-600 text-white">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Entregada
-                              </Badge>
-                            ) : isOverdue ? (
-                              <Badge variant="destructive">
-                                <Clock className="h-3 w-3 mr-1" />
-                                Vencida
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="border-yellow-500 text-yellow-500">
-                                <Clock className="h-3 w-3 mr-1" />
-                                Pendiente
-                              </Badge>
+                        <TableCell className="font-medium text-neutral-100">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-[#D89216]" />
+                            {task.name}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-neutral-400 max-w-md">
+                          <p className="line-clamp-2 text-sm">
+                            {task.description || 'Sin descripción'}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1 items-center">
+                            {task.gold > 0 && (
+                              <div className="flex items-center gap-1 text-yellow-500">
+                                <Coins className="h-4 w-4" />
+                                <span className="text-sm font-semibold">
+                                  {task.gold} Oro
+                                </span>
+                              </div>
+                            )}
+                            {task.experience > 0 && (
+                              <div className="flex items-center gap-1 text-blue-400">
+                                <Trophy className="h-4 w-4" />
+                                <span className="text-sm font-semibold">
+                                  {task.experience} XP
+                                </span>
+                              </div>
                             )}
                           </div>
-
-                          {task.description && (
-                            <p className="text-sm text-neutral-400">
-                              {task.description}
-                            </p>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {task.completed ? (
+                            <Badge className="bg-green-500/20 text-green-400 border-green-500/50 hover:bg-green-500/20">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Completada
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10"
+                            >
+                              <Clock className="h-3 w-3 mr-1" />
+                              Pendiente
+                            </Badge>
                           )}
-
-                          <div className="flex items-center gap-4 text-xs text-neutral-500">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              Límite: {formattedDeadline}
-                            </span>
-                          </div>
-                        </div>
-
-                        {showSuccess === task.id && (
-                          <Alert className="bg-green-900/20 border-green-600">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <AlertDescription className="text-green-400">
-                              ¡Tarea entregada exitosamente!
-                            </AlertDescription>
-                          </Alert>
-                        )}
-
-                        {!isSubmitted && (
-                          <div className="space-y-3">
-                            <div className="space-y-2">
-                              <Label
-                                htmlFor={`link-${task.id}`}
-                                className="text-neutral-300"
-                              >
-                                Enlace de entrega
-                              </Label>
-                              <div className="flex gap-2">
-                                <div className="relative flex-1">
-                                  <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-500" />
-                                  <Input
-                                    id={`link-${task.id}`}
-                                    type="url"
-                                    placeholder="https://..."
-                                    value={taskLinks[task.id] || ""}
-                                    onChange={(e) =>
-                                      handleLinkChange(task.id, e.target.value)
-                                    }
-                                    className="bg-neutral-900 border-neutral-700 text-neutral-100 pl-10"
-                                  />
-                                </div>
-                                <Button
-                                  onClick={() => handleSubmit(task.id)}
-                                  className="bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
-                                >
-                                  Entregar
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <FileText className="h-16 w-16 text-neutral-600 mx-auto mb-4" />
-                  <p className="text-neutral-400 text-lg">
-                    No hay tareas asignadas
-                  </p>
-                  <p className="text-neutral-500 text-sm mt-2">
-                    Las tareas aparecerán aquí cuando el profesor las publique
-                  </p>
-                </div>
-              )}
-            </ScrollArea>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {task.completed ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-neutral-500 cursor-not-allowed"
+                              disabled
+                            >
+                              Ya Entregada
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="bg-[#D89216] hover:bg-[#B87A12] text-black"
+                              onClick={() =>
+                                router.push(
+                                  `/main/dashboard/player/tasks/${task.id}/submit?courseId=${courseId}&memberId=${memberId}`
+                                )
+                              }
+                            >
+                              Subir Archivo
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -314,4 +283,3 @@ function TasksPage() {
 }
 
 export default withAuth(TasksPage);
-

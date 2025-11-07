@@ -1,12 +1,13 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { PlayerNavigation } from '@/components/layout/Navigation';
 import { Sidebar, SidebarItem, SidebarCollapse } from '@/components/layout/Sidebar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Menu, BookOpen, Mail, User, Users, Trophy, Home, Layers, LogOut, ScrollText, Heart } from 'lucide-react';
+import { Menu, BookOpen, Mail, User, Users, Trophy, Home, Layers, LogOut, ScrollText, Heart, FileText } from 'lucide-react';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -35,9 +36,16 @@ export default function PlayerLayout({
   courseName,
   history = []
 }: PlayerLayoutProps) {
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [invitationsCount, setInvitationsCount] = useState(0);
   const [courseData, setCourseData] = useState<any>(null);
+  const [quizHistory, setQuizHistory] = useState<Array<{
+    character: { name: string };
+    quiz: string;
+    score: number;
+  }>>([]);
+  const [memberId, setMemberId] = useState<string | null>(null);
 
   // Helper para construir URLs con courseId
   const buildUrl = (path: string) => {
@@ -47,16 +55,73 @@ export default function PlayerLayout({
     return path;
   };
 
+  // Obtener memberId del usuario
+  useEffect(() => {
+    const fetchMemberId = async () => {
+      if (!courseId || !user?.id) return;
+
+      try {
+        const response = await fetch(
+          `/api/characters/member?userId=${user.id}&courseId=${courseId}`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          setMemberId(data.memberId);
+        } else {
+          console.error('Error al obtener memberId:', response.status);
+        }
+      } catch (error) {
+        console.error('Error al obtener memberId:', error);
+      }
+    };
+
+    fetchMemberId();
+  }, [courseId, user?.id]);
+
+  // Cargar historial de quizzes
+  useEffect(() => {
+    const fetchQuizHistory = async () => {
+      if (!memberId || !user?.id) return;
+
+      try {
+        const response = await fetch(
+          `/api/quizzes/history?memberId=${memberId}`,
+          {
+            headers: {
+              'x-user-id': user.id
+            }
+          }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setQuizHistory(data.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error al cargar historial de quizzes:', error);
+      }
+    };
+
+    fetchQuizHistory();
+    
+    // Actualizar cada 30 segundos
+    const interval = setInterval(fetchQuizHistory, 30000);
+    
+    return () => clearInterval(interval);
+  }, [memberId, user?.id]);
+
   useEffect(() => {
     // Cargar datos del curso si tenemos courseId
     const fetchCourseData = async () => {
-      if (!courseId) return;
+      if (!courseId || !user?.id) return;
 
       try {
-        const userId = 1; // TODO: Obtener del contexto de auth
         const response = await fetch(`/api/courses/members?courseId=${courseId}`, {
           headers: {
-            'x-user-id': userId.toString()
+            'x-user-id': user.id
           }
         });
         
@@ -72,6 +137,8 @@ export default function PlayerLayout({
               });
             }
           }
+        } else {
+          console.error('Error al cargar datos del curso:', response.status);
         }
       } catch (error) {
         console.error('Error al cargar datos del curso:', error);
@@ -79,21 +146,25 @@ export default function PlayerLayout({
     };
 
     fetchCourseData();
-  }, [courseId]);
+  }, [courseId, user?.id]);
 
   useEffect(() => {
     // Cargar el conteo de invitaciones pendientes
     const fetchInvitationsCount = async () => {
+      if (!user?.id) return;
+
       try {
         const response = await fetch('/api/invitations/count', {
           headers: {
-            'x-user-id': 'temp-user-id' // TODO: Obtener del contexto de auth
+            'x-user-id': user.id
           }
         });
 
         if (response.ok) {
           const data = await response.json();
           setInvitationsCount(data.count || 0);
+        } else {
+          console.error('Error al cargar conteo de invitaciones:', response.status);
         }
       } catch (error) {
         console.error('Error al cargar conteo de invitaciones:', error);
@@ -106,7 +177,7 @@ export default function PlayerLayout({
     const interval = setInterval(fetchInvitationsCount, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id]);
 
   const scrollContent = (
     <>
@@ -115,12 +186,12 @@ export default function PlayerLayout({
           Historial de Quizzes
         </h1>
       </div>
-      {history.length === 0 ? (
+      {quizHistory.length === 0 ? (
         <div className="flex justify-center items-center p-8 text-neutral-400">
           <p>No hay historial disponible</p>
         </div>
       ) : (
-        history.map((item, index) => (
+        quizHistory.map((item, index) => (
           <div
             key={index}
             className="flex border-b border-neutral-800 p-3 items-center justify-between hover:bg-neutral-800/30 transition-colors"
@@ -129,7 +200,7 @@ export default function PlayerLayout({
               {item.character.name}
             </p>
             <p className="border-r border-neutral-700 flex-1 text-center text-neutral-300">
-              Quiz {item.quiz}
+              {item.quiz}
             </p>
             <p className="text-[#D89216] flex-1 text-center font-bold">
               {item.score}%
@@ -277,6 +348,17 @@ export default function PlayerLayout({
                   >
                     <BookOpen className="h-4 w-4 mr-3" />
                     Exámenes
+                  </Button>
+                </Link>
+
+                {/* Tareas */}
+                <Link href={buildUrl('/main/dashboard/player/tasks')}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-neutral-400 hover:text-[#D89216] hover:bg-neutral-800/50 transition-colors"
+                  >
+                    <FileText className="h-4 w-4 mr-3" />
+                    Tareas
                   </Button>
                 </Link>
 

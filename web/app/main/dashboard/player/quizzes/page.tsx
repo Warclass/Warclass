@@ -9,18 +9,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { Clock, FileQuestion, Calendar, CheckCircle, XCircle } from 'lucide-react'
+import { Clock, FileQuestion, Calendar, CheckCircle, XCircle, Award } from 'lucide-react'
 import { withAuth } from '@/lib/hoc/withAuth'
 
 interface Quiz {
   id: string
-  name: string
-  description: string | null
-  created_at: string
-  questions: Array<{
-    id: string
-    question: string
-  }>
+  question: string
+  answers: { text: string }[]
+  difficulty: string
+  points: number
+  timeLimit: number
+  groupId: string
+  groupName?: string
+  completed?: boolean
+  score?: number
+  timeTaken?: number
+  createdAt?: string
 }
 
 function QuizzesPage() {
@@ -29,20 +33,44 @@ function QuizzesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [memberId, setMemberId] = useState<string | null>(null)
   
   const courseId = searchParams.get('courseId')
 
+  // Obtener memberId del usuario
   useEffect(() => {
-    const fetchQuizzes = async () => {
+    const fetchMemberId = async () => {
       if (!user?.id || !courseId) return
 
       try {
+        const response = await fetch(`/api/characters/member?userId=${user.id}&courseId=${courseId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setMemberId(data.memberId)
+        }
+      } catch (error) {
+        console.error('Error al obtener memberId:', error)
+      }
+    }
+
+    fetchMemberId()
+  }, [user?.id, courseId])
+
+  // Cargar quizzes con estado de completado
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      if (!user?.id || !courseId || !memberId) return
+
+      try {
         setIsLoading(true)
-        const response = await fetch(`/api/courses/quizzes?courseId=${courseId}`, {
-          headers: {
-            'x-user-id': user.id
+        const response = await fetch(
+          `/api/quizzes?courseId=${courseId}&memberId=${memberId}`,
+          {
+            headers: {
+              'x-user-id': user.id
+            }
           }
-        })
+        )
 
         if (response.ok) {
           const data = await response.json()
@@ -64,7 +92,7 @@ function QuizzesPage() {
     }
 
     fetchQuizzes()
-  }, [user?.id, courseId])
+  }, [user?.id, courseId, memberId])
 
   if (isLoading) {
     return (
@@ -146,11 +174,14 @@ function QuizzesPage() {
           <CardContent className="space-y-4">
             {quizzes.length > 0 ? (
               quizzes.map((quiz) => {
-                const createdDate = new Date(quiz.created_at).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })
+                const isCompleted = quiz.completed ?? false
+                const createdDate = quiz.createdAt 
+                  ? new Date(quiz.createdAt).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })
+                  : 'Sin fecha'
 
                 return (
                   <div
@@ -158,30 +189,59 @@ function QuizzesPage() {
                     className="flex flex-col sm:flex-row justify-between items-start sm:items-center border border-neutral-800 rounded-lg p-4 hover:border-[#D89216] transition-colors gap-4"
                   >
                     <div className="flex-1 space-y-2">
-                      <h3 className="text-xl font-semibold text-neutral-100">
-                        {quiz.name}
-                      </h3>
-                      {quiz.description && (
-                        <p className="text-sm text-neutral-400">
-                          {quiz.description}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-semibold text-neutral-100">
+                          {quiz.groupName || 'Quiz'}
+                        </h3>
+                        {isCompleted && (
+                          <Badge className="bg-green-600 text-white">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Completado
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-neutral-400 line-clamp-2">
+                        {quiz.question}
+                      </p>
                       <div className="flex flex-wrap gap-3 text-xs text-neutral-500">
                         <span className="flex items-center gap-1">
                           <FileQuestion className="h-3 w-3" />
-                          {quiz.questions.length} preguntas
+                          {quiz.answers?.length || 0} respuestas
                         </span>
                         <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {quiz.timeLimit}s
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Award className="h-3 w-3" />
+                          {quiz.points} puntos
+                        </span>
+                        {quiz.score !== undefined && (
+                          <span className="flex items-center gap-1 text-green-500 font-semibold">
+                            Nota: {quiz.score}%
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          Creado: {createdDate}
+                          {createdDate}
                         </span>
                       </div>
                     </div>
-                    <Link href={`/main/dashboard/player/quizzes/${quiz.id}/start?courseId=${courseId}`}>
-                      <Button className="bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold">
-                        Realizar Examen
+                    {!isCompleted ? (
+                      <Link href={`/main/dashboard/player/quizzes/${quiz.id}/start?courseId=${courseId}`}>
+                        <Button className="bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold">
+                          Comenzar Quiz
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button 
+                        disabled 
+                        variant="outline" 
+                        className="border-neutral-700 text-neutral-500"
+                      >
+                        Ya completado
                       </Button>
-                    </Link>
+                    )}
                   </div>
                 )
               })
