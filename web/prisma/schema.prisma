@@ -124,9 +124,10 @@ model members {
 
   group                   groups                    @relation(fields: [group_id], references: [id], onDelete: Cascade)
   characters              characters?
-  events                  events[]
+  tasks                   tasks[]
   quizzes_history         quizzes_history[]
-  teachers_courses_events teachers_courses_events[]
+  teachers_courses_tasks  teachers_courses_tasks[]
+  events_history          events_history[]
 }
 
 model characters {
@@ -143,7 +144,7 @@ model characters {
   member    members                @relation(fields: [character_id], references: [id], onDelete: Cascade)
   class     classes                @relation(fields: [class_id], references: [id])
   abilities characters_abilities[]
-  events    characters_events[]
+  tasks     characters_tasks[]
 }
 
 model classes {
@@ -209,7 +210,7 @@ model quizzes_history {
   @@unique([quiz_id, member_id])
 }
 
-model events {
+model tasks {
   id          String   @id @default(uuid())
   name        String
   description String?
@@ -221,30 +222,57 @@ model events {
   updated_at  DateTime @updatedAt
 
   members                 members[]
-  characters_events       characters_events[]
-  teachers_courses_events teachers_courses_events[]
+  characters_tasks        characters_tasks[]
+  teachers_courses_tasks  teachers_courses_tasks[]
 }
 
-model characters_events {
+model characters_tasks {
   id           String @id @default(uuid())
   character_id String
-  event_id     String
+  task_id      String
 
   character characters @relation(fields: [character_id], references: [id], onDelete: Cascade)
-  event     events     @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  task      tasks      @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
-  @@unique([character_id, event_id])
+  @@unique([character_id, task_id])
 }
 
-model teachers_courses_events {
+model teachers_courses_tasks {
   id                String @id @default(uuid())
   teacher_course_id String
-  event_id          String
+  task_id           String
 
   member members @relation(fields: [teacher_course_id], references: [id], onDelete: Cascade)
-  event  events  @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  task   tasks   @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
-  @@unique([teacher_course_id, event_id])
+  @@unique([teacher_course_id, task_id])
+}
+
+model events {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  type        String   @default("neutral")
+  experience  Int      @default(0)
+  gold        Int      @default(0)
+  health      Int      @default(0)
+  energy      Int      @default(0)
+  probability Float    @default(0.1)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  events_history events_history[]
+}
+
+model events_history {
+  id          String   @id @default(uuid())
+  event_id    String
+  member_id   String
+  applied_at  DateTime @default(now())
+
+  event  events  @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  member members @relation(fields: [member_id], references: [id], onDelete: Cascade)
 }
 
 model institutions {

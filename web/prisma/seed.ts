@@ -8,9 +8,10 @@ async function main() {
 
   // Limpiar datos existentes (opcional - comentar si no quieres borrar)
   console.log('🧹 Cleaning existing data...');
+  await prisma.events_history.deleteMany();
   await prisma.characters_abilities.deleteMany();
-  await prisma.characters_events.deleteMany();
-  await prisma.teachers_courses_events.deleteMany();
+  await prisma.characters_tasks.deleteMany();
+  await prisma.teachers_courses_tasks.deleteMany();
   await prisma.quizzes_history.deleteMany();
   await prisma.characters.deleteMany();
   await prisma.members.deleteMany();
@@ -23,6 +24,7 @@ async function main() {
   await prisma.teachers.deleteMany();
   await prisma.sessions.deleteMany();
   await prisma.users.deleteMany();
+  await prisma.tasks.deleteMany();
   await prisma.events.deleteMany();
   await prisma.abilities.deleteMany();
   await prisma.classes.deleteMany();
@@ -430,9 +432,8 @@ async function main() {
     ],
   });
 
-  // 11. Crear eventos (misiones/tareas)
-  console.log('🎯 Creating events/quests...');
-  const event1 = await prisma.events.create({
+  console.log('🎯 Creating tasks...');
+  const task1 = await prisma.tasks.create({
     data: {
       name: 'Diseño Responsivo',
       description: 'Crear una página web responsive con CSS Grid',
@@ -443,7 +444,7 @@ async function main() {
     },
   });
 
-  const event2 = await prisma.events.create({
+  const task2 = await prisma.tasks.create({
     data: {
       name: 'Normalización',
       description: 'Normalizar una base de datos hasta 3FN',
@@ -454,7 +455,7 @@ async function main() {
     },
   });
 
-  const event3 = await prisma.events.create({
+  const task3 = await prisma.tasks.create({
     data: {
       name: 'Redes Neuronales',
       description: 'Implementar una red neuronal básica',
@@ -465,7 +466,7 @@ async function main() {
     },
   });
 
-  const event4 = await prisma.events.create({
+  const task4 = await prisma.tasks.create({
     data: {
       name: 'Teoría de Grafos',
       description: 'Resolver problemas de grafos con algoritmos',
@@ -476,7 +477,72 @@ async function main() {
     },
   });
 
-  // 12. Crear invitaciones
+  console.log('🎲 Creating random events...');
+  await prisma.events.createMany({
+    data: [
+      {
+        name: '🌪️ Terremoto',
+        description: 'Un terremoto sacude la tierra, todos los estudiantes pierden 2 puntos de salud',
+        type: 'disaster',
+        health: -2,
+        probability: 0.05,
+      },
+      {
+        name: '💰 Tesoro Encontrado',
+        description: 'Un estudiante encontró un tesoro escondido, todos ganan 200 de oro',
+        type: 'fortune',
+        gold: 200,
+        probability: 0.1,
+      },
+      {
+        name: '⚡ Tormenta Mágica',
+        description: 'Una tormenta mágica drena la energía, todos pierden 50 de energía',
+        type: 'disaster',
+        energy: -50,
+        probability: 0.08,
+      },
+      {
+        name: '🎁 Día de la Generosidad',
+        description: 'El reino celebra, todos reciben 100 de oro y 50 de experiencia',
+        type: 'fortune',
+        gold: 100,
+        experience: 50,
+        probability: 0.15,
+      },
+      {
+        name: '🔥 Ataque de Dragón',
+        description: 'Un dragón ataca la ciudad, todos pierden 5 de salud y 100 de oro',
+        type: 'disaster',
+        health: -5,
+        gold: -100,
+        probability: 0.03,
+      },
+      {
+        name: '✨ Lluvia de Estrellas',
+        description: 'Una lluvia de estrellas otorga bendiciones, todos ganan 30 de energía',
+        type: 'fortune',
+        energy: 30,
+        probability: 0.12,
+      },
+      {
+        name: '🌑 Eclipse Solar',
+        description: 'Un eclipse solar debilita a todos, pierden 20 de energía y 1 de salud',
+        type: 'disaster',
+        energy: -20,
+        health: -1,
+        probability: 0.06,
+      },
+      {
+        name: '🎉 Festival del Reino',
+        description: 'Gran celebración en el reino, todos ganan 150 de oro y recuperan energía',
+        type: 'fortune',
+        gold: 150,
+        energy: 50,
+        probability: 0.1,
+      },
+    ],
+  });
+
   console.log('✉️ Creating invitations...');
   await prisma.invitations.createMany({
     data: [
@@ -792,6 +858,19 @@ async function main() {
     ],
   });
 
+  console.log('🎯 Creating task assignments (teachers_courses_tasks)...');
+  await prisma.teachers_courses_tasks.createMany({
+    data: [
+      { teacher_course_id: member1.id, task_id: task1.id },
+      { teacher_course_id: member2.id, task_id: task1.id },
+      { teacher_course_id: member3.id, task_id: task1.id },
+      { teacher_course_id: member4.id, task_id: task2.id },
+      { teacher_course_id: member5.id, task_id: task2.id },
+      { teacher_course_id: member6.id, task_id: task2.id },
+      { teacher_course_id: member7.id, task_id: task3.id },
+      { teacher_course_id: member8.id, task_id: task4.id },
+    ],
+  });
 
   console.log('✅ Seed completed successfully!');
   console.log('\n📊 Summary:');
@@ -801,11 +880,15 @@ async function main() {
   console.log(`- Groups: ${await prisma.groups.count()}`);
   console.log(`- Members: ${await prisma.members.count()}`);
   console.log(`- Characters: ${await prisma.characters.count()}`);
-  console.log(`- Events: ${await prisma.events.count()}`);
+  console.log(`- Tasks: ${await prisma.tasks.count()}`);
+  console.log(`- Random Events: ${await prisma.events.count()}`);
   console.log(`- Abilities: ${await prisma.abilities.count()}`);
   console.log(`- Classes: ${await prisma.classes.count()}`);
   console.log(`- Invitations: ${await prisma.invitations.count()}`);
   console.log(`- Inscriptions: ${await prisma.inscriptions.count()}`);
+  console.log(`- Task Assignments: ${await prisma.teachers_courses_tasks.count()}`);
+  console.log(`- Quizzes: ${await prisma.quizzes.count()}`);
+  console.log(`- Quiz History: ${await prisma.quizzes_history.count()}`);
   console.log('\n🔐 Test credentials:');
   console.log('Email: juan@example.com | Password: password123');
   console.log('Email: garcia@example.com | Password: password123');

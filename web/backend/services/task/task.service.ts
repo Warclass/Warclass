@@ -11,7 +11,7 @@ import {
 export class TaskService {
   static async createTask(data: CreateTaskDTO): Promise<TaskWithAssignments> {
     try {
-      const task = await prisma.events.create({
+      const task = await prisma.tasks.create({
         data: {
           name: data.name,
           description: data.description,
@@ -44,10 +44,10 @@ export class TaskService {
 
   static async getTaskById(taskId: string): Promise<TaskWithAssignments> {
     try {
-      const task = await prisma.events.findUnique({
+      const task = await prisma.tasks.findUnique({
         where: { id: taskId },
         include: {
-          teachers_courses_events: {
+          teachers_courses_tasks: {
             include: {
               member: {
                 include: {
@@ -64,7 +64,7 @@ export class TaskService {
       }
 
       const groupMap = new Map();
-      task.teachers_courses_events.forEach((tce) => {
+      task.teachers_courses_tasks.forEach((tce) => {
         const group = tce.member.group;
         if (!groupMap.has(group.id)) {
           groupMap.set(group.id, {
@@ -87,8 +87,8 @@ export class TaskService {
         createdAt: task.created_at,
         updatedAt: task.updated_at,
         assignedGroups: Array.from(groupMap.values()),
-        completedCount: task.teachers_courses_events.length,
-        totalAssigned: task.teachers_courses_events.length,
+        completedCount: task.teachers_courses_tasks.length,
+        totalAssigned: task.teachers_courses_tasks.length,
       };
     } catch (error) {
       console.error('Error getting task:', error);
@@ -98,9 +98,9 @@ export class TaskService {
 
   static async getAllTasks(): Promise<TaskWithAssignments[]> {
     try {
-      const tasks = await prisma.events.findMany({
+      const tasks = await prisma.tasks.findMany({
         include: {
-          teachers_courses_events: {
+          teachers_courses_tasks: {
             include: {
               member: {
                 include: {
@@ -115,7 +115,7 @@ export class TaskService {
 
       return tasks.map((task) => {
         const groupMap = new Map();
-        task.teachers_courses_events.forEach((tce) => {
+        task.teachers_courses_tasks.forEach((tce) => {
           const group = tce.member.group;
           if (!groupMap.has(group.id)) {
             groupMap.set(group.id, {
@@ -138,8 +138,8 @@ export class TaskService {
           createdAt: task.created_at,
           updatedAt: task.updated_at,
           assignedGroups: Array.from(groupMap.values()),
-          completedCount: task.teachers_courses_events.length,
-          totalAssigned: task.teachers_courses_events.length,
+          completedCount: task.teachers_courses_tasks.length,
+          totalAssigned: task.teachers_courses_tasks.length,
         };
       });
     } catch (error) {
@@ -158,7 +158,7 @@ export class TaskService {
       if (data.health !== undefined) updateData.health = data.health;
       if (data.energy !== undefined) updateData.energy = data.energy;
 
-      const task = await prisma.events.update({
+      const task = await prisma.tasks.update({
         where: { id: taskId },
         data: updateData,
       });
@@ -172,7 +172,7 @@ export class TaskService {
 
   static async deleteTask(taskId: string): Promise<void> {
     try {
-      await prisma.events.delete({
+      await prisma.tasks.delete({
         where: { id: taskId },
       });
     } catch (error) {
@@ -183,7 +183,7 @@ export class TaskService {
 
   static async assignTaskToGroups(data: AssignTaskDTO): Promise<void> {
     try {
-      const task = await prisma.events.findUnique({
+      const task = await prisma.tasks.findUnique({
         where: { id: data.taskId },
       });
 
@@ -202,20 +202,20 @@ export class TaskService {
         }
 
         for (const member of group.members) {
-          const existing = await prisma.teachers_courses_events.findUnique({
+          const existing = await prisma.teachers_courses_tasks.findUnique({
             where: {
-              teacher_course_id_event_id: {
+              teacher_course_id_task_id: {
                 teacher_course_id: member.id,
-                event_id: data.taskId,
+                task_id: data.taskId,
               },
             },
           });
 
           if (!existing) {
-            await prisma.teachers_courses_events.create({
+            await prisma.teachers_courses_tasks.create({
               data: {
                 teacher_course_id: member.id,
-                event_id: data.taskId,
+                task_id: data.taskId,
               },
             });
           }
@@ -229,7 +229,7 @@ export class TaskService {
 
   static async completeTask(data: CompleteTaskDTO): Promise<void> {
     try {
-      const task = await prisma.events.findUnique({
+      const task = await prisma.tasks.findUnique({
         where: { id: data.taskId },
       });
 
@@ -245,11 +245,11 @@ export class TaskService {
         throw new Error('Miembro no encontrado');
       }
 
-      const existing = await prisma.teachers_courses_events.findUnique({
+      const existing = await prisma.teachers_courses_tasks.findUnique({
         where: {
-          teacher_course_id_event_id: {
+          teacher_course_id_task_id: {
             teacher_course_id: data.memberId,
-            event_id: data.taskId,
+            task_id: data.taskId,
           },
         },
       });
@@ -259,10 +259,10 @@ export class TaskService {
       }
 
       await prisma.$transaction([
-        prisma.teachers_courses_events.create({
+        prisma.teachers_courses_tasks.create({
           data: {
             teacher_course_id: data.memberId,
-            event_id: data.taskId,
+            task_id: data.taskId,
           },
         }),
         prisma.members.update({
@@ -282,10 +282,10 @@ export class TaskService {
 
   static async getTaskProgress(taskId: string): Promise<TaskProgress> {
     try {
-      const task = await prisma.events.findUnique({
+      const task = await prisma.tasks.findUnique({
         where: { id: taskId },
         include: {
-          teachers_courses_events: {
+          teachers_courses_tasks: {
             include: {
               member: true,
             },
@@ -297,7 +297,7 @@ export class TaskService {
         throw new Error('Tarea no encontrada');
       }
 
-      const completedMembers = task.teachers_courses_events.length;
+      const completedMembers = task.teachers_courses_tasks.length;
       const totalMembers = await prisma.members.count();
 
       return {
@@ -320,9 +320,9 @@ export class TaskService {
         include: {
           members: {
             include: {
-              teachers_courses_events: {
+              teachers_courses_tasks: {
                 include: {
-                  event: true,
+                  task: true,
                 },
               },
             },
@@ -337,8 +337,8 @@ export class TaskService {
       const taskMap = new Map();
       
       group.members.forEach((member) => {
-        member.teachers_courses_events.forEach((tce) => {
-          const task = tce.event;
+        member.teachers_courses_tasks.forEach((tce) => {
+          const task = tce.task;
           if (!taskMap.has(task.id)) {
             taskMap.set(task.id, {
               id: task.id,
