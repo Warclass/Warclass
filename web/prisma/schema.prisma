@@ -177,26 +177,36 @@ model characters_abilities {
 }
 
 model quizzes {
-  id         String   @id @default(uuid())
-  question   String
-  answers    String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  question             String
+  answers              String
+  correct_answer_index Int
+  difficulty           String   @default("medium")
+  points               Int      @default(100)
+  time_limit           Int      @default(30)
+  group_id             String
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
-  groups          groups[]
+  group           groups            @relation(fields: [group_id], references: [id], onDelete: Cascade)
   quizzes_history quizzes_history[]
 }
 
 model quizzes_history {
-  id                 String  @id @default(uuid())
-  course_id          String
-  character_quest_id String
-  is_on_quest        Boolean @default(false)
+  id              String   @id @default(uuid())
+  quiz_id         String
+  member_id       String
+  is_on_quest     Boolean  @default(false)
+  selected_answer Int
+  is_correct      Boolean
+  points_earned   Int      @default(0)
+  time_taken      Int
+  answered_at     DateTime @default(now())
 
-  member members @relation(fields: [character_quest_id], references: [id], onDelete: Cascade)
-  quiz   quizzes @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  member members  @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  quiz   quizzes @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
 
-  @@unique([course_id, character_quest_id])
+  @@unique([quiz_id, member_id])
 }
 
 model events {

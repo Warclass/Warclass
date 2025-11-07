@@ -515,28 +515,283 @@ async function main() {
     ],
   });
 
-  // 13. Crear quizzes
+  // 13. Crear quizzes tipo Kahoot
   console.log('📝 Creating quizzes...');
-  await prisma.quizzes.createMany({
+  
+  // Quizzes para Desarrollo Web (group1)
+  const quiz1 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué significa HTML?',
+      answers: JSON.stringify([
+        { text: 'HyperText Markup Language', isCorrect: true },
+        { text: 'Home Tool Markup Language', isCorrect: false },
+        { text: 'Hyperlinks Text Mark Language', isCorrect: false },
+        { text: 'High Tech Modern Language', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'easy',
+      points: 100,
+      time_limit: 30,
+      group_id: group1.id,
+    },
+  });
+
+  const quiz2 = await prisma.quizzes.create({
+    data: {
+      question: '¿Cuál es la forma correcta de crear una función en JavaScript?',
+      answers: JSON.stringify([
+        { text: 'function myFunc() {}', isCorrect: true },
+        { text: 'def myFunc():', isCorrect: false },
+        { text: 'func myFunc() {}', isCorrect: false },
+        { text: 'function: myFunc() {}', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'medium',
+      points: 150,
+      time_limit: 45,
+      group_id: group1.id,
+    },
+  });
+
+  const quiz3 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué método se usa para agregar un elemento al final de un array en JavaScript?',
+      answers: JSON.stringify([
+        { text: 'push()', isCorrect: true },
+        { text: 'append()', isCorrect: false },
+        { text: 'add()', isCorrect: false },
+        { text: 'insert()', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'easy',
+      points: 100,
+      time_limit: 30,
+      group_id: group1.id,
+    },
+  });
+
+  // Quizzes para Bases de Datos (group2)
+  const quiz4 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué es una clave primaria (Primary Key)?',
+      answers: JSON.stringify([
+        { text: 'Un identificador único para cada registro en una tabla', isCorrect: true },
+        { text: 'Una clave que se usa para encriptar datos', isCorrect: false },
+        { text: 'Un índice secundario opcional', isCorrect: false },
+        { text: 'Una referencia a otra tabla', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'easy',
+      points: 100,
+      time_limit: 30,
+      group_id: group2.id,
+    },
+  });
+
+  const quiz5 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué comando SQL se usa para recuperar datos de una tabla?',
+      answers: JSON.stringify([
+        { text: 'SELECT', isCorrect: true },
+        { text: 'GET', isCorrect: false },
+        { text: 'FETCH', isCorrect: false },
+        { text: 'RETRIEVE', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'easy',
+      points: 100,
+      time_limit: 25,
+      group_id: group2.id,
+    },
+  });
+
+  const quiz6 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué tipo de JOIN devuelve todos los registros cuando hay coincidencia en alguna tabla?',
+      answers: JSON.stringify([
+        { text: 'FULL OUTER JOIN', isCorrect: true },
+        { text: 'INNER JOIN', isCorrect: false },
+        { text: 'LEFT JOIN', isCorrect: false },
+        { text: 'RIGHT JOIN', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'hard',
+      points: 200,
+      time_limit: 60,
+      group_id: group2.id,
+    },
+  });
+
+  // Quizzes para Algoritmos (group3)
+  const quiz7 = await prisma.quizzes.create({
+    data: {
+      question: '¿Cuál es la complejidad temporal del algoritmo de búsqueda binaria?',
+      answers: JSON.stringify([
+        { text: 'O(log n)', isCorrect: true },
+        { text: 'O(n)', isCorrect: false },
+        { text: 'O(n²)', isCorrect: false },
+        { text: 'O(1)', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'medium',
+      points: 150,
+      time_limit: 45,
+      group_id: group3.id,
+    },
+  });
+
+  const quiz8 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué estructura de datos usa el principio LIFO (Last In, First Out)?',
+      answers: JSON.stringify([
+        { text: 'Stack (Pila)', isCorrect: true },
+        { text: 'Queue (Cola)', isCorrect: false },
+        { text: 'List (Lista)', isCorrect: false },
+        { text: 'Tree (Árbol)', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'easy',
+      points: 100,
+      time_limit: 30,
+      group_id: group3.id,
+    },
+  });
+
+  // Quizzes para IA (group4)
+  const quiz9 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué tipo de aprendizaje automático usa datos etiquetados?',
+      answers: JSON.stringify([
+        { text: 'Aprendizaje Supervisado', isCorrect: true },
+        { text: 'Aprendizaje No Supervisado', isCorrect: false },
+        { text: 'Aprendizaje por Refuerzo', isCorrect: false },
+        { text: 'Aprendizaje Profundo', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'medium',
+      points: 150,
+      time_limit: 40,
+      group_id: group4.id,
+    },
+  });
+
+  const quiz10 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué función de activación se usa comúnmente en redes neuronales para clasificación binaria?',
+      answers: JSON.stringify([
+        { text: 'Sigmoid', isCorrect: true },
+        { text: 'ReLU', isCorrect: false },
+        { text: 'Tanh', isCorrect: false },
+        { text: 'Softmax', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'hard',
+      points: 200,
+      time_limit: 60,
+      group_id: group4.id,
+    },
+  });
+
+  // Quizzes para Matemáticas (group5)
+  const quiz11 = await prisma.quizzes.create({
+    data: {
+      question: '¿Cuál es el valor de π (pi) aproximadamente?',
+      answers: JSON.stringify([
+        { text: '3.14159', isCorrect: true },
+        { text: '2.71828', isCorrect: false },
+        { text: '1.61803', isCorrect: false },
+        { text: '4.66920', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'easy',
+      points: 100,
+      time_limit: 20,
+      group_id: group5.id,
+    },
+  });
+
+  const quiz12 = await prisma.quizzes.create({
+    data: {
+      question: '¿Qué teorema establece la relación entre los lados de un triángulo rectángulo?',
+      answers: JSON.stringify([
+        { text: 'Teorema de Pitágoras', isCorrect: true },
+        { text: 'Teorema de Tales', isCorrect: false },
+        { text: 'Teorema de Fermat', isCorrect: false },
+        { text: 'Teorema del Seno', isCorrect: false },
+      ]),
+      correct_answer_index: 0,
+      difficulty: 'easy',
+      points: 100,
+      time_limit: 30,
+      group_id: group5.id,
+    },
+  });
+
+  // Crear historial de quizzes para algunos miembros
+  console.log('📊 Creating quiz history...');
+  await prisma.quizzes_history.createMany({
     data: [
+      // member1 responde algunos quizzes del grupo 1
       {
-        question: '¿Qué es HTML?',
-        answers: JSON.stringify([
-          { text: 'HyperText Markup Language', correct: true },
-          { text: 'Home Tool Markup Language', correct: false },
-          { text: 'Hyperlinks Text Mark Language', correct: false },
-        ]),
+        quiz_id: quiz1.id,
+        member_id: member1.id,
+        selected_answer: 0,
+        is_correct: true,
+        points_earned: 120,
+        time_taken: 15,
+        is_on_quest: false,
       },
       {
-        question: '¿Qué es una clave primaria?',
-        answers: JSON.stringify([
-          { text: 'Un identificador único para cada registro', correct: true },
-          { text: 'Una clave foránea', correct: false },
-          { text: 'Un índice secundario', correct: false },
-        ]),
+        quiz_id: quiz2.id,
+        member_id: member1.id,
+        selected_answer: 0,
+        is_correct: true,
+        points_earned: 180,
+        time_taken: 30,
+        is_on_quest: true,
+      },
+      // member2 responde quiz1
+      {
+        quiz_id: quiz1.id,
+        member_id: member2.id,
+        selected_answer: 1,
+        is_correct: false,
+        points_earned: 0,
+        time_taken: 28,
+        is_on_quest: false,
+      },
+      // member4 responde quizzes del grupo 2
+      {
+        quiz_id: quiz4.id,
+        member_id: member4.id,
+        selected_answer: 0,
+        is_correct: true,
+        points_earned: 110,
+        time_taken: 20,
+        is_on_quest: false,
+      },
+      {
+        quiz_id: quiz5.id,
+        member_id: member4.id,
+        selected_answer: 0,
+        is_correct: true,
+        points_earned: 125,
+        time_taken: 18,
+        is_on_quest: false,
+      },
+      // member7 responde quizzes del grupo 4 (IA)
+      {
+        quiz_id: quiz9.id,
+        member_id: member7.id,
+        selected_answer: 0,
+        is_correct: true,
+        points_earned: 175,
+        time_taken: 25,
+        is_on_quest: true,
       },
     ],
   });
+
 
   console.log('✅ Seed completed successfully!');
   console.log('\n📊 Summary:');
