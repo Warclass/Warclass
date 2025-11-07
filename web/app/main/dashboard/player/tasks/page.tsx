@@ -22,7 +22,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FileText, CheckCircle, Clock, Trophy, Coins } from "lucide-react";
-import { withAuth } from "@/lib/hoc/withAuth";
 
 interface Task {
   id: string;
@@ -35,7 +34,7 @@ interface Task {
   completed?: boolean;
 }
 
-function TasksPage() {
+export default function TasksPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -281,5 +280,3 @@ function TasksPage() {
     </PlayerLayout>
   );
 }
-
-export default withAuth(TasksPage);

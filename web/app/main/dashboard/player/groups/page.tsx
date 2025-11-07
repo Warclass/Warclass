@@ -16,7 +16,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Users, Coins, Zap, Star } from 'lucide-react'
-import { withAuth } from '@/lib/hoc/withAuth'
 
 interface Group {
   id: string
@@ -43,7 +42,7 @@ interface Group {
   }>
 }
 
-function GroupsPage() {
+export default function GroupsPage() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
@@ -261,6 +260,4 @@ function GroupsPage() {
     </PlayerLayout>
   )
 }
-
-export default withAuth(GroupsPage)
 

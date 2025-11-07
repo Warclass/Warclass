@@ -7,7 +7,6 @@ import PlayerLayout from '@/app/layouts/PlayerLayout'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Trophy, Star, Coins, Zap, Medal } from 'lucide-react'
-import { withAuth } from '@/lib/hoc/withAuth'
 
 interface RankedMember {
   id: string
@@ -34,7 +33,7 @@ interface RankedMember {
   } | null
 }
 
-function ScorePage() {
+export default function ScorePage() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const resultParam = searchParams.get('result')
@@ -243,6 +242,4 @@ function ScorePage() {
     </PlayerLayout>
   )
 }
-
-export default withAuth(ScorePage)
 

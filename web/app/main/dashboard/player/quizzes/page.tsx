@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Clock, FileQuestion, Calendar, CheckCircle, XCircle, Award } from 'lucide-react'
-import { withAuth } from '@/lib/hoc/withAuth'
 
 interface Quiz {
   id: string
@@ -27,7 +26,7 @@ interface Quiz {
   createdAt?: string
 }
 
-function QuizzesPage() {
+export default function QuizzesPage() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
@@ -260,6 +259,4 @@ function QuizzesPage() {
     </PlayerLayout>
   )
 }
-
-export default withAuth(QuizzesPage)
 

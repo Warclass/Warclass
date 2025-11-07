@@ -360,6 +360,55 @@ export class InvitationService {
   }
 }
 
+export async function acceptInvitation(userId: string, invitationId: string): Promise<void> {
+  try {
+    const invitation = await prisma.invitations.findUnique({
+      where: { id: invitationId },
+      include: { course: true },
+    });
+
+    if (!invitation) {
+      throw new Error('Invitación no encontrada');
+    }
+
+    if (invitation.used) {
+      throw new Error('Esta invitación ya ha sido utilizada');
+    }
+
+    const existingInscription = await prisma.inscriptions.findUnique({
+      where: {
+        user_id_course_id: {
+          user_id: userId,
+          course_id: invitation.course_id,
+        },
+      },
+    });
+
+    if (existingInscription) {
+      throw new Error('Ya estás inscrito en este curso');
+    }
+
+    await prisma.$transaction([
+      prisma.invitations.update({
+        where: { id: invitationId },
+        data: {
+          used: true,
+          user_id: userId,
+        },
+      }),
+      prisma.inscriptions.create({
+        data: {
+          user_id: userId,
+          course_id: invitation.course_id,
+        },
+      }),
+    ]);
+  } catch (error) {
+    console.error('Error al aceptar invitación:', error);
+    throw error;
+  }
+}
+
 export async function getPendingInvitations(userId: string): Promise<PendingInvitation[]> {
   return InvitationService.getPendingInvitations(userId);
 }

@@ -5,7 +5,6 @@ import PlayerLayout from '@/app/layouts/PlayerLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { withAuth } from '@/lib/hoc/withAuth';
 import { useAuthContext } from '@/contexts/AuthContext';
 
 interface DashboardProps {
@@ -32,7 +31,7 @@ interface DashboardProps {
   }>;
 }
 
-function DashboardPage({
+export default function DashboardPage({
   teacher,
   institutionCourses = [],
   inscriptions = [],
@@ -199,5 +198,3 @@ function DashboardPage({
     </PlayerLayout>
   );
 }
-
-export default withAuth(DashboardPage);

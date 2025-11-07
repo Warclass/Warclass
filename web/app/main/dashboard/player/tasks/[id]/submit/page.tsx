@@ -22,7 +22,6 @@ import {
   Coins,
   ArrowLeft,
 } from "lucide-react";
-import { withAuth } from "@/lib/hoc/withAuth";
 import Link from "next/link";
 
 interface Task {
@@ -34,7 +33,7 @@ interface Task {
   completed?: boolean;
 }
 
-function SubmitTaskPage() {
+export default function SubmitTaskPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const params = useParams();
@@ -362,6 +361,4 @@ function SubmitTaskPage() {
     </PlayerLayout>
   );
 }
-
-export default withAuth(SubmitTaskPage);
 

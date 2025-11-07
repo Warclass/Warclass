@@ -7,7 +7,6 @@ import PlayerLayout from '@/app/layouts/PlayerLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Coins, Zap, Star, Users } from 'lucide-react'
-import { withAuth } from '@/lib/hoc/withAuth'
 
 interface Member {
   id: string
@@ -33,7 +32,7 @@ interface Member {
   } | null
 }
 
-function MembersPage() {
+export default function MembersPage() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
@@ -199,6 +198,4 @@ function MembersPage() {
     </PlayerLayout>
   )
 }
-
-export default withAuth(MembersPage)
 

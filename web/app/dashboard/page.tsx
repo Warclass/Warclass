@@ -15,7 +15,8 @@ import {
   Search,
   LogOut,
   Mail,
-  UserCircle
+  UserCircle,
+  Send
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,17 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useDashboard } from "@/hooks/dashboard/useDashboard";
+import { CreateCourseModal } from "@/components/dashboard/CreateCourseModal";
+import { InvitationModal } from "@/components/dashboard/InvitationModal";
+
+interface TeacherCourse {
+  id: string;
+  name: string;
+  description: string | null;
+  studentsCount: number;
+  groupsCount: number;
+  membersCount: number;
+}
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -38,8 +50,17 @@ export default function DashboardPage() {
   const [loadingInvitations, setLoadingInvitations] = useState(true);
   const [myInscriptions, setMyInscriptions] = useState<any[]>([]);
 
+  // Estados para profesor
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [teacherCourses, setTeacherCourses] = useState<TeacherCourse[]>([]);
+  const [loadingTeacher, setLoadingTeacher] = useState(true);
+
+  // Estados para modales
+  const [createCourseModalOpen, setCreateCourseModalOpen] = useState(false);
+  const [invitationModalOpen, setInvitationModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<{ id: string; name: string } | null>(null);
+
   // Usar datos del API o valores por defecto
-  const teachingCourses = dashboardData?.teachingCourses || [];
   const enrolledCourses = dashboardData?.enrolledCourses || [];
   const recentActivity = dashboardData?.recentActivity || [];
   const stats = dashboardData?.stats || {
@@ -106,6 +127,73 @@ export default function DashboardPage() {
     
     return () => clearInterval(interval);
   }, [user?.id]);
+
+  // Verificar si es profesor y cargar sus cursos
+  useEffect(() => {
+    const checkTeacherStatus = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoadingTeacher(true);
+
+        // Verificar si es profesor
+        const teacherResponse = await fetch('/api/teachers/check', {
+          headers: {
+            'x-user-id': user.id
+          }
+        });
+
+        if (teacherResponse.ok) {
+          const teacherData = await teacherResponse.json();
+          setIsTeacher(teacherData.isTeacher);
+
+          // Si es profesor, cargar sus cursos
+          if (teacherData.isTeacher) {
+            const coursesResponse = await fetch('/api/courses/teacher', {
+              headers: {
+                'x-user-id': user.id
+              }
+            });
+
+            if (coursesResponse.ok) {
+              const coursesData = await coursesResponse.json();
+              setTeacherCourses(coursesData.courses || []);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error al verificar estado de profesor:', error);
+      } finally {
+        setLoadingTeacher(false);
+      }
+    };
+
+    checkTeacherStatus();
+  }, [user?.id]);
+
+  const refreshTeacherCourses = async () => {
+    if (!user?.id || !isTeacher) return;
+
+    try {
+      const coursesResponse = await fetch('/api/courses/teacher', {
+        headers: {
+          'x-user-id': user.id
+        }
+      });
+
+      if (coursesResponse.ok) {
+        const coursesData = await coursesResponse.json();
+        setTeacherCourses(coursesData.courses || []);
+      }
+    } catch (error) {
+      console.error('Error al refrescar cursos:', error);
+    }
+  };
+
+  const handleOpenInvitationModal = (courseId: string, courseName: string) => {
+    setSelectedCourse({ id: courseId, name: courseName });
+    setInvitationModalOpen(true);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -370,19 +458,21 @@ export default function DashboardPage() {
           {/* Left Column - Courses */}
           <div className="lg:col-span-2 space-y-6">
             <Tabs defaultValue="enrolled" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-[#1a1a1a] border border-neutral-800">
+              <TabsList className={`grid w-full ${isTeacher ? 'grid-cols-2' : 'grid-cols-1'} bg-[#1a1a1a] border border-neutral-800`}>
                 <TabsTrigger 
                   value="enrolled"
                   className="data-[state=active]:bg-[#D89216] data-[state=active]:text-black"
                 >
                   Mis Cursos
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="teaching"
-                  className="data-[state=active]:bg-[#D89216] data-[state=active]:text-black"
-                >
-                  Enseñando
-                </TabsTrigger>
+                {isTeacher && (
+                  <TabsTrigger 
+                    value="teaching"
+                    className="data-[state=active]:bg-[#D89216] data-[state=active]:text-black"
+                  >
+                    Enseñando
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               {/* Enrolled Courses Tab */}
@@ -455,89 +545,111 @@ export default function DashboardPage() {
               </TabsContent>
 
               {/* Teaching Courses Tab */}
-              <TabsContent value="teaching" className="space-y-4 mt-6">
-                {teachingCourses.length === 0 ? (
-                  <Card className="bg-[#1a1a1a] border-neutral-800">
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <GraduationCap className="h-16 w-16 text-neutral-600 mb-4" />
-                      <p className="text-neutral-400 text-center mb-2">
-                        No estás enseñando ningún curso
-                      </p>
-                      <p className="text-neutral-500 text-sm text-center mb-4">
-                        Crea tu primer curso para comenzar a enseñar
-                      </p>
-                      <Button className="bg-[#D89216] hover:bg-[#b6770f] text-black">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Crear Curso
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <>
-                    <Card className="bg-[#1a1a1a] border-neutral-800 border-dashed hover:border-[#D89216] transition-colors cursor-pointer">
-                      <CardContent className="flex flex-col items-center justify-center py-8">
-                        <Plus className="h-12 w-12 text-neutral-600 mb-2" />
-                        <p className="text-neutral-400 text-sm">Crear nuevo curso</p>
+              {isTeacher && (
+                <TabsContent value="teaching" className="space-y-4 mt-6">
+                  {loadingTeacher ? (
+                    <Card className="bg-[#1a1a1a] border-neutral-800">
+                      <CardContent className="flex flex-col items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D89216] mb-4"></div>
+                        <p className="text-neutral-400">Cargando cursos...</p>
                       </CardContent>
                     </Card>
-
-                    {teachingCourses.map((course) => (
-                  <Card
-                    key={course.id}
-                    className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
-                  >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-12 h-12 ${course.color} rounded-lg flex items-center justify-center text-white font-bold text-xl`}
-                          >
-                            {course.code}
-                          </div>
-                          <div>
-                            <CardTitle className="text-neutral-100">
-                              {course.name}
-                            </CardTitle>
-                            <CardDescription className="text-neutral-500">
-                              Código: {course.code}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className="border-blue-500 text-blue-400"
+                  ) : teacherCourses.length === 0 ? (
+                    <Card className="bg-[#1a1a1a] border-neutral-800">
+                      <CardContent className="flex flex-col items-center justify-center py-12">
+                        <GraduationCap className="h-16 w-16 text-neutral-600 mb-4" />
+                        <p className="text-neutral-400 text-center mb-2">
+                          No estás enseñando ningún curso
+                        </p>
+                        <p className="text-neutral-500 text-sm text-center mb-4">
+                          Crea tu primer curso para comenzar a enseñar
+                        </p>
+                        <Button 
+                          className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                          onClick={() => setCreateCourseModalOpen(true)}
                         >
-                          Nivel {course.level}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-between items-center mb-4">
-                        <div className="flex gap-4 text-sm text-neutral-400">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            {course.students} estudiantes
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Target className="h-4 w-4" />
-                            {course.quests} misiones
-                          </span>
-                        </div>
-                      </div>
-                      <Link href={`/dashboard/master/groups`}>
-                        <Button
-                          variant="outline"
-                          className="w-full border-neutral-700 text-neutral-100 hover:bg-neutral-800"
-                        >
-                          Gestionar Curso
+                          <Plus className="h-4 w-4 mr-2" />
+                          Crear Curso
                         </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                    ))}
-                  </>
-                )}
-              </TabsContent>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <>
+                      <Card 
+                        className="bg-[#1a1a1a] border-neutral-800 border-dashed hover:border-[#D89216] transition-colors cursor-pointer"
+                        onClick={() => setCreateCourseModalOpen(true)}
+                      >
+                        <CardContent className="flex flex-col items-center justify-center py-8">
+                          <Plus className="h-12 w-12 text-neutral-600 mb-2" />
+                          <p className="text-neutral-400 text-sm">Crear nuevo curso</p>
+                        </CardContent>
+                      </Card>
+
+                      {teacherCourses.map((course) => (
+                        <Card
+                          key={course.id}
+                          className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors"
+                        >
+                          <CardHeader>
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                                  {course.name.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div className="flex-1">
+                                  <CardTitle className="text-neutral-100">
+                                    {course.name}
+                                  </CardTitle>
+                                  <CardDescription className="text-neutral-500">
+                                    {course.description || 'Sin descripción'}
+                                  </CardDescription>
+                                </div>
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className="border-blue-500 text-blue-400"
+                              >
+                                {course.studentsCount} estudiantes
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex gap-4 text-sm text-neutral-400 mb-4">
+                              <span className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                {course.groupsCount} grupos
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Target className="h-4 w-4" />
+                                {course.membersCount} miembros
+                              </span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                className="flex-1 border-neutral-700 text-neutral-100 hover:bg-neutral-800"
+                                onClick={() => router.push(`/main/dashboard/master?courseId=${course.id}`)}
+                              >
+                                Gestionar Curso
+                              </Button>
+                              <Button
+                                className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenInvitationModal(course.id, course.name);
+                                }}
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                Invitar
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </>
+                  )}
+                </TabsContent>
+              )}
             </Tabs>
           </div>
 
@@ -616,6 +728,27 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Modales */}
+      {user?.id && (
+        <>
+          <CreateCourseModal
+            open={createCourseModalOpen}
+            onOpenChange={setCreateCourseModalOpen}
+            onSuccess={refreshTeacherCourses}
+            userId={user.id}
+          />
+          {selectedCourse && (
+            <InvitationModal
+              open={invitationModalOpen}
+              onOpenChange={setInvitationModalOpen}
+              courseId={selectedCourse.id}
+              courseName={selectedCourse.name}
+              userId={user.id}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }

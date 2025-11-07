@@ -10,7 +10,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
-import { withAuth } from '@/lib/hoc/withAuth'
 
 interface Quiz {
   id: string
@@ -27,7 +26,7 @@ interface Quiz {
   pointsEarned?: number
 }
 
-function QuizStartPage() {
+export default function QuizStartPage() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -381,5 +380,3 @@ function QuizStartPage() {
     </PlayerLayout>
   )
 }
-
-export default withAuth(QuizStartPage)

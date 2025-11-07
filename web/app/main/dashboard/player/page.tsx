@@ -7,12 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { withAuth } from '@/lib/hoc/withAuth';
 import { useAuth } from '@/hooks/auth/useAuth';
 
 interface PlayerDashboardProps {}
 
-function PlayerDashboardPage({}: PlayerDashboardProps) {
+export default function PlayerDashboardPage({}: PlayerDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -303,5 +302,3 @@ function PlayerDashboardPage({}: PlayerDashboardProps) {
     </PlayerLayout>
   );
 }
-
-export default withAuth(PlayerDashboardPage);

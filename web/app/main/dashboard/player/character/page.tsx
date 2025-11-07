@@ -9,9 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Sword, Shield, Zap, Heart, Coins, Star, BookOpen } from 'lucide-react'
-import { withAuth } from '@/lib/hoc/withAuth'
 
-function CharacterPage() {
+export default function CharacterPage() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const { user } = useAuth()
@@ -316,5 +315,3 @@ function CharacterPage() {
         </PlayerLayout>
     )
 }
-
-export default withAuth(CharacterPage)

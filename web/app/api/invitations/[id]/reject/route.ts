@@ -15,7 +15,7 @@ export async function POST(
       );
     }
 
-    const invitationId = params.id;
+    const { id: invitationId } = await params;
 
     await rejectInvitation(userId, invitationId);
 

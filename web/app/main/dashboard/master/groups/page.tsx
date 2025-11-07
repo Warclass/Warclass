@@ -1,318 +1,481 @@
-'use client'
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import Image from "next/image"
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/hooks/auth/useAuth';
+import MasterCourseLayout from '@/app/layouts/MasterCourseLayout';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Plus, 
+  Users, 
+  Trash2,
+  UserPlus,
+  Search
+} from 'lucide-react';
 
-interface Student {
-  id: string
-  name: string
-  character: string
-  level: number
-  gold: number
-  experience: number
-  energy: number
-  health: number
-  avatar: string
+interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  course_id: string;
+  members: Member[];
 }
 
-interface PointsFormData {
-  studentName: string
-  gold: number
-  experience: number
+interface Member {
+  id: string;
+  name: string;
+  experience: number;
+  gold: number;
+  energy: number;
+  group?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export default function GroupsPage() {
-  const [showAddPointsModal, setShowAddPointsModal] = useState(false)
-  const [showRemovePointsModal, setShowRemovePointsModal] = useState(false)
-  const [addPointsForm, setAddPointsForm] = useState<PointsFormData>({
-    studentName: '',
-    gold: 0,
-    experience: 0,
-  })
-  const [removePointsForm, setRemovePointsForm] = useState<PointsFormData>({
-    studentName: '',
-    gold: 0,
-    experience: 0,
-  })
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const courseId = searchParams.get('courseId');
 
-  const students: Student[] = [
-    {
-      id: '1',
-      name: 'Chocce, Marcos',
-      character: 'Curandero',
-      level: 2,
-      gold: 100000,
-      experience: 1000,
-      energy: 1000,
-      health: 1000,
-      avatar: 'https://raw.githubusercontent.com/cruip/vuejs-admin-dashboard-template/main/src/images/user-36-05.jpg',
-    },
-    {
-      id: '2',
-      name: 'Torres, Ismael',
-      character: 'Guerrero',
-      level: 5,
-      gold: 50000,
-      experience: 2500,
-      energy: 800,
-      health: 1200,
-      avatar: 'https://raw.githubusercontent.com/cruip/vuejs-admin-dashboard-template/main/src/images/user-36-05.jpg',
-    },
-    {
-      id: '3',
-      name: 'Rojas, Cristian',
-      character: 'Mago',
-      level: 3,
-      gold: 75000,
-      experience: 1500,
-      energy: 900,
-      health: 800,
-      avatar: 'https://raw.githubusercontent.com/cruip/vuejs-admin-dashboard-template/main/src/images/user-36-05.jpg',
-    },
-  ]
+  const [loading, setLoading] = useState(true);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleAddPoints = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Adding points:', addPointsForm)
-    setShowAddPointsModal(false)
+  // Estados para crear grupo
+  const [newGroup, setNewGroup] = useState({
+    name: '',
+    description: '',
+  });
+
+  // Estados para asignar miembros
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!courseId) {
+      router.push('/dashboard');
+      return;
+    }
+
+    fetchData();
+  }, [courseId, user?.id, router]);
+
+  const fetchData = async () => {
+    if (!user?.id || !courseId) return;
+
+    try {
+      setLoading(true);
+
+      // Obtener grupos del curso
+      const groupsResponse = await fetch(`/api/groups?courseId=${courseId}`, {
+        headers: { 'x-user-id': user.id }
+      });
+
+      if (groupsResponse.ok) {
+        const groupsData = await groupsResponse.json();
+        setGroups(groupsData.groups || []);
+      }
+
+      // Obtener todos los miembros del curso
+      const membersResponse = await fetch(`/api/courses/members?courseId=${courseId}`, {
+        headers: { 'x-user-id': user.id }
+      });
+
+      if (membersResponse.ok) {
+        const membersData = await membersResponse.json();
+        setAllMembers(membersData.members || []);
+      }
+
+    } catch (error) {
+      console.error('Error cargando datos:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los datos',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!newGroup.name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'El nombre del grupo es requerido',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/groups', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user!.id
+        },
+        body: JSON.stringify({
+          name: newGroup.name,
+          description: newGroup.description,
+          course_id: courseId
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Éxito',
+          description: 'Grupo creado correctamente'
+        });
+        setNewGroup({ name: '', description: '' });
+        setCreateModalOpen(false);
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'No se pudo crear el grupo',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error creando grupo:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo crear el grupo',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleAssignMembers = async () => {
+    if (!selectedGroup || selectedMembers.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'Selecciona al menos un miembro',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/groups/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user!.id
+        },
+        body: JSON.stringify({
+          group_id: selectedGroup.id,
+          member_ids: selectedMembers
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Éxito',
+          description: 'Miembros asignados correctamente'
+        });
+        setSelectedMembers([]);
+        setAssignModalOpen(false);
+        fetchData();
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'No se pudieron asignar los miembros',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error asignando miembros:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron asignar los miembros',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
+    if (!confirm('¿Estás seguro de eliminar este grupo?')) return;
+
+    try {
+      const response = await fetch(`/api/groups/${groupId}`, {
+        method: 'DELETE',
+        headers: { 'x-user-id': user!.id }
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Éxito',
+          description: 'Grupo eliminado correctamente'
+        });
+        fetchData();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'No se pudo eliminar el grupo',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error eliminando grupo:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar el grupo',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const openAssignModal = (group: Group) => {
+    setSelectedGroup(group);
+    setSelectedMembers(group.members.map(m => m.id));
+    setAssignModalOpen(true);
+  };
+
+  const filteredMembers = allMembers.filter(member =>
+    member.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (!courseId) {
+    return null;
   }
 
-  const handleRemovePoints = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Removing points:', removePointsForm)
-    setShowRemovePointsModal(false)
+  if (loading) {
+    return (
+      <MasterCourseLayout courseId={courseId}>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+            <p className="mt-4 text-neutral-400">Cargando grupos...</p>
+          </div>
+        </div>
+      </MasterCourseLayout>
+    );
   }
 
   return (
-    <div className="flex w-full flex-col items-center justify-center bg-white dark:bg-black">
-      <section className="m-4 flex w-8/12 flex-row items-center gap-3 rounded-md border-2 border-black p-4 dark:border-white">
-        <p className="text-xl font-semibold text-neutral-700 dark:text-neutral-100">
-          Gestión de miembros:
-        </p>
-
-        <Dialog open={showAddPointsModal} onOpenChange={setShowAddPointsModal}>
-          <DialogTrigger asChild>
-            <Button className="btn-success gap-2 text-lg font-bold">
-              <span className="icon-[foundation--plus]" />
-              Dar puntos
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="border bg-white p-8 text-black">
-            <DialogHeader>
-              <DialogTitle className="flex w-full justify-center text-2xl font-bold">
-                Dar Puntos
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddPoints} className="w-full space-y-4 p-3">
-              <div>
-                <Label className="mb-2 block text-gray-700">Nombre</Label>
-                <Input
-                  type="text"
-                  placeholder="Name"
-                  value={addPointsForm.studentName}
-                  onChange={(e) =>
-                    setAddPointsForm({ ...addPointsForm, studentName: e.target.value })
-                  }
-                  className="w-full bg-white"
-                  required
-                />
-              </div>
-              <div className="flex flex-row gap-4">
-                <div className="flex-1">
-                  <Label className="mb-2 block text-gray-700">Oro:</Label>
-                  <Input
-                    type="number"
-                    placeholder="Oro"
-                    value={addPointsForm.gold}
-                    onChange={(e) =>
-                      setAddPointsForm({ ...addPointsForm, gold: Number(e.target.value) })
-                    }
-                    className="w-full bg-white"
-                    required
-                  />
-                </div>
-                <div className="flex-1">
-                  <Label className="mb-2 block text-gray-700">Experiencia:</Label>
-                  <Input
-                    type="number"
-                    placeholder="Experiencia"
-                    value={addPointsForm.experience}
-                    onChange={(e) =>
-                      setAddPointsForm({
-                        ...addPointsForm,
-                        experience: Number(e.target.value),
-                      })
-                    }
-                    className="w-full bg-white"
-                    required
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="btn-success w-full">
-                Confirmar
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showRemovePointsModal} onOpenChange={setShowRemovePointsModal}>
-          <DialogTrigger asChild>
-            <Button className="btn-error gap-2 text-lg font-bold">
-              <span className="icon-[streamline--subtract-1-solid]" />
-              Quitar puntos
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="border bg-white p-8 text-black">
-            <DialogHeader>
-              <DialogTitle className="flex w-full justify-center text-2xl font-bold">
-                Quitar puntos
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleRemovePoints} className="w-full space-y-4 p-3">
-              <div>
-                <Label className="mb-2 block text-gray-700">Nombre</Label>
-                <Input
-                  type="text"
-                  placeholder="Name"
-                  value={removePointsForm.studentName}
-                  onChange={(e) =>
-                    setRemovePointsForm({ ...removePointsForm, studentName: e.target.value })
-                  }
-                  className="w-full bg-white"
-                  required
-                />
-              </div>
-              <div className="flex flex-row gap-4">
-                <div className="flex-1">
-                  <Label className="mb-2 block text-gray-700">Oro:</Label>
-                  <Input
-                    type="number"
-                    placeholder="Oro"
-                    value={removePointsForm.gold}
-                    onChange={(e) =>
-                      setRemovePointsForm({ ...removePointsForm, gold: Number(e.target.value) })
-                    }
-                    className="w-full bg-white"
-                    required
-                  />
-                </div>
-                <div className="flex-1">
-                  <Label className="mb-2 block text-gray-700">Experiencia:</Label>
-                  <Input
-                    type="number"
-                    placeholder="Experiencia"
-                    value={removePointsForm.experience}
-                    onChange={(e) =>
-                      setRemovePointsForm({
-                        ...removePointsForm,
-                        experience: Number(e.target.value),
-                      })
-                    }
-                    className="w-full bg-white"
-                    required
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="btn-error w-full">
-                Confirmar
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </section>
-
-      <section className="h-[33rem] w-8/12 flex flex-col items-center overflow-x-scroll border-2 border-neutral-500 scrollbar-none dark:bg-black">
-        <div className="h-full w-full rounded-sm px-4 py-2 text-black shadow-lg">
-          <header className="border-b border-gray-100 px-5 py-4">
-            <h2 className="text-2xl font-bold text-yellow-600">Grupo 1</h2>
-          </header>
-          <div className="p-3">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-neutral-700 text-xs font-semibold uppercase text-yellow-500">
-                  <TableRow className="border-2 border-black">
-                    <TableHead className="p-4 text-left text-sm font-semibold">
-                      Alumno
-                    </TableHead>
-                    <TableHead className="p-4 text-left text-sm font-semibold">
-                      Personaje
-                    </TableHead>
-                    <TableHead className="p-4 text-left text-sm font-semibold">
-                      Nivel
-                    </TableHead>
-                    <TableHead className="p-4 text-center text-sm font-semibold">
-                      Oro
-                    </TableHead>
-                    <TableHead className="p-4 text-center text-sm font-semibold">
-                      Experiencia
-                    </TableHead>
-                    <TableHead className="p-4 text-center text-sm font-semibold">
-                      Energía
-                    </TableHead>
-                    <TableHead className="p-4 text-center text-sm font-semibold">
-                      Vida
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-gray-100 border-2 border-black text-sm text-neutral-600 dark:text-white">
-                  {students.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell className="p-2">
-                        <div className="flex items-center">
-                          <div className="mr-2 h-10 w-10 flex-shrink-0 sm:mr-3">
-                            <Image
-                              className="rounded-full"
-                              src={student.avatar}
-                              alt={student.name}
-                              width={40}
-                              height={40}
-                            />
-                          </div>
-                          <div className="font-medium">{student.name}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="p-2 text-left">{student.character}</TableCell>
-                      <TableCell className="p-2 text-left font-medium text-green-500">
-                        {student.level}
-                      </TableCell>
-                      <TableCell className="p-2 text-center text-lg">
-                        {student.gold.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="p-2 text-center text-lg">
-                        {student.experience}
-                      </TableCell>
-                      <TableCell className="p-2 text-center text-lg">
-                        {student.energy}
-                      </TableCell>
-                      <TableCell className="p-2 text-center text-lg">
-                        {student.health}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+    <MasterCourseLayout courseId={courseId}>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-neutral-100 mb-2">
+              Gestión de Grupos
+            </h1>
+            <p className="text-neutral-400">
+              Crea grupos y asigna estudiantes para organizarlos
+            </p>
           </div>
+
+          <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#D89216] hover:bg-[#b6770f] text-black">
+                <Plus className="h-4 w-4 mr-2" />
+                Crear Grupo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#1a1a1a] border-neutral-800">
+              <DialogHeader>
+                <DialogTitle className="text-neutral-100">Crear Nuevo Grupo</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name" className="text-neutral-300">Nombre del Grupo *</Label>
+                  <Input
+                    id="name"
+                    value={newGroup.name}
+                    onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
+                    className="bg-[#0a0a0a] border-neutral-700 text-neutral-100"
+                    placeholder="Ej: Grupo A"
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description" className="text-neutral-300">Descripción (opcional)</Label>
+                  <Textarea
+                    id="description"
+                    value={newGroup.description}
+                    onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
+                    className="bg-[#0a0a0a] border-neutral-700 text-neutral-100"
+                    placeholder="Descripción del grupo"
+                    rows={3}
+                    maxLength={500}
+                  />
+                </div>
+                <Button 
+                  onClick={handleCreateGroup}
+                  className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black"
+                >
+                  Crear Grupo
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-      </section>
-    </div>
-  )
+
+        {/* Lista de Grupos */}
+        {groups.length === 0 ? (
+          <Card className="bg-[#1a1a1a] border-neutral-800">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Users className="h-16 w-16 text-neutral-600 mb-4" />
+              <p className="text-neutral-400 text-center mb-2">
+                No hay grupos creados
+              </p>
+              <p className="text-neutral-500 text-sm text-center mb-4">
+                Crea tu primer grupo para comenzar a organizar estudiantes
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {groups.map((group) => (
+              <Card key={group.id} className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <CardTitle className="text-neutral-100">{group.name}</CardTitle>
+                      {group.description && (
+                        <CardDescription className="text-neutral-500 mt-1">
+                          {group.description}
+                        </CardDescription>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteGroup(group.id)}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-400">Miembros:</span>
+                      <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
+                        {group.members?.length || 0}
+                      </Badge>
+                    </div>
+                    <Button
+                      onClick={() => openAssignModal(group)}
+                      variant="outline"
+                      className="w-full border-neutral-700 text-neutral-100 hover:bg-neutral-800"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Asignar Miembros
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Modal de Asignar Miembros */}
+        <Dialog open={assignModalOpen} onOpenChange={setAssignModalOpen}>
+          <DialogContent className="bg-[#1a1a1a] border-neutral-800 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-neutral-100">
+                Asignar Miembros - {selectedGroup?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Buscador */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 bg-[#0a0a0a] border-neutral-700 text-neutral-100"
+                  placeholder="Buscar miembros..."
+                />
+              </div>
+
+              {/* Lista de Miembros */}
+              <div className="max-h-96 overflow-y-auto space-y-2">
+                {filteredMembers.length === 0 ? (
+                  <p className="text-center text-neutral-500 py-8">
+                    No hay miembros disponibles
+                  </p>
+                ) : (
+                  filteredMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center space-x-3 p-3 rounded-lg bg-[#0a0a0a] border border-neutral-800 hover:border-neutral-700 transition-colors"
+                    >
+                      <Checkbox
+                        id={member.id}
+                        checked={selectedMembers.includes(member.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedMembers([...selectedMembers, member.id]);
+                          } else {
+                            setSelectedMembers(selectedMembers.filter(id => id !== member.id));
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={member.id}
+                        className="flex-1 cursor-pointer"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-neutral-100 font-medium">{member.name}</p>
+                            {member.group && (
+                              <p className="text-xs text-neutral-500">
+                                Grupo actual: {member.group.name}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-xs text-neutral-400">
+                            <span className="ml-2">⭐ {member.experience}</span>
+                            <span className="ml-2">💰 {member.gold}</span>
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-4 border-t border-neutral-800">
+                <Button
+                  variant="outline"
+                  onClick={() => setAssignModalOpen(false)}
+                  className="flex-1 border-neutral-700 text-neutral-100"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleAssignMembers}
+                  className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black"
+                >
+                  Asignar {selectedMembers.length} miembro{selectedMembers.length !== 1 ? 's' : ''}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </MasterCourseLayout>
+  );
 }
