@@ -22,6 +22,7 @@ async function main() {
   await prisma.teachers_courses.deleteMany();
   await prisma.courses.deleteMany();
   await prisma.teachers.deleteMany();
+  await prisma.institutions.deleteMany();
   await prisma.sessions.deleteMany();
   await prisma.users.deleteMany();
   await prisma.tasks.deleteMany();
@@ -141,29 +142,48 @@ async function main() {
     },
   });
 
-  // 4. Crear profesores
+  // 4. Crear institución (opcional)
+  console.log('🏫 Creating institution...');
+  const institution = await prisma.institutions.create({
+    data: {
+      name: 'Universidad Tecnológica',
+      phone_number: '+1234567890',
+    },
+  });
+
+  // 5. Crear profesores vinculados a users
   console.log('👨‍🏫 Creating teachers...');
   const teacher1 = await prisma.teachers.create({
     data: {
-      name: 'Dr. García',
-      internal_id: 'T001',
-      school_id: 'SCH001',
+      user_id: teacherUser.id,
+      internal_id: 'PROF-2024-001',
+      institution_id: institution.id,
     },
   });
 
   const teacher2 = await prisma.teachers.create({
     data: {
-      name: 'Prof. Martínez',
-      internal_id: 'T002',
-      school_id: 'SCH001',
+      user_id: teacherUser2.id,
+      internal_id: 'PROF-2024-002',
+      institution_id: institution.id,
+    },
+  });
+
+  // Crear un teacher independiente (sin institución)
+  const independentTeacherUser = await prisma.users.create({
+    data: {
+      name: 'Dra. Rodríguez (Independiente)',
+      email: 'rodriguez@example.com',
+      username: 'drarodriguez',
+      password: hashedPassword,
     },
   });
 
   const teacher3 = await prisma.teachers.create({
     data: {
-      name: 'Dra. Rodríguez',
-      internal_id: 'T003',
-      school_id: 'SCH001',
+      user_id: independentTeacherUser.id,
+      internal_id: null, // Sin código institucional
+      institution_id: null, // Sin institución
     },
   });
 

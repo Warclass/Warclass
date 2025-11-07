@@ -48,7 +48,11 @@ export class DashboardService {
         include: {
           course: {
             include: {
-              teacher: true,
+              teacher: {
+                include: {
+                  user: true,
+                },
+              },
               groups: {
                 include: {
                   members: {
@@ -83,7 +87,7 @@ export class DashboardService {
         return {
           id: course.id,
           name: course.name,
-          instructor: course.teacher.name,
+          instructor: course.teacher.user.name, // FIXED: Acceder a través de user
           progress,
           color,
           level: avgLevel,
