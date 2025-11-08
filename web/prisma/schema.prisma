@@ -23,6 +23,7 @@ model users {
   sessions     sessions[]
   inscriptions inscriptions[]
   invitations  invitations[]
+  teacher      teachers?
 }
 
 model sessions {
@@ -36,13 +37,15 @@ model sessions {
 }
 
 model teachers {
-  id          String   @id @default(uuid())
-  name        String
-  internal_id String
-  school_id   String
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id             String   @id @default(uuid())
+  user_id        String   @unique
+  internal_id    String?
+  institution_id String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
+  user             users                      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  institution      institutions?              @relation(fields: [institution_id], references: [id], onDelete: SetNull)
   courses          courses[]
   teachers_courses teachers_courses[]
 }
@@ -281,6 +284,8 @@ model institutions {
   phone_number String?
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
+
+  teachers teachers[]
 }
 
 model accesories {

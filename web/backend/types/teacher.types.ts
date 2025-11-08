@@ -1,28 +1,39 @@
+/**
+ * Teacher Types
+ * Types for teacher management (users who can create courses)
+ */
+
 export interface Teacher {
   id: string;
-  name: string;
-  internalId: string;
-  schoolId: string;
-  totalCourses: number;
-  totalStudents: number;
-}
-
-export interface TeacherCourse {
-  id: string;
-  name: string;
-  description: string | null;
-  teacherName: string;
-  studentsCount: number;
-  groupsCount: number;
-  membersCount: number;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  internalId: string | null;
+  institutionId: string | null;
+  institutionName: string | null;
   createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface CreateCourseDTO {
-  name: string;
-  description?: string;
+export interface CreateTeacherDTO {
+  userId: string;
+  internalId?: string | null;
+  institutionId?: string | null;
 }
 
-export interface TeacherDetails extends Teacher {
-  courses: TeacherCourse[];
+export interface UpdateTeacherDTO {
+  internalId?: string | null;
+  institutionId?: string | null;
+}
+
+export interface TeacherResponse {
+  success: boolean;
+  teacher?: Teacher;
+  message?: string;
+}
+
+export interface TeachersListResponse {
+  success: boolean;
+  teachers: Teacher[];
+  total: number;
 }
