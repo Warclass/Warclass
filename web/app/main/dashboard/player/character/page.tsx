@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/auth/useAuth'
 import PlayerLayout from '@/app/layouts/PlayerLayout'
@@ -9,6 +9,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Sword, Shield, Zap, Heart, Coins, Star, BookOpen } from 'lucide-react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import * as THREE from 'three'
+import { CustomizableCharacter } from '@/lib/character'
+import type { CharacterAppearance } from '@/lib/character'
+import ambienceConfig from '@/config/ambience.json'
+import timeConfig from '@/config/time.json'
+import { Ambience } from '@/components/three/Ambience'
 
 export default function CharacterPage() {
     const searchParams = useSearchParams()
@@ -103,33 +111,173 @@ export default function CharacterPage() {
     const experiencePercent = (characterData.experience / 1000) * 100 // Ejemplo: nivel cada 1000 exp
     const level = Math.floor(characterData.experience / 100) + 1
 
+    console.log('🎮 Character Data:', {
+        charClass,
+        gender: characterData.gender,
+        name: characterData.name,
+        fullData: characterData
+    })
+
+    // Mapeo de nombres de clase a paths del modelo
+    const classPathMap: Record<string, string> = {
+        'Guerrero': 'Warrior',
+        'Warrior': 'Warrior',
+        'Mago': 'Mage',
+        'Mage': 'Mage',
+        'Arquero': 'Archer',
+        'Archer': 'Archer'
+    }
+
+    // Mapeo de clase a nombre de archivo del modelo
+    const classModelFileMap: Record<string, string> = {
+        'Warrior': 'warrior.fbx',
+        'Mage': 'witch.fbx',
+        'Archer': 'archer.fbx'
+    }
+
+    // Seleccionar un ambiente aleatorio
+    const ambienceNames = ['Ambience1', 'Ambience2', 'Ambience3', 'Ambience4', 'Ambience5'] as const
+    const selectedAmbience = ambienceNames[Math.floor(Math.random() * ambienceNames.length)]
+    const selectedAmbienceConfig = ambienceConfig[selectedAmbience]
+    const selectedTimeConfig = timeConfig[selectedAmbienceConfig.time as 'day' | 'night']
+
+    // Convertir colores de character a appearance
+    const appearance: CharacterAppearance = {
+        Hair: characterData.hair_color || '#8B4513',
+        Eyes: characterData.eye_color || '#0000FF',
+        Skin: characterData.skin_color || '#FFE0BD',
+        Shirt: characterData.class?.color || '#FF0000',
+        Pants: '#2C3E50',
+        Shoes: '#1A1A1A'
+    }
+
+    // Determinar el path de la clase usando el mapeo
+    const className = charClass?.name || 'Guerrero'
+    const classPath = classPathMap[className] || 'Warrior' // Fallback a Warrior
+    const modelFileName = classModelFileMap[classPath] || 'warrior.fbx' // Fallback a warrior.fbx
+    const genderPath = characterData.gender === 'male' ? 'Male' : 'Female'
+    
+    const modelPath = `/models/character_scene/Character/${classPath}/${genderPath}/${modelFileName}`
+    const animationsPath = `/models/character_scene/Character/${classPath}/${genderPath}/State/`
+
+    console.log('📂 Model paths:', { 
+        className,
+        classPath,
+        modelFileName,
+        genderPath,
+        modelPath, 
+        animationsPath 
+    })
+
     return (
         <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
-            <div className="max-w-7xl mx-auto space-y-6">
-                {/* Header con info del curso */}
-                <Card className="bg-gradient-to-r from-purple-600 to-blue-600 border-none text-white">
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="text-3xl font-bold mb-2">
-                                    {characterData.name}
-                                </CardTitle>
-                                <CardDescription className="text-white/90 text-lg">
-                                    {charClass.name} • Nivel {level}
-                                </CardDescription>
-                                <CardDescription className="text-white/80 text-sm mt-1">
-                                    Curso: {course.name} • Profesor: {course.teacher}
-                                </CardDescription>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                {/* Panel Izquierdo: Visualización 3D */}
+                <div className="flex flex-col gap-4">
+                    {/* Header con info del curso */}
+                    <Card className="bg-gradient-to-r from-purple-600 to-blue-600 border-none text-white">
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-2xl font-bold mb-1">
+                                        {characterData.name}
+                                    </CardTitle>
+                                    <CardDescription className="text-white/90">
+                                        {charClass.name} • Nivel {level}
+                                    </CardDescription>
+                                    <CardDescription className="text-white/80 text-sm">
+                                        {course.name} • {course.teacher}
+                                    </CardDescription>
+                                </div>
+                                <Badge className="bg-white/20 text-white px-3 py-1">
+                                    ⚡ {charClass.speed}
+                                </Badge>
                             </div>
-                            <Badge className="bg-white/20 text-white text-lg px-4 py-2">
-                                ⚡ {charClass.speed} velocidad
-                            </Badge>
-                        </div>
-                    </CardHeader>
-                </Card>
+                        </CardHeader>
+                    </Card>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Visualización 3D del personaje */}
+                    <Card className="bg-[#1a1a1a] border-neutral-800 flex-1 min-h-[400px]">
+                        <CardContent className="p-0 h-full">
+                            <div 
+                                className="relative w-full h-full rounded-lg overflow-hidden"
+                                style={{
+                                    background: selectedTimeConfig.skyColor
+                                }}
+                            >
+                                <Canvas
+                                    camera={{
+                                        position: [
+                                            selectedAmbienceConfig.cameraPosition.x,
+                                            selectedAmbienceConfig.cameraPosition.y,
+                                            selectedAmbienceConfig.cameraPosition.z
+                                        ],
+                                        fov: 75,
+                                        near: 0.1,
+                                        far: 1000
+                                    }}
+                                    gl={{
+                                        antialias: true,
+                                        alpha: true,
+                                        toneMapping: THREE.ACESFilmicToneMapping,
+                                        toneMappingExposure: selectedTimeConfig.exposure
+                                    }}
+                                >
+                                    <Suspense fallback={null}>
+                                        <ambientLight 
+                                            color={selectedTimeConfig.ambientLightColor} 
+                                            intensity={0.8} 
+                                        />
+                                        <directionalLight
+                                            color={selectedTimeConfig.sunLightColor}
+                                            intensity={1}
+                                            position={[
+                                                selectedAmbienceConfig.lights.backLight.position.x,
+                                                selectedAmbienceConfig.lights.backLight.position.y,
+                                                selectedAmbienceConfig.lights.backLight.position.z
+                                            ]}
+                                        />
+                                        <spotLight
+                                            color={selectedTimeConfig.frontLightColor}
+                                            intensity={30}
+                                            position={[5, 5, 5]}
+                                            angle={0.5}
+                                            penumbra={0.5}
+                                        />
+
+                                        <CustomizableCharacter
+                                            modelPath={modelPath}
+                                            animationsPath={animationsPath}
+                                            appearance={appearance}
+                                            rotation={[0, Math.PI, 0]}
+                                            autoRestartIdle={true}
+                                        />
+
+                                        <Ambience name={selectedAmbience} />
+
+                                        <OrbitControls
+                                            target={[
+                                                selectedAmbienceConfig.focusPosition.x,
+                                                selectedAmbienceConfig.focusPosition.y,
+                                                selectedAmbienceConfig.focusPosition.z
+                                            ]}
+                                            enablePan={false}
+                                            enableZoom={true}
+                                            minDistance={2}
+                                            maxDistance={8}
+                                            rotateSpeed={0.5}
+                                        />
+                                    </Suspense>
+                                </Canvas>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Panel Derecho: Stats y Detalles */}
+                <div className="flex flex-col gap-4 overflow-y-auto">
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-4">
                     <Card className="bg-[#1a1a1a] border-neutral-800">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
@@ -140,10 +288,10 @@ export default function CharacterPage() {
                         <CardContent>
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-2xl font-bold text-neutral-100">
+                                    <span className="text-xl font-bold text-neutral-100">
                                         {characterData.experience}
                                     </span>
-                                    <span className="text-sm text-neutral-500">/ 1000</span>
+                                    <span className="text-xs text-neutral-500">/ 1000</span>
                                 </div>
                                 <Progress value={experiencePercent} className="h-2" />
                             </div>
@@ -158,10 +306,10 @@ export default function CharacterPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-neutral-100">
+                            <div className="text-xl font-bold text-neutral-100">
                                 {characterData.gold}
                             </div>
-                            <p className="text-xs text-neutral-500 mt-1">Monedas disponibles</p>
+                            <p className="text-xs text-neutral-500 mt-1">Monedas</p>
                         </CardContent>
                     </Card>
 
@@ -175,10 +323,10 @@ export default function CharacterPage() {
                         <CardContent>
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-2xl font-bold text-neutral-100">
+                                    <span className="text-xl font-bold text-neutral-100">
                                         {characterData.energy}
                                     </span>
-                                    <span className="text-sm text-neutral-500">/ 100</span>
+                                    <span className="text-xs text-neutral-500">/ 100</span>
                                 </div>
                                 <Progress value={characterData.energy} className="h-2" />
                             </div>
@@ -186,8 +334,7 @@ export default function CharacterPage() {
                     </Card>
                 </div>
 
-                {/* Character Details */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Character Details */}
                     {/* Abilities */}
                     <Card className="bg-[#1a1a1a] border-neutral-800">
                         <CardHeader>
@@ -254,63 +401,34 @@ export default function CharacterPage() {
                                 </div>
                             </CardContent>
                         </Card>
-
-                        <Card className="bg-[#1a1a1a] border-neutral-800">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <BookOpen className="h-5 w-5 text-[#D89216]" />
-                                    Información del Member
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-neutral-400">Nombre:</span>
-                                        <span className="text-neutral-100 font-medium">{member.name}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-neutral-400">Experiencia Base:</span>
-                                        <span className="text-neutral-100 font-medium">{member.experience}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-neutral-400">Oro Base:</span>
-                                        <span className="text-neutral-100 font-medium">{member.gold}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-neutral-400">Energía Base:</span>
-                                        <span className="text-neutral-100 font-medium">{member.energy}</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
                     </div>
-                </div>
 
-                {/* Actions */}
-                <Card className="bg-[#1a1a1a] border-neutral-800">
-                    <CardContent className="pt-6">
-                        <div className="flex gap-4">
-                            <Button 
-                                onClick={() => router.push(`/main/dashboard/player/tasks?courseId=${courseId}`)}
-                                className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black"
-                            >
-                                Ver Tareas
-                            </Button>
-                            <Button 
-                                onClick={() => router.push(`/main/dashboard/player/quizzes?courseId=${courseId}`)}
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                            >
-                                Ver Exámenes
-                            </Button>
-                            <Button 
-                                onClick={() => router.push(`/main/dashboard/player/members?courseId=${courseId}`)}
-                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
-                            >
-                                Ver Gremio
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                    {/* Actions */}
+                    <Card className="bg-[#1a1a1a] border-neutral-800">
+                        <CardContent className="pt-6">
+                            <div className="flex gap-4">
+                                <Button 
+                                    onClick={() => router.push(`/main/dashboard/player/tasks?courseId=${courseId}`)}
+                                    className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black"
+                                >
+                                    Ver Tareas
+                                </Button>
+                                <Button 
+                                    onClick={() => router.push(`/main/dashboard/player/quizzes?courseId=${courseId}`)}
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    Ver Exámenes
+                                </Button>
+                                <Button 
+                                    onClick={() => router.push(`/main/dashboard/player/members?courseId=${courseId}`)}
+                                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                                >
+                                    Ver Gremio
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </PlayerLayout>
     )
