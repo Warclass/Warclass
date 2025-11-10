@@ -46,7 +46,7 @@ const eyeColors = [
 export default function CreateCharacterPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const [selectedClass, setSelectedClass] = useState('warrior')
   const [selectedGender, setSelectedGender] = useState('female')
   const [characterName, setCharacterName] = useState('')
@@ -55,37 +55,58 @@ export default function CreateCharacterPage() {
   const [eyeColorIndex, setEyeColorIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [classes, setClasses] = useState<Array<{ id: string; name: string; speed: number }>>([])
   const inputManagerRef = useRef<CharacterInputManager | null>(null)
 
+  // Verificar autenticación
   useEffect(() => {
-    // Cargar las clases disponibles
+    if (!authLoading && !user) {
+      console.error('❌ Usuario no autenticado, redirigiendo a login')
+      router.push('/auth/login')
+    }
+  }, [authLoading, user, router])
+
+  useEffect(() => {
     const fetchClasses = async () => {
       try {
-        const response = await fetch('/api/characters?action=classes')
+        console.log('🔄 Cargando clases de personajes...')
+        const response = await fetch('/api/characters?action=classes', {
+          headers: user?.id ? { 'x-user-id': user.id } : {}
+        })
+        
         if (response.ok) {
           const data = await response.json()
+          console.log('✅ Clases cargadas:', data.data)
           setClasses(data.data || [])
+        } else {
+          console.error('❌ Error al cargar clases:', response.status)
+          setLoadError('Error al cargar las clases de personaje')
         }
       } catch (error) {
-        console.error('Error al cargar clases:', error)
+        console.error('❌ Error al cargar clases:', error)
+        setLoadError('Error de conexión al cargar clases')
       }
     }
 
-    fetchClasses()
-  }, [])
+    if (user?.id) {
+      fetchClasses()
+    }
+  }, [user?.id])
 
   useEffect(() => {
+    console.log('🎮 Inicializando InputManager...')
     const manager = new CharacterInputManager()
     inputManagerRef.current = manager
 
     const timer = setTimeout(() => {
+      console.log('✅ Carga inicial completada')
       setIsLoading(false)
-    }, 2000)
+    }, 1500)
 
     return () => {
       clearTimeout(timer)
-      // CharacterInputManager no tiene dispose, se limpia automáticamente
+      console.log('🧹 Limpiando InputManager')
     }
   }, [])
 
@@ -153,10 +174,8 @@ export default function CreateCharacterPage() {
         return
       }
 
-      // NOTA: Por ahora usamos un memberId temporal
       // TODO: Implementar lógica para obtener el memberId correcto desde el curso
-      // Se debe obtener del member asociado al usuario en el grupo del curso
-      const memberId = searchParams.get('memberId') || '1' // ID temporal
+      const memberId = searchParams.get('memberId') || '1'
 
       const characterData = {
         name: characterName,
@@ -179,7 +198,7 @@ export default function CreateCharacterPage() {
           name: characterData.name,
           classId: characterData.classId,
           memberId: characterData.memberId,
-          appearance: characterData.appearance // Agregado el appearance
+          appearance: characterData.appearance
         })
       })
 
@@ -187,7 +206,6 @@ export default function CreateCharacterPage() {
         const data = await response.json();
         console.log('Personaje creado:', data);
         
-        // Redirigir al dashboard de player
         router.push('/main/dashboard/player');
       } else {
         const errorData = await response.json()
@@ -203,7 +221,7 @@ export default function CreateCharacterPage() {
 
   const ambienceConfig = {
     focusPosition: new THREE.Vector3(0, 0, 0),
-    cameraPosition: new THREE.Vector3(0, 1, 3),
+    cameraPosition: new THREE.Vector3(1, 0.75, 1),
     lights: {
       frontLight: { modifier: 0 },
       backLight: { position: new THREE.Vector3(10, 10, 10) },
@@ -220,9 +238,47 @@ export default function CreateCharacterPage() {
   }
 
   const modelPath = `/models/character_scene/Character/${characterClasses.find(c => c.id === selectedClass)?.path}/${genders.find(g => g.id === selectedGender)?.path}`
+  
+  console.log('🎨 Configuración actual:', {
+    selectedClass,
+    selectedGender,
+    modelPath,
+    hairColor: hairColors[hairColorIndex],
+    skinColor: skinColors[skinColorIndex],
+    eyeColor: eyeColors[eyeColorIndex],
+    user: user?.id,
+  })
+
+  // Mostrar estado de carga mientras se autentica
+  if (authLoading || !user) {
+    return (
+      <div className="flex h-screen w-screen bg-[#0a0a0a] items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+          <p className="text-neutral-400">Verificando autenticación...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Mostrar error si hay
+  if (loadError) {
+    return (
+      <div className="flex h-screen w-screen bg-[#0a0a0a] items-center justify-center">
+        <div className="text-center space-y-4 max-w-md p-8">
+          <div className="text-red-500 text-6xl">⚠️</div>
+          <h2 className="text-2xl font-bold text-neutral-100">Error de Carga</h2>
+          <p className="text-neutral-400">{loadError}</p>
+          <Button onClick={() => router.push('/main/dashboard/player')} className="bg-[#D89216] hover:bg-[#b6770f]">
+            Volver al Dashboard
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#0a0a0a]">
+    <div className="flex flex-col h-screen w-screen">
       <header className="w-full flex h-14 bg-[#0f0f0f] border-b border-neutral-800">
         <nav className="flex w-full justify-between px-6 items-center">
           <Link href="/dashboard" className="flex items-center gap-2 text-neutral-400 hover:text-neutral-100 transition">
@@ -234,16 +290,19 @@ export default function CreateCharacterPage() {
         </nav>
       </header>
 
-      <main className="flex flex-row flex-grow relative overflow-hidden bg-neutral-900/90 h-full">
+      <main className="flex flex-row flex-grow relative overflow-hidde h-full">
         <section id="scene" className="fixed h-full w-full -z-10">
           {isLoading ? (
             <div className="h-full w-full bg-[#0a0a0a] flex justify-center items-center">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216]" />
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+                <p className="text-neutral-400">Cargando personaje...</p>
+              </div>
             </div>
           ) : (
             inputManagerRef.current && (
               <CharacterCreator
-                key={`${hairColorIndex}-${skinColorIndex}-${eyeColorIndex}`}
+                key={`${selectedClass}-${selectedGender}`}
                 modelPath={`${modelPath}/warrior.fbx`}
                 animationsPath={`${modelPath}/State/`}
                 appearance={{
@@ -261,10 +320,10 @@ export default function CreateCharacterPage() {
                   ambienceConfig.focusPosition.y,
                   ambienceConfig.focusPosition.z,
                 ]}
-                rotation={[0, Math.PI * 0.75, 0]}
+                rotation={[0, Math.PI * 0.25, 0]}
                 timeConfig={timeConfig}
                 inputManager={inputManagerRef.current}
-                onLoad={() => console.log('Character loaded!')}
+                onLoad={() => console.log('✅ Personaje y animación idle cargados correctamente')}
               />
             )
           )}

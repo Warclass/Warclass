@@ -33,6 +33,7 @@ interface CharacterCreatorProps {
   timeConfig: TimeConfig;
   inputManager: CharacterInputManager;
   onLoad?: () => void;
+  onError?: (error: string) => void;
 }
 
 function CustomizableCharacter({
@@ -41,6 +42,7 @@ function CustomizableCharacter({
   appearance,
   rotation,
   onLoad,
+  onError,
 }: Omit<
   CharacterCreatorProps,
   "cameraPosition" | "focusPosition" | "timeConfig" | "inputManager"
@@ -51,13 +53,23 @@ function CustomizableCharacter({
   const [materialsMap, setMaterialsMap] = useState<Map<string, THREE.Material>>(
     new Map()
   );
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('🎨 Cargando modelo desde:', modelPath);
     const loader = new FBXLoader();
 
     loader.load(
       modelPath,
       (object) => {
+        console.log('✅ Modelo cargado exitosamente');
+        console.log('📦 Animaciones en el FBX:', object.animations.length);
+        if (object.animations.length > 0) {
+          object.animations.forEach((clip, index) => {
+            console.log(`  ${index + 1}. ${clip.name} - Duración: ${clip.duration}s - Tracks: ${clip.tracks.length}`);
+          });
+        }
+        
         object.scale.set(0.005, 0.005, 0.005);
         object.rotation.set(...rotation);
 
@@ -90,30 +102,102 @@ function CustomizableCharacter({
         setMaterialsMap(materials);
         modelRef.current = object;
 
-        if (groupRef.current && !groupRef.current.children.length) {
-          groupRef.current.add(object);
+        // Verificar que el modelo tenga SkinnedMesh
+        let hasSkinnedMesh = false;
+        object.traverse((child) => {
+          if (child instanceof THREE.SkinnedMesh) {
+            hasSkinnedMesh = true;
+            console.log('✅ SkinnedMesh encontrado:', child.name);
+            console.log('   - Skeleton bones:', child.skeleton?.bones.length);
+          }
+        });
+
+        if (!hasSkinnedMesh) {
+          console.warn('⚠️ El modelo no tiene SkinnedMesh - las animaciones no funcionarán');
         }
 
+        // PRIMERO agregar el modelo al grupo (importante para que el mixer funcione)
+        if (groupRef.current) {
+          if (groupRef.current.children.length > 0) {
+            // Limpiar hijos anteriores
+            while (groupRef.current.children.length > 0) {
+              groupRef.current.remove(groupRef.current.children[0]);
+            }
+          }
+          groupRef.current.add(object);
+          console.log('✅ Modelo agregado al grupo de la escena');
+        }
+
+        // LUEGO crear el AnimationManager (después de que el modelo esté en la escena)
         animationManagerRef.current = new AnimationManager(
           object,
           animationsPath
         );
 
+        // Si el modelo ya tiene animaciones embebidas, úsalas como respaldo
+        if (object.animations && object.animations.length > 0) {
+          console.log('🎬 El modelo tiene animaciones embebidas, intentando usarlas primero...');
+          const embeddedIdleClip = object.animations.find(clip => 
+            clip.name.toLowerCase().includes('idle') || 
+            clip.name.toLowerCase().includes('t-pose') ||
+            object.animations.length === 1
+          );
+          
+          if (embeddedIdleClip) {
+            console.log('✅ Usando animación embebida:', embeddedIdleClip.name);
+            const action = animationManagerRef.current.mixer.clipAction(embeddedIdleClip);
+            action.setLoop(THREE.LoopRepeat, Infinity);
+            action.play();
+            onLoad?.();
+            return;
+          }
+        }
+
+        // Si no hay animaciones embebidas, cargar desde archivos externos
         animationManagerRef.current
           .loadAnimations([{ name: "idle", path: "idle.fbx", loop: true }])
           .then(() => {
-            animationManagerRef.current?.play("idle");
+            console.log('✅ Animaciones cargadas exitosamente');
+            const action = animationManagerRef.current?.play("idle");
+            if (action) {
+              console.log('✅ Animación idle iniciada:', {
+                isRunning: action.isRunning(),
+                time: action.time,
+                timeScale: action.timeScale,
+                weight: action.weight,
+                enabled: action.enabled
+              });
+            } else {
+              console.error('❌ No se pudo iniciar la animación idle');
+            }
             onLoad?.();
+          })
+          .catch((error) => {
+            console.error('❌ Error cargando animaciones:', error);
+            const errorMsg = `Error al cargar animaciones: ${error.message}`;
+            setLoadError(errorMsg);
+            onError?.(errorMsg);
           });
       },
-      undefined,
-      (error) => console.error("Error loading character:", error)
+      (progress) => {
+        const percent = (progress.loaded / progress.total) * 100;
+        if (percent % 25 === 0) { // Log cada 25%
+          console.log(`📦 Progreso de carga: ${percent.toFixed(0)}%`);
+        }
+      },
+      (error) => {
+        console.error('❌ Error loading character:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Archivo no encontrado';
+        const errorMsg = `Error al cargar el modelo: ${errorMessage}`;
+        setLoadError(errorMsg);
+        onError?.(errorMsg);
+      }
     );
 
     return () => {
       animationManagerRef.current?.dispose();
     };
-  }, [modelPath, animationsPath, rotation, onLoad]);
+  }, [modelPath, animationsPath, rotation, onLoad, onError]);
 
   useEffect(() => {
     if (materialsMap.size === 0) return;
@@ -184,6 +268,17 @@ function CustomizableCharacter({
   useFrame((_, delta) => {
     if (animationManagerRef.current) {
       animationManagerRef.current.update(delta);
+      
+      // Log periódico para debugging (cada 60 frames aprox)
+      if (Math.random() < 0.016) {
+        const isIdle = animationManagerRef.current.isPlaying('idle');
+        console.log('🔄 Frame update:', {
+          delta,
+          idlePlaying: isIdle,
+          idleTime: animationManagerRef.current.getTime('idle'),
+          idleDuration: animationManagerRef.current.getDuration('idle')
+        });
+      }
     }
   });
 
@@ -201,6 +296,18 @@ function LoadingScreen() {
   );
 }
 
+function ErrorScreen({ error }: { error: string }) {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/80 backdrop-blur-sm">
+      <div className="text-center space-y-4 max-w-md px-4">
+        <div className="text-red-500 text-5xl">⚠️</div>
+        <h3 className="text-lg font-semibold text-white">Error al cargar el personaje</h3>
+        <p className="text-sm text-neutral-300">{error}</p>
+      </div>
+    </div>
+  );
+}
+
 export function CharacterCreator({
   modelPath,
   animationsPath,
@@ -212,10 +319,17 @@ export function CharacterCreator({
   onLoad,
 }: CharacterCreatorProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const handleCharacterLoad = () => {
     setLoading(false);
     onLoad?.();
+  };
+
+  const handleCharacterError = (error: string) => {
+    console.error('❌ Error en CharacterCreator:', error);
+    setLoading(false);
+    setLoadError(error);
   };
 
   const targetPosition = new THREE.Vector3(...focusPosition);
@@ -230,6 +344,7 @@ export function CharacterCreator({
       }}
     >
       {loading && <LoadingScreen />}
+      {loadError && <ErrorScreen error={loadError} />}
 
       <Canvas
         camera={{
@@ -266,6 +381,7 @@ export function CharacterCreator({
             appearance={appearance}
             rotation={rotation}
             onLoad={handleCharacterLoad}
+            onError={handleCharacterError}
           />
 
           <OrbitControls

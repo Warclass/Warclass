@@ -12,34 +12,75 @@ import {
 } from "@/lib/types/character";
 
 export class AnimationManager {
-  private mixer: THREE.AnimationMixer;
+  public mixer: THREE.AnimationMixer; // Cambiado a public para acceso externo
   private animations: Map<AnimationName, AnimationClip>;
   private loader: FBXLoader;
   private basePath: string;
 
   constructor(model: THREE.Group, basePath: string) {
+    console.log('🎭 Inicializando AnimationManager');
     this.mixer = new THREE.AnimationMixer(model);
     this.animations = new Map();
     this.loader = new FBXLoader();
     this.basePath = basePath;
+
+    // Verificar que el modelo tenga skeleton
+    let skeletonFound = false;
+    model.traverse((child) => {
+      if (child instanceof THREE.SkinnedMesh && child.skeleton) {
+        skeletonFound = true;
+        console.log('✅ Skeleton encontrado en el modelo:', {
+          bones: child.skeleton.bones.length,
+          meshName: child.name
+        });
+      }
+    });
+
+    if (!skeletonFound) {
+      console.error('❌ No se encontró skeleton en el modelo - las animaciones no funcionarán');
+    }
   }
 
   async loadAnimation(config: AnimationConfig): Promise<void> {
     return new Promise((resolve, reject) => {
+      const fullPath = `${this.basePath}${config.path}`;
+      console.log(`🎬 Cargando animación "${config.name}" desde: ${fullPath}`);
+      
       this.loader.load(
-        `${this.basePath}${config.path}`,
+        fullPath,
         (fbx) => {
           const clip = fbx.animations[0];
           if (!clip) {
+            console.error(`❌ No se encontró animación en ${config.path}`);
             reject(new Error(`No animation found in ${config.path}`));
             return;
           }
 
+          console.log(`✅ Clip "${config.name}" cargado:`, {
+            duration: clip.duration,
+            name: clip.name,
+            tracks: clip.tracks.length,
+            trackNames: clip.tracks.slice(0, 5).map(t => t.name) // Mostrar primeros 5 tracks
+          });
+
           const action = this.mixer.clipAction(clip);
 
+          console.log('🎬 Action creada:', {
+            enabled: action.enabled,
+            paused: action.paused,
+            time: action.time,
+            timeScale: action.timeScale,
+            weight: action.weight
+          });
+
+          // Configurar loop
           if (config.loop === false) {
             action.setLoop(THREE.LoopOnce, 1);
             action.clampWhenFinished = true;
+            console.log(`🔁 Loop desactivado para "${config.name}"`);
+          } else {
+            action.setLoop(THREE.LoopRepeat, Infinity);
+            console.log(`🔁 Loop activado para "${config.name}"`);
           }
 
           if (config.timeScale) {
@@ -47,10 +88,14 @@ export class AnimationManager {
           }
 
           this.animations.set(config.name, { clip, action });
+          console.log(`✅ Animación "${config.name}" registrada en el manager`);
           resolve();
         },
         undefined,
-        reject
+        (error) => {
+          console.error(`❌ Error cargando ${fullPath}:`, error);
+          reject(error);
+        }
       );
     });
   }
@@ -73,9 +118,11 @@ export class AnimationManager {
   ): THREE.AnimationAction | null {
     const animationClip = this.animations.get(name);
     if (!animationClip) {
-      console.warn(`Animation "${name}" not found`);
+      console.warn(`❌ Animación "${name}" no encontrada en el manager`);
       return null;
     }
+
+    console.log(`▶️ Reproduciendo animación "${name}"`);
 
     const { action } = animationClip;
     const {
@@ -99,6 +146,15 @@ export class AnimationManager {
     action.setEffectiveTimeScale(timeScale);
     action.setEffectiveWeight(1.0);
     action.play();
+
+    console.log(`✅ Animación "${name}" reproduciendo:`, {
+      enabled: action.enabled,
+      time: action.time,
+      timeScale: action.getEffectiveTimeScale(),
+      weight: action.getEffectiveWeight(),
+      isRunning: action.isRunning(),
+      paused: action.paused
+    });
 
     return action;
   }
