@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Sword, Shield, Zap, Heart, Coins, Star, BookOpen } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { CustomizableCharacter } from '@/lib/character'
 import type { CharacterAppearance } from '@/lib/character'
@@ -141,6 +140,17 @@ export default function CharacterPage() {
     const selectedAmbienceConfig = ambienceConfig[selectedAmbience]
     const selectedTimeConfig = timeConfig[selectedAmbienceConfig.time as 'day' | 'night']
 
+    // Rotaciones específicas por ambiente (como en el código Laravel original)
+    const ambienceRotations: Record<string, [number, number, number]> = {
+        'Ambience1': [0, (3/4) * Math.PI, 0],
+        'Ambience2': [0, (1/2) * Math.PI, 0],
+        'Ambience3': [0, (1/4) * Math.PI - 0.25, 0],
+        'Ambience4': [0, Math.PI, 0],
+        'Ambience5': [0, (7/4) * Math.PI - 0.17, 0]
+    }
+
+    const characterRotation = ambienceRotations[selectedAmbience]
+
     // Convertir colores de character a appearance
     const appearance: CharacterAppearance = {
         Hair: characterData.hair_color || '#8B4513',
@@ -249,24 +259,11 @@ export default function CharacterPage() {
                                             modelPath={modelPath}
                                             animationsPath={animationsPath}
                                             appearance={appearance}
-                                            rotation={[0, Math.PI, 0]}
+                                            rotation={characterRotation}
                                             autoRestartIdle={true}
                                         />
 
                                         <Ambience name={selectedAmbience} />
-
-                                        <OrbitControls
-                                            target={[
-                                                selectedAmbienceConfig.focusPosition.x,
-                                                selectedAmbienceConfig.focusPosition.y,
-                                                selectedAmbienceConfig.focusPosition.z
-                                            ]}
-                                            enablePan={false}
-                                            enableZoom={true}
-                                            minDistance={2}
-                                            maxDistance={8}
-                                            rotateSpeed={0.5}
-                                        />
                                     </Suspense>
                                 </Canvas>
                             </div>
