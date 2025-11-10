@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -23,7 +23,7 @@ const genders = [
 ]
 
 const hairColors = [
-  { name: 'Rubio', hex: '#FFD700' },
+  { name: 'Rubio', hex: '#A98307' },
   { name: 'Castaño', hex: '#8B4513' },
   { name: 'Pelinegro', hex: '#000000' },
   { name: 'Pelirrojo', hex: '#FF4500' },
@@ -141,6 +141,12 @@ export default function CreateCharacterPage() {
     setSkinColorIndex(Math.floor(Math.random() * skinColors.length))
     setEyeColorIndex(Math.floor(Math.random() * eyeColors.length))
   }
+
+  // Memorizar callbacks para evitar re-renders innecesarios del CharacterCreator
+  const handleCharacterLoad = useCallback(() => {
+    console.log('✅ Personaje y animación idle cargados correctamente')
+    setIsLoading(false)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -323,7 +329,7 @@ export default function CreateCharacterPage() {
                 rotation={[0, Math.PI * 0.25, 0]}
                 timeConfig={timeConfig}
                 inputManager={inputManagerRef.current}
-                onLoad={() => console.log('✅ Personaje y animación idle cargados correctamente')}
+                onLoad={handleCharacterLoad}
               />
             )
           )}

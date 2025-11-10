@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -54,9 +54,59 @@ function CustomizableCharacter({
     new Map()
   );
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [modelLoaded, setModelLoaded] = useState(false); // Nuevo estado
+  const wasLoadedRef = useRef(false); // Para mantener el estado de carga
+  const isInitialLoadRef = useRef(false);
+  const onLoadRef = useRef(onLoad);
+  const onErrorRef = useRef(onError);
+
+  // Actualizar las refs cuando cambien los callbacks
+  useEffect(() => {
+    onLoadRef.current = onLoad;
+    onErrorRef.current = onError;
+  }, [onLoad, onError]);
+
+  // Una vez cargado, siempre cargado
+  useEffect(() => {
+    if (modelLoaded && !wasLoadedRef.current) {
+      wasLoadedRef.current = true;
+      console.log('✅ Modelo marcado como cargado permanentemente');
+    }
+  }, [modelLoaded]);
+
+  // useEffect para detectar montaje/desmontaje
+  useEffect(() => {
+    console.log('🟢 CustomizableCharacter MONTADO');
+    return () => {
+      console.log('🔴 CustomizableCharacter DESMONTADO');
+      // Solo limpiar cuando el componente se desmonta completamente
+      if (animationManagerRef.current) {
+        console.log('🧹 Limpiando AnimationManager en desmontaje');
+        animationManagerRef.current.dispose();
+        animationManagerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
+    // Si ya cargamos el modelo, solo verificar que la animación siga corriendo
+    if (isInitialLoadRef.current && modelRef.current && animationManagerRef.current) {
+      console.log('⏭️ Modelo ya cargado, verificando animación idle');
+      
+      // Si la animación idle no está corriendo, reiniciarla
+      if (!animationManagerRef.current.isPlaying('idle')) {
+        console.log('🔄 Reiniciando animación idle');
+        animationManagerRef.current.play('idle');
+      } else {
+        console.log('✅ Animación idle ya está corriendo');
+      }
+      
+      return;
+    }
+
     console.log('🎨 Cargando modelo desde:', modelPath);
+    isInitialLoadRef.current = true;
+    setModelLoaded(false); // Ocultar mientras carga
     const loader = new FBXLoader();
 
     loader.load(
@@ -101,6 +151,47 @@ function CustomizableCharacter({
         console.log("✅ Total de materiales mapeados:", materials.size);
         setMaterialsMap(materials);
         modelRef.current = object;
+
+        // 🎨 Aplicar colores INMEDIATAMENTE antes de mostrar el modelo
+        const materialMapping: Record<string, keyof CharacterAppearance> = {
+          Hair: "Hair",
+          "Hair.001": "Hair",
+          Eye: "Eyes",
+          Eyes: "Eyes",
+          Skin: "Skin",
+          Body: "Skin",
+          Shirt: "Shirt",
+          Top: "Shirt",
+          "T-Shirt": "Shirt",
+          Base_Chestplate: "Shirt",
+          Accent_Chestplate: "Shirt",
+          Pants: "Pants",
+          Legs: "Pants",
+          Base_Leggings: "Pants",
+          Shoes: "Shoes",
+          Boots: "Shoes",
+          Base_Boots: "Shoes",
+          Accent_Boots: "Shoes",
+        };
+
+        let initialColorCount = 0;
+        materials.forEach((material, name) => {
+          const appearanceKey = materialMapping[name];
+          if (appearanceKey && appearance[appearanceKey]) {
+            const hexColor = appearance[appearanceKey];
+            if (
+              material instanceof THREE.MeshStandardMaterial ||
+              material instanceof THREE.MeshPhongMaterial ||
+              material instanceof THREE.MeshBasicMaterial
+            ) {
+              material.color.set(new THREE.Color(hexColor));
+              material.needsUpdate = true;
+              initialColorCount++;
+              console.log(`🎨 Color inicial aplicado: ${name} → ${hexColor}`);
+            }
+          }
+        });
+        console.log(`✅ Colores iniciales aplicados: ${initialColorCount}/${materials.size}`);
 
         // Verificar que el modelo tenga SkinnedMesh
         let hasSkinnedMesh = false;
@@ -148,7 +239,8 @@ function CustomizableCharacter({
             const action = animationManagerRef.current.mixer.clipAction(embeddedIdleClip);
             action.setLoop(THREE.LoopRepeat, Infinity);
             action.play();
-            onLoad?.();
+            setModelLoaded(true); // Marcar como cargado
+            onLoadRef.current?.();
             return;
           }
         }
@@ -170,13 +262,14 @@ function CustomizableCharacter({
             } else {
               console.error('❌ No se pudo iniciar la animación idle');
             }
-            onLoad?.();
+            setModelLoaded(true); // Marcar como cargado
+            onLoadRef.current?.();
           })
           .catch((error) => {
             console.error('❌ Error cargando animaciones:', error);
             const errorMsg = `Error al cargar animaciones: ${error.message}`;
             setLoadError(errorMsg);
-            onError?.(errorMsg);
+            onErrorRef.current?.(errorMsg);
           });
       },
       (progress) => {
@@ -190,38 +283,39 @@ function CustomizableCharacter({
         const errorMessage = error instanceof Error ? error.message : 'Archivo no encontrado';
         const errorMsg = `Error al cargar el modelo: ${errorMessage}`;
         setLoadError(errorMsg);
-        onError?.(errorMsg);
+        onErrorRef.current?.(errorMsg);
       }
     );
 
-    return () => {
-      animationManagerRef.current?.dispose();
-    };
-  }, [modelPath, animationsPath, rotation, onLoad, onError]);
+    // NO hay cleanup aquí - se maneja en el useEffect de montaje/desmontaje
+  }, [modelPath, animationsPath, rotation]); // Eliminadas onLoad y onError de dependencias
 
+  // useEffect para actualizar colores dinámicamente (sin recargar el modelo)
   useEffect(() => {
+    console.log('🎨 useEffect de colores disparado', {
+      materialsMapSize: materialsMap.size,
+      modelLoaded,
+      hasAnimationManager: !!animationManagerRef.current,
+      isIdlePlaying: animationManagerRef.current?.isPlaying('idle')
+    });
+    
     if (materialsMap.size === 0) return;
 
     const materialMapping: Record<string, keyof CharacterAppearance> = {
       Hair: "Hair",
       "Hair.001": "Hair",
-
       Eye: "Eyes",
       Eyes: "Eyes",
-
       Skin: "Skin",
       Body: "Skin",
-
       Shirt: "Shirt",
       Top: "Shirt",
       "T-Shirt": "Shirt",
       Base_Chestplate: "Shirt",
       Accent_Chestplate: "Shirt",
-
       Pants: "Pants",
       Legs: "Pants",
       Base_Leggings: "Pants",
-
       Shoes: "Shoes",
       Boots: "Shoes",
       Base_Boots: "Shoes",
@@ -238,51 +332,33 @@ function CustomizableCharacter({
           material instanceof THREE.MeshPhongMaterial ||
           material instanceof THREE.MeshBasicMaterial
         ) {
-          const newColor = new THREE.Color(hexColor);
-          material.color.set(newColor);
+          material.color.set(new THREE.Color(hexColor));
           material.needsUpdate = true;
           updatedCount++;
-          console.log(
-            `✅ Material "${name}" actualizado a ${hexColor} (RGB: ${material.color.r.toFixed(
-              2
-            )}, ${material.color.g.toFixed(2)}, ${material.color.b.toFixed(2)})`
-          );
-        } else {
-          console.log(
-            `⚠️ Material "${name}" no es un tipo compatible:`,
-            material.type
-          );
         }
-      } else if (appearanceKey) {
-        console.log(
-          `⚠️ No se encontró color para "${name}" → ${appearanceKey}`
-        );
       }
     });
 
-    console.log(
-      `🔄 Total de materiales actualizados: ${updatedCount}/${materialsMap.size}`
-    );
+    if (updatedCount > 0) {
+      console.log(`🎨 Colores actualizados: ${updatedCount} materiales`);
+    }
   }, [appearance, materialsMap]);
 
   useFrame((_, delta) => {
     if (animationManagerRef.current) {
       animationManagerRef.current.update(delta);
       
-      // Log periódico para debugging (cada 60 frames aprox)
-      if (Math.random() < 0.016) {
-        const isIdle = animationManagerRef.current.isPlaying('idle');
-        console.log('🔄 Frame update:', {
-          delta,
-          idlePlaying: isIdle,
-          idleTime: animationManagerRef.current.getTime('idle'),
-          idleDuration: animationManagerRef.current.getDuration('idle')
-        });
+      // Verificar periódicamente que idle esté corriendo
+      if (modelLoaded && !animationManagerRef.current.isPlaying('idle')) {
+        console.warn('⚠️ Animación idle detenida, reiniciando...');
+        animationManagerRef.current.play('idle');
       }
     }
   });
 
-  return <group ref={groupRef} />;
+  // Solo renderizar el grupo si el modelo está completamente cargado y animado
+  // Una vez visible, siempre visible
+  return <group ref={groupRef} visible={wasLoadedRef.current || modelLoaded} />;
 }
 
 function LoadingScreen() {
@@ -321,16 +397,17 @@ export function CharacterCreator({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const handleCharacterLoad = () => {
+  const handleCharacterLoad = useCallback(() => {
+    console.log('✅ Personaje cargado completamente');
     setLoading(false);
     onLoad?.();
-  };
+  }, [onLoad]);
 
-  const handleCharacterError = (error: string) => {
+  const handleCharacterError = useCallback((error: string) => {
     console.error('❌ Error en CharacterCreator:', error);
     setLoading(false);
     setLoadError(error);
-  };
+  }, []);
 
   const targetPosition = new THREE.Vector3(...focusPosition);
 
