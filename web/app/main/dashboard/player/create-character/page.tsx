@@ -13,8 +13,8 @@ import Link from 'next/link'
 import * as THREE from 'three'
 
 const characterClasses = [
-  { id: 'mage', name: 'Mago', icon: '🧙‍♂️', path: 'Mage' },
-  { id: 'warrior', name: 'Guerrero', icon: '⚔️', path: 'Warrior' },
+  { id: 'mage', name: 'Mago', icon: '🧙‍♂️', path: 'Mage', model: 'witch.fbx' },
+  { id: 'warrior', name: 'Guerrero', icon: '⚔️', path: 'Warrior', model: 'warrior.fbx' },
 ]
 
 const genders = [
@@ -243,12 +243,16 @@ export default function CreateCharacterPage() {
     sunLightColor: 0xfef3c7,
   }
 
-  const modelPath = `/models/character_scene/Character/${characterClasses.find(c => c.id === selectedClass)?.path}/${genders.find(g => g.id === selectedGender)?.path}`
+  const selectedClassData = characterClasses.find(c => c.id === selectedClass)
+  const modelPath = `/models/character_scene/Character/${selectedClassData?.path}/${genders.find(g => g.id === selectedGender)?.path}`
+  const modelFile = selectedClassData?.model || 'warrior.fbx'
   
   console.log('🎨 Configuración actual:', {
     selectedClass,
     selectedGender,
     modelPath,
+    modelFile,
+    fullPath: `${modelPath}/${modelFile}`,
     hairColor: hairColors[hairColorIndex],
     skinColor: skinColors[skinColorIndex],
     eyeColor: eyeColors[eyeColorIndex],
@@ -309,7 +313,7 @@ export default function CreateCharacterPage() {
             inputManagerRef.current && (
               <CharacterCreator
                 key={`${selectedClass}-${selectedGender}`}
-                modelPath={`${modelPath}/warrior.fbx`}
+                modelPath={`${modelPath}/${modelFile}`}
                 animationsPath={`${modelPath}/State/`}
                 appearance={{
                   Hair: hairColors[hairColorIndex].hex,
