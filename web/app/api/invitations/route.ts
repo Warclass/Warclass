@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No tienes permisos para crear invitaciones' }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { courseId, name } = body;
+  const body = await request.json();
+  const { courseId, name, email } = body;
 
     if (!courseId) {
       return NextResponse.json({ error: 'El ID del curso es requerido' }, { status: 400 });
@@ -58,10 +58,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'El nombre de la invitación es requerido' }, { status: 400 });
     }
 
-    // Crear la invitación
+    // Crear la invitación (opcionalmente dirigida a un email existente)
     const invitation = await InvitationService.createInvitation({
       courseId,
       name,
+      email: typeof email === 'string' && email.includes('@') ? email : undefined,
     });
 
     return NextResponse.json({

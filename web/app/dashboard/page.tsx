@@ -37,6 +37,8 @@ interface TeacherCourse {
   studentsCount: number;
   groupsCount: number;
   membersCount: number;
+  institutionId?: string | null;
+  institutionName?: string | null;
 }
 
 export default function DashboardPage() {
@@ -273,10 +275,10 @@ export default function DashboardPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="text-neutral-400 hover:text-neutral-100 relative"
+              className="text-neutral-400 hover:text-neutral-100"
               onClick={() => router.push('/dashboard/invitations')}
             >
-              <Mail className="h-5 w-5" />
+              <Bell className="h-5 w-5" />
               {pendingInvitations > 0 && (
                 <Badge 
                   variant="destructive" 
@@ -285,13 +287,6 @@ export default function DashboardPage() {
                   {pendingInvitations}
                 </Badge>
               )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-neutral-400 hover:text-neutral-100"
-            >
-              <Bell className="h-5 w-5" />
             </Button>
             <Link href="/dashboard/profile">
               <Button
@@ -575,6 +570,15 @@ export default function DashboardPage() {
                     </Card>
                   ) : (
                     <>
+                      <div className="flex justify-end">
+                        <Button
+                          variant="outline"
+                          className="border-neutral-700 text-neutral-100 hover:bg-neutral-800"
+                          onClick={() => router.push('/dashboard/invitations/teacher')}
+                        >
+                          Ver estado de invitaciones
+                        </Button>
+                      </div>
                       <Card 
                         className="bg-[#1a1a1a] border-neutral-800 border-dashed hover:border-[#D89216] transition-colors cursor-pointer"
                         onClick={() => setCreateCourseModalOpen(true)}
@@ -603,6 +607,11 @@ export default function DashboardPage() {
                                   <CardDescription className="text-neutral-500">
                                     {course.description || 'Sin descripción'}
                                   </CardDescription>
+                                  {course.institutionName && (
+                                    <div className="text-xs text-neutral-500 mt-1">
+                                      Institución: {course.institutionName}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <Badge

@@ -378,4 +378,101 @@ export class TeacherService {
       };
     }
   }
+
+  /**
+   * Obtener cursos donde el teacher es el creador principal
+   */
+  static async getTeacherCourses(teacherId: string) {
+    try {
+      const courses = await prisma.courses.findMany({
+        where: {
+          teacher_id: teacherId,
+        },
+        include: {
+          groups: {
+            include: {
+              members: true,
+            },
+          },
+          inscriptions: true,
+          teacher: {
+            include: {
+              institution: true,
+            },
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
+
+      return courses.map((course: any) => ({
+        id: course.id,
+        name: course.name,
+        description: course.description,
+        studentsCount: course.inscriptions.length,
+        groupsCount: course.groups.length,
+        membersCount: course.groups.reduce(
+          (sum: number, group: any) => sum + group.members.length,
+          0
+        ),
+        institutionId: course.teacher?.institution_id || null,
+        institutionName: course.teacher?.institution?.name || null,
+      }));
+    } catch (error) {
+      console.error('Error getting teacher courses:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Crear un curso asociado a un teacher
+   */
+  static async createCourse(
+    teacherId: string,
+    data: { name: string; description?: string | null }
+  ): Promise<{
+    id: string;
+    name: string;
+    description: string | null;
+    teacherId: string;
+    institutionId: string | null;
+    institutionName: string | null;
+  }> {
+    try {
+      // Verificar que el teacher existe
+      const teacher = await prisma.teachers.findUnique({
+        where: { id: teacherId },
+        include: { institution: true },
+      });
+
+      if (!teacher) {
+        throw new Error('Profesor no encontrado');
+      }
+
+      if (!data.name || !data.name.trim()) {
+        throw new Error('El nombre del curso es requerido');
+      }
+
+      const course = await prisma.courses.create({
+        data: {
+          name: data.name.trim(),
+          description: data.description?.trim() || null,
+          teacher_id: teacherId,
+        },
+      });
+
+      return {
+        id: course.id,
+        name: course.name,
+        description: course.description,
+        teacherId: teacher.id,
+        institutionId: teacher.institution_id,
+        institutionName: teacher.institution?.name || null,
+      };
+    } catch (error) {
+      console.error('Error creating course:', error);
+      throw error;
+    }
+  }
 }

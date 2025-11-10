@@ -4,7 +4,7 @@ import { UpdateEventSchema } from '@/backend/validators/event.validator';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = req.headers.get('x-user-id');
@@ -12,10 +12,12 @@ export async function GET(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const event = await EventService.getEventById(params.id);
+    const { id } = await params;
+    const event = await EventService.getEventById(id);
     return NextResponse.json({ event }, { status: 200 });
   } catch (error: any) {
-    console.error(`Error in GET /api/events/${params.id}:`, error);
+    const { id } = await params;
+    console.error(`Error in GET /api/events/${id}:`, error);
     if (error.message === 'Evento no encontrado') {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
@@ -28,7 +30,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = req.headers.get('x-user-id');
@@ -46,11 +48,13 @@ export async function PUT(
       );
     }
 
-    const event = await EventService.updateEvent(params.id, validation.data);
+    const { id } = await params;
+    const event = await EventService.updateEvent(id, validation.data);
 
     return NextResponse.json({ event }, { status: 200 });
   } catch (error: any) {
-    console.error(`Error in PUT /api/events/${params.id}:`, error);
+    const { id } = await params;
+    console.error(`Error in PUT /api/events/${id}:`, error);
     if (error.message === 'Evento no encontrado') {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
@@ -63,7 +67,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = req.headers.get('x-user-id');
@@ -71,11 +75,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    await EventService.deleteEvent(params.id);
+    const { id } = await params;
+    await EventService.deleteEvent(id);
 
     return NextResponse.json({ message: 'Evento eliminado' }, { status: 200 });
   } catch (error: any) {
-    console.error(`Error in DELETE /api/events/${params.id}:`, error);
+    const { id } = await params;
+    console.error(`Error in DELETE /api/events/${id}:`, error);
     if (error.message === 'Evento no encontrado') {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }

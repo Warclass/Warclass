@@ -48,12 +48,27 @@ export class InvitationService {
         });
       }
 
+      // If email provided, try to resolve to an existing user to attach the invitation
+      let targetUserId: string | null = null;
+      if (data.email) {
+        const recipient = await prisma.users.findUnique({
+          where: { email: data.email },
+          select: { id: true },
+        });
+
+        if (!recipient) {
+          throw new Error('No existe un usuario registrado con ese email');
+        }
+        targetUserId = recipient.id;
+      }
+
       const invitation = await prisma.invitations.create({
         data: {
           name: data.name,
           code,
           course_id: data.courseId,
           used: false,
+          user_id: targetUserId,
         },
       });
 
@@ -356,6 +371,58 @@ export class InvitationService {
     } catch (error) {
       console.error('Error al aceptar invitación:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Obtiene todas las invitaciones de los cursos impartidos por un profesor.
+   * Incluye información del curso y (si existe) el usuario destinatario.
+   */
+  static async getInvitationsByTeacher(teacherId: string): Promise<
+    Array<{
+      id: string;
+      name: string;
+      code: string;
+      used: boolean;
+      createdAt: Date;
+      courseId: string;
+      courseName: string;
+      courseDescription: string | null;
+      userId?: string | null;
+      userName?: string | null;
+      userEmail?: string | null;
+    }>
+  > {
+    try {
+      const invitations = await prisma.invitations.findMany({
+        where: {
+          course: {
+            teacher_id: teacherId,
+          },
+        },
+        include: {
+          course: true,
+          user: true,
+        },
+        orderBy: { created_at: 'desc' },
+      });
+
+      return invitations.map((inv) => ({
+        id: inv.id,
+        name: inv.name,
+        code: inv.code,
+        used: inv.used,
+        createdAt: inv.created_at,
+        courseId: inv.course_id,
+        courseName: inv.course.name,
+        courseDescription: inv.course.description,
+        userId: inv.user_id,
+        userName: inv.user ? inv.user.name : null,
+        userEmail: inv.user ? inv.user.email : null,
+      }));
+    } catch (error) {
+      console.error('Error obteniendo invitaciones de profesor:', error);
+      throw new Error('No se pudieron obtener las invitaciones del profesor');
     }
   }
 }

@@ -8,13 +8,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const teacherData = await TeacherService.getTeacherByUserId(userId);
+    const teacherRes = await TeacherService.getTeacherByUserId(userId);
 
-    if (!teacherData) {
+    if (!teacherRes.success || !teacherRes.teacher) {
       return NextResponse.json(
-        { 
+        {
           isTeacher: false,
-          message: 'Usuario no es profesor'
+          message: teacherRes.message || 'Usuario no es profesor',
         },
         { status: 200 }
       );
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         isTeacher: true,
-        teacher: teacherData,
+        teacher: teacherRes.teacher,
       },
       { status: 200 }
     );

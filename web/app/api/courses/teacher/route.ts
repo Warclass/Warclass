@@ -13,9 +13,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Obtener teacher por userId
-    const teacherData = await TeacherService.getTeacherByUserId(userId);
-    
-    if (!teacherData) {
+    const teacherRes = await TeacherService.getTeacherByUserId(userId);
+
+    if (!teacherRes.success || !teacherRes.teacher) {
       return NextResponse.json(
         { error: 'Usuario no es profesor' },
         { status: 403 }
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Obtener cursos del teacher
-    const courses = await TeacherService.getTeacherCourses(teacherData.id);
+    const courses = await TeacherService.getTeacherCourses(teacherRes.teacher.id);
 
     return NextResponse.json(
       {
@@ -53,9 +53,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Obtener teacher por userId
-    const teacherData = await TeacherService.getTeacherByUserId(userId);
-    
-    if (!teacherData) {
+    const teacherRes = await TeacherService.getTeacherByUserId(userId);
+
+    if (!teacherRes.success || !teacherRes.teacher) {
       return NextResponse.json(
         { error: 'Usuario no es profesor' },
         { status: 403 }
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const course = await TeacherService.createCourse(teacherData.id, {
+    const course = await TeacherService.createCourse(teacherRes.teacher.id, {
       name,
       description,
     });

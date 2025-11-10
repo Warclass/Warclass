@@ -21,6 +21,7 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isEmailInvitation, setIsEmailInvitation] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +39,8 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
     setIsLoading(true);
 
     try {
+      const isEmail = /@/.test(name.trim());
+      setIsEmailInvitation(isEmail);
       const response = await fetch("/api/invitations", {
         method: "POST",
         headers: {
@@ -47,6 +50,7 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
         body: JSON.stringify({
           courseId,
           name: name.trim(),
+          email: isEmail ? name.trim() : undefined,
         }),
       });
 
@@ -56,10 +60,13 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
         throw new Error(data.error || "Error al crear la invitación");
       }
 
-      setGeneratedCode(data.data.code);
+      // Solo mostramos código si NO es una invitación dirigida por email
+      setGeneratedCode(isEmail ? null : data.data.code);
       toast({
         title: "¡Invitación creada!",
-        description: "El código de invitación ha sido generado exitosamente",
+        description: isEmail
+          ? "La invitación aparecerá en la campana del usuario destinatario"
+          : "El código de invitación ha sido generado exitosamente",
       });
     } catch (error) {
       console.error("Error creating invitation:", error);
@@ -88,6 +95,7 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
   const handleClose = () => {
     setName("");
     setGeneratedCode(null);
+    setIsEmailInvitation(false);
     setCopied(false);
     onOpenChange(false);
   };
@@ -104,7 +112,8 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
           </DialogDescription>
         </DialogHeader>
 
-        {!generatedCode ? (
+        {/* Formulario inicial */}
+        {!generatedCode && !isEmailInvitation ? (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-neutral-300">
@@ -120,7 +129,7 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
                 maxLength={100}
               />
               <p className="text-xs text-neutral-500">
-                Este nombre se mostrará al usuario en su lista de invitaciones
+                Si ingresas un email de un usuario registrado, la invitación aparecerá en su campana.
               </p>
             </div>
 
@@ -142,18 +151,18 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generando...
+                    Procesando...
                   </>
                 ) : (
                   <>
                     <Mail className="mr-2 h-4 w-4" />
-                    Generar Código
+                    {name.trim().includes('@') ? 'Enviar Invitación' : 'Generar Código'}
                   </>
                 )}
               </Button>
             </div>
           </form>
-        ) : (
+        ) : generatedCode && !isEmailInvitation ? (
           <div className="space-y-6">
             <div className="bg-[#0f0f0f] border border-neutral-800 rounded-lg p-6 space-y-4">
               <div className="text-center">
@@ -188,6 +197,21 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
               </p>
             </div>
 
+            <Button
+              onClick={handleClose}
+              variant="outline"
+              className="w-full border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+            >
+              Cerrar
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-green-900/20 border border-green-700/40 rounded-lg p-6 space-y-4">
+              <p className="text-neutral-200 text-sm">
+                Invitación enviada correctamente. El usuario verá la invitación en su campana y podrá aceptarla desde su panel.
+              </p>
+            </div>
             <Button
               onClick={handleClose}
               variant="outline"
