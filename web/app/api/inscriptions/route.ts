@@ -81,6 +81,15 @@ export async function GET(req: NextRequest) {
                   }
                 }
               }
+            },
+            // Incluir personajes del curso (pueden no tener grupo asignado aún)
+            characters: {
+              where: {
+                user_id: userId
+              },
+              include: {
+                class: true
+              }
             }
           }
         }
@@ -90,26 +99,28 @@ export async function GET(req: NextRequest) {
     // Formatear datos
     const formattedCourses = inscriptions.map((inscription: any) => {
       const course = inscription.course;
-      const totalMembers = course.groups.reduce((acc: number, group: any) => acc + group.members.length, 0);
+      const totalMembers = course.groups.reduce((acc: number, group: any) => acc + group.characters.length, 0);
       
-      // Buscar el personaje del usuario en los members
-      let userCharacter = null;
-      for (const group of course.groups) {
-        for (const member of group.members) {
-          if (member.characters) {
-            userCharacter = member.characters;
-            break;
-          }
-        }
-        if (userCharacter) break;
-      }
+      // Obtener el nombre del profesor principal (primer teacher en teachers_courses)
+      const teacherName = course.teachers_courses[0]?.teacher?.user?.name || 'Sin profesor';
+      
+      // Buscar el personaje del usuario directamente en el curso
+      // Los personajes ahora se crean con course_id (sin grupo inicialmente)
+      const userCharacter = course.characters[0] || null;
+      
+      // Obtener grupos del curso
+      let userGroups = course.groups.map((group: any) => ({
+        id: group.id,
+        name: group.name,
+      }));
 
       return {
         id: course.id,
         name: course.name,
         description: course.description,
-        code: course.id.substring(0, 8).toUpperCase(), // Generamos un código corto del ID
-        teacher: course.teacher?.name || 'Sin profesor',
+        code: course.id.substring(0, 8).toUpperCase(),
+        teacher: teacherName,
+        groups: userGroups,
         membersCount: totalMembers,
         hasCharacter: !!userCharacter,
         character: userCharacter ? {

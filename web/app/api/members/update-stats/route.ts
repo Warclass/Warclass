@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       where: {
         user_id_course_id: {
           user_id: userId,
-          course_id: character.group.course_id
+          course_id: character.course_id // Ahora usamos course_id directamente del personaje
         }
       }
     });
@@ -229,7 +229,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Verificar permisos (todos deben ser del mismo curso)
-    const courseIds = [...new Set(characters.map(c => c.group.course_id))];
+    const courseIds = [...new Set(characters.map(c => c.course_id))]; // Ahora usamos course_id directamente
     
     if (courseIds.length > 1) {
       return NextResponse.json(

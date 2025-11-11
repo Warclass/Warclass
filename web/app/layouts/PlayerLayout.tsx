@@ -36,10 +36,9 @@ export default function PlayerLayout({
   courseName,
   history = []
 }: PlayerLayoutProps) {
-  const { user } = useAuth();
+  const { user, token: authToken } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [invitationsCount, setInvitationsCount] = useState(0);
-  const [courseData, setCourseData] = useState<any>(null);
   const [quizHistory, setQuizHistory] = useState<Array<{
     character: { name: string };
     quiz: string;
@@ -113,40 +112,8 @@ export default function PlayerLayout({
     return () => clearInterval(interval);
   }, [memberId, user?.id]);
 
-  useEffect(() => {
-    // Cargar datos del curso si tenemos courseId
-    const fetchCourseData = async () => {
-      if (!courseId || !user?.id) return;
-
-      try {
-        const response = await fetch(`/api/courses/members?courseId=${courseId}`, {
-          headers: {
-            'x-user-id': user.id
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.members && data.members.length > 0) {
-            // Obtener el nombre del curso desde el primer miembro
-            const firstMember = data.members[0];
-            if (firstMember.course) {
-              setCourseData({
-                name: firstMember.course.name,
-                ...firstMember.course
-              });
-            }
-          }
-        } else {
-          console.error('Error al cargar datos del curso:', response.status);
-        }
-      } catch (error) {
-        console.error('Error al cargar datos del curso:', error);
-      }
-    };
-
-    fetchCourseData();
-  }, [courseId, user?.id]);
+  // Eliminado: fetchCourseData - ahora usamos courseName prop directamente
+  // El endpoint /api/courses/members está deprecado (410)
 
   useEffect(() => {
     // Cargar el conteo de invitaciones pendientes
@@ -231,7 +198,7 @@ export default function PlayerLayout({
               <BookOpen className="h-5 w-5 text-[#D89216]" />
               <div>
                 <h2 className="text-sm font-bold text-neutral-100">
-                  {courseName || courseData?.name || 'Cargando...'}
+                  {courseName || 'Curso'}
                 </h2>
                 <p className="text-xs text-neutral-500">Vista de Jugador</p>
               </div>

@@ -1,0 +1,19 @@
+/*
+  Warnings:
+
+  - A unique constraint covering the columns `[user_id,course_id]` on the table `characters` will be added. If there are existing duplicate values, this will fail.
+  - Added the required column `course_id` to the `characters` table without a default value. This is not possible if the table is not empty.
+
+*/
+-- DropIndex
+DROP INDEX "public"."characters_user_id_group_id_key";
+
+-- AlterTable
+ALTER TABLE "characters" ADD COLUMN     "course_id" TEXT NOT NULL,
+ALTER COLUMN "group_id" DROP NOT NULL;
+
+-- CreateIndex
+CREATE UNIQUE INDEX "characters_user_id_course_id_key" ON "characters"("user_id", "course_id");
+
+-- AddForeignKey
+ALTER TABLE "characters" ADD CONSTRAINT "characters_course_id_fkey" FOREIGN KEY ("course_id") REFERENCES "courses"("id") ON DELETE CASCADE ON UPDATE CASCADE;

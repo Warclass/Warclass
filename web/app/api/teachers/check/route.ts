@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TeacherService } from '@/backend/services/teacher/teacher.service';
+import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
 /**
  * @swagger
@@ -33,6 +34,12 @@ import { TeacherService } from '@/backend/services/teacher/teacher.service';
  */
 export async function GET(req: NextRequest) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });

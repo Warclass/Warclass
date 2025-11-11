@@ -14,9 +14,10 @@ interface CreateCourseModalProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   userId: string;
+  token?: string;
 }
 
-export function CreateCourseModal({ open, onOpenChange, onSuccess, userId }: CreateCourseModalProps) {
+export function CreateCourseModal({ open, onOpenChange, onSuccess, userId, token }: CreateCourseModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -37,12 +38,20 @@ export function CreateCourseModal({ open, onOpenChange, onSuccess, userId }: Cre
     setIsLoading(true);
 
     try {
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      // Usar Bearer token si está disponible, sino usar x-user-id
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      } else {
+        headers["x-user-id"] = userId;
+      }
+
       const response = await fetch("/api/courses/teacher", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
-        },
+        headers,
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim() || undefined,

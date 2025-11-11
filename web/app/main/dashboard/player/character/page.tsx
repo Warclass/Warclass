@@ -106,13 +106,38 @@ export default function CharacterPage() {
         )
     }
 
-    const { class: charClass, course, member } = characterData
+    // Desestructurar datos del personaje
+    const charClass = characterData.class
+    const course = characterData.course
     const experiencePercent = (characterData.experience / 1000) * 100 // Ejemplo: nivel cada 1000 exp
     const level = Math.floor(characterData.experience / 100) + 1
 
+    // Validar que tengamos la información necesaria
+    if (!charClass || !course) {
+        return (
+            <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+                <div className="flex h-full justify-center items-center">
+                    <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
+                        <CardHeader>
+                            <CardTitle className="text-red-400">Error</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-neutral-400 mb-4">Datos del personaje incompletos</p>
+                            <Button 
+                                onClick={() => router.push('/dashboard')}
+                                className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black"
+                            >
+                                Volver al Dashboard
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </PlayerLayout>
+        )
+    }
+
     console.log('🎮 Character Data:', {
         charClass,
-        gender: characterData.gender,
         name: characterData.name,
         fullData: characterData
     })

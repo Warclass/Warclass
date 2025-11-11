@@ -8,8 +8,20 @@ export interface CharacterData {
   experience: number;
   gold: number;
   energy: number;
+  health?: number;
+  appearance?: any;
   className: string;
   classSpeed: number;
+  class?: {
+    id: string;
+    name: string;
+    speed: number;
+  };
+  course?: {
+    id: string;
+    name: string;
+    teacher?: string;
+  };
   abilities: Array<{
     id: string;
     name: string;
@@ -22,7 +34,7 @@ export interface CreateCharacterInput {
   name: string;
   classId: string;
   userId: string; // El ID del usuario propietario del character
-  groupId: string; // El ID del grupo al que pertenece
+  courseId: string; // El ID del curso al que pertenece (sin grupo asignado inicialmente)
   appearance?: {
     Hair?: string;
     Eyes?: string;
@@ -67,16 +79,28 @@ export async function getUserCharacterForCourse(userId: string, courseId: string
       return null;
     }
 
-    // Buscar el character del usuario en algún grupo de este curso
+    // Buscar el character del usuario directamente por course_id
+    // (El personaje puede o no tener grupo asignado)
     const character = await prisma.characters.findFirst({
       where: {
         user_id: userId,
-        group: {
-          course_id: courseId
-        }
+        course_id: courseId
       },
       include: {
         class: true,
+        course: {
+          include: {
+            teachers_courses: {
+              include: {
+                teacher: {
+                  include: {
+                    user: true
+                  }
+                }
+              }
+            }
+          }
+        },
         abilities: {
           include: {
             ability: true
@@ -89,14 +113,29 @@ export async function getUserCharacterForCourse(userId: string, courseId: string
       return null;
     }
 
+    // Obtener nombre del profesor
+    const teacherName = character.course.teachers_courses[0]?.teacher?.user?.name || 'Sin profesor';
+
     return {
       id: character.id,
       name: character.name,
       experience: character.experience,
       gold: character.gold,
       energy: character.energy,
+      health: character.health,
+      appearance: character.appearance,
       className: character.class.name,
       classSpeed: character.class.speed,
+      class: {
+        id: character.class.id,
+        name: character.class.name,
+        speed: character.class.speed
+      },
+      course: {
+        id: character.course.id,
+        name: character.course.name,
+        teacher: teacherName
+      },
       abilities: character.abilities.map((ca: any) => ({
         id: ca.ability.id,
         name: ca.ability.name,
@@ -111,46 +150,45 @@ export async function getUserCharacterForCourse(userId: string, courseId: string
 }
 
 /**
- * Crea un nuevo personaje para un usuario en un grupo específico
+ * Crea un nuevo personaje para un usuario en un curso específico
+ * El personaje se crea sin grupo asignado - el profesor asignará grupos posteriormente
  */
 export async function createCharacter(data: CreateCharacterInput): Promise<CharacterData> {
   try {
-    // Verificar que el grupo existe
-    const group = await prisma.groups.findUnique({
-      where: { id: data.groupId }
+    // Verificar que el curso existe
+    const course = await prisma.courses.findUnique({
+      where: { id: data.courseId }
     });
 
-    if (!group) {
-      throw new Error('Grupo no encontrado');
+    if (!course) {
+      throw new Error('Curso no encontrado');
     }
 
-    // Verificar que el usuario está inscrito en el curso del grupo
+    // Verificar que el usuario está inscrito en el curso
     const inscription = await prisma.inscriptions.findUnique({
       where: {
         user_id_course_id: {
           user_id: data.userId,
-          course_id: group.course_id
+          course_id: data.courseId
         },
         is_active: true
       }
     });
 
     if (!inscription) {
-      throw new Error('Usuario no inscrito en el curso de este grupo');
+      throw new Error('Usuario no inscrito en este curso');
     }
 
-    // Verificar que el usuario no tiene ya un personaje en este grupo
-    const existingCharacter = await prisma.characters.findUnique({
+    // Verificar que el usuario no tiene ya un personaje en este curso
+    const existingCharacter = await prisma.characters.findFirst({
       where: {
-        user_id_group_id: {
-          user_id: data.userId,
-          group_id: data.groupId
-        }
+        user_id: data.userId,
+        course_id: data.courseId
       }
     });
 
     if (existingCharacter) {
-      throw new Error('Ya tienes un personaje en este grupo');
+      throw new Error('Ya tienes un personaje en este curso');
     }
 
     // Verificar que la clase existe
@@ -162,12 +200,13 @@ export async function createCharacter(data: CreateCharacterInput): Promise<Chara
       throw new Error('Clase de personaje no encontrada');
     }
 
-    // Crear el personaje con stats iniciales
+    // Crear el personaje con stats iniciales (sin grupo asignado)
     const character = await prisma.characters.create({
       data: {
         name: data.name,
         user_id: data.userId,
-        group_id: data.groupId,
+        course_id: data.courseId,
+        group_id: null, // Sin grupo asignado - el profesor lo asignará después
         class_id: data.classId,
         experience: 0,
         gold: 500, // Oro inicial

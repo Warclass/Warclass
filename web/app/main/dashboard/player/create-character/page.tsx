@@ -46,7 +46,7 @@ const eyeColors = [
 export default function CreateCharacterPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, isLoading: authLoading } = useAuth()
+  const { user, token, isLoading: authLoading } = useAuth() // Agregar token
   const [selectedClass, setSelectedClass] = useState('warrior')
   const [selectedGender, setSelectedGender] = useState('female')
   const [characterName, setCharacterName] = useState('')
@@ -69,10 +69,14 @@ export default function CreateCharacterPage() {
 
   useEffect(() => {
     const fetchClasses = async () => {
+      if (!token) return; // Esperar a tener el token
+      
       try {
         console.log('🔄 Cargando clases de personajes...')
         const response = await fetch('/api/characters?action=classes', {
-          headers: user?.id ? { 'x-user-id': user.id } : {}
+          headers: {
+            'Authorization': `Bearer ${token}` // Usar Bearer token
+          }
         })
         
         if (response.ok) {
@@ -89,10 +93,8 @@ export default function CreateCharacterPage() {
       }
     }
 
-    if (user?.id) {
-      fetchClasses()
-    }
-  }, [user?.id])
+    fetchClasses()
+  }, [token]) // Cambiar dependencia a token
 
   useEffect(() => {
     console.log('🎮 Inicializando InputManager...')
@@ -156,8 +158,8 @@ export default function CreateCharacterPage() {
       return
     }
 
-    if (!user?.id) {
-      alert('No se pudo identificar al usuario')
+    if (!token) {
+      alert('No se pudo autenticar al usuario')
       return
     }
 
@@ -180,13 +182,23 @@ export default function CreateCharacterPage() {
         return
       }
 
-      // TODO: Implementar lógica para obtener el memberId correcto desde el curso
-      const memberId = searchParams.get('memberId') || '1'
+      // Obtener courseId desde los searchParams
+      const courseId = searchParams.get('courseId')
+      
+      if (!courseId) {
+        alert('No se especificó un curso')
+        return
+      }
+
+      if (!token) {
+        alert('No se pudo autenticar al usuario')
+        return
+      }
 
       const characterData = {
         name: characterName,
         classId: selectedClassData.id,
-        memberId: memberId,
+        courseId: courseId,
         appearance: {
           Hair: hairColors[hairColorIndex].hex,
           Eyes: eyeColors[eyeColorIndex].hex,
@@ -198,12 +210,12 @@ export default function CreateCharacterPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           name: characterData.name,
           classId: characterData.classId,
-          memberId: characterData.memberId,
+          courseId: characterData.courseId,
           appearance: characterData.appearance
         })
       })

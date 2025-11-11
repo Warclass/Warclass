@@ -42,13 +42,12 @@ interface TeacherCourse {
 }
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const router = useRouter();
   const { data: dashboardData, isLoading, error } = useDashboard();
   
-  // Estados para invitaciones y personaje
+  // Estados para invitaciones
   const [pendingInvitations, setPendingInvitations] = useState(0);
-  const [hasCharacter, setHasCharacter] = useState(false);
   const [loadingInvitations, setLoadingInvitations] = useState(true);
   const [myInscriptions, setMyInscriptions] = useState<any[]>([]);
 
@@ -72,9 +71,9 @@ export default function DashboardPage() {
     averageLevel: 0,
   };
 
-  // Cargar invitaciones y estado del personaje
+  // Cargar invitaciones
   useEffect(() => {
-    const fetchInvitationsAndCharacter = async () => {
+    const fetchInvitations = async () => {
       if (!user?.id) return;
 
       try {
@@ -92,18 +91,6 @@ export default function DashboardPage() {
           setPendingInvitations(invitationsData.count || 0);
         }
 
-        // Verificar si tiene personaje
-        const characterResponse = await fetch('/api/characters?action=check', {
-          headers: {
-            'x-user-id': user.id
-          }
-        });
-
-        if (characterResponse.ok) {
-          const characterData = await characterResponse.json();
-          setHasCharacter(characterData.hasCharacter);
-        }
-
         // Obtener cursos inscritos
         const inscriptionsResponse = await fetch('/api/inscriptions', {
           headers: {
@@ -116,16 +103,16 @@ export default function DashboardPage() {
           setMyInscriptions(inscriptionsData.data || []);
         }
       } catch (error) {
-        console.error('Error al cargar invitaciones y personaje:', error);
+        console.error('Error al cargar invitaciones:', error);
       } finally {
         setLoadingInvitations(false);
       }
     };
 
-    fetchInvitationsAndCharacter();
+    fetchInvitations();
 
     // Actualizar cada 30 segundos
-    const interval = setInterval(fetchInvitationsAndCharacter, 30000);
+    const interval = setInterval(fetchInvitations, 30000);
     
     return () => clearInterval(interval);
   }, [user?.id]);
@@ -133,7 +120,7 @@ export default function DashboardPage() {
   // Verificar si es profesor y cargar sus cursos
   useEffect(() => {
     const checkTeacherStatus = async () => {
-      if (!user?.id) return;
+      if (!user?.id || !token) return;
 
       try {
         setLoadingTeacher(true);
@@ -141,27 +128,33 @@ export default function DashboardPage() {
         // Verificar si es profesor
         const teacherResponse = await fetch('/api/teachers/check', {
           headers: {
-            'x-user-id': user.id
+            'Authorization': `Bearer ${token}`,
           }
         });
 
         if (teacherResponse.ok) {
           const teacherData = await teacherResponse.json();
+          console.log('Teacher check response:', teacherData);
           setIsTeacher(teacherData.isTeacher);
 
           // Si es profesor, cargar sus cursos
           if (teacherData.isTeacher) {
             const coursesResponse = await fetch('/api/courses/teacher', {
               headers: {
-                'x-user-id': user.id
+                'Authorization': `Bearer ${token}`,
               }
             });
 
             if (coursesResponse.ok) {
               const coursesData = await coursesResponse.json();
+              console.log('Teacher courses response:', coursesData);
               setTeacherCourses(coursesData.courses || []);
+            } else {
+              console.error('Error fetching courses:', await coursesResponse.text());
             }
           }
+        } else {
+          console.error('Error checking teacher status:', await teacherResponse.text());
         }
       } catch (error) {
         console.error('Error al verificar estado de profesor:', error);
@@ -171,24 +164,57 @@ export default function DashboardPage() {
     };
 
     checkTeacherStatus();
-  }, [user?.id]);
+  }, [user?.id, token]);
 
   const refreshTeacherCourses = async () => {
-    if (!user?.id || !isTeacher) return;
+    if (!user?.id || !token) return;
 
     try {
-      const coursesResponse = await fetch('/api/courses/teacher', {
+      // Primero verificar si es profesor (puede haberse convertido en profesor)
+      const teacherResponse = await fetch('/api/teachers/check', {
         headers: {
-          'x-user-id': user.id
+          'Authorization': `Bearer ${token}`,
         }
       });
 
-      if (coursesResponse.ok) {
-        const coursesData = await coursesResponse.json();
-        setTeacherCourses(coursesData.courses || []);
+      if (teacherResponse.ok) {
+        const teacherData = await teacherResponse.json();
+        console.log('Refresh - Teacher check:', teacherData);
+        setIsTeacher(teacherData.isTeacher);
+
+        // Si ahora es profesor, obtener sus cursos
+        if (teacherData.isTeacher) {
+          const coursesResponse = await fetch('/api/courses/teacher', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            }
+          });
+
+          if (coursesResponse.ok) {
+            const coursesData = await coursesResponse.json();
+            console.log('Refresh - Courses:', coursesData);
+            setTeacherCourses(coursesData.courses || []);
+          } else {
+            console.error('Error fetching courses:', await coursesResponse.text());
+          }
+        }
+      } else {
+        console.error('Error checking teacher:', await teacherResponse.text());
       }
     } catch (error) {
       console.error('Error al refrescar cursos:', error);
+    }
+  };
+
+  const handleCourseClick = async (course: any) => {
+    // Si no tiene personaje para este curso, redirigir a crear personaje
+    if (!course.hasCharacter) {
+      // Los personajes se crean sin necesidad de grupo
+      // El profesor asignará grupos después
+      router.push(`/main/dashboard/player/create-character?courseId=${course.id}`);
+    } else {
+      // Si tiene personaje, ir al dashboard del curso
+      router.push(`/main/dashboard/player?courseId=${course.id}`);
     }
   };
 
@@ -332,8 +358,8 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Alertas - Invitaciones y Personaje */}
-        {(pendingInvitations > 0 || !hasCharacter) && (
+        {/* Alertas - Invitaciones */}
+        {pendingInvitations > 0 && (
           <div className="space-y-4 mb-8">
             {pendingInvitations > 0 && (
               <Card className="bg-gradient-to-r from-yellow-900/20 to-yellow-800/10 border-yellow-700/50">
@@ -361,31 +387,6 @@ export default function DashboardPage() {
               </Card>
             )}
 
-            {!hasCharacter && !loadingInvitations && (
-              <Card className="bg-gradient-to-r from-green-900/20 to-green-800/10 border-green-700/50">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start gap-3">
-                      <UserCircle className="h-6 w-6 text-green-500 mt-1" />
-                      <div>
-                        <CardTitle className="text-lg mb-1 text-neutral-100">
-                          ¡Crea tu personaje!
-                        </CardTitle>
-                        <CardDescription className="text-neutral-400">
-                          Antes de comenzar tu aventura, necesitas crear tu personaje
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Button 
-                      onClick={() => router.push('/dashboard/create-character')}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      Crear Personaje
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
 
@@ -452,6 +453,17 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Courses */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Botón para crear curso - Visible para todos */}
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setCreateCourseModalOpen(true)}
+                className="bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Crear Curso
+              </Button>
+            </div>
+
             <Tabs defaultValue="enrolled" className="w-full">
               <TabsList className={`grid w-full ${isTeacher ? 'grid-cols-2' : 'grid-cols-1'} bg-[#1a1a1a] border border-neutral-800`}>
                 <TabsTrigger 
@@ -472,6 +484,34 @@ export default function DashboardPage() {
 
               {/* Enrolled Courses Tab */}
               <TabsContent value="enrolled" className="space-y-4 mt-6">
+                {/* Información sobre crear cursos para usuarios no profesores */}
+                {!isTeacher && (
+                  <Card className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-700/50 mb-4">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-start gap-3">
+                          <GraduationCap className="h-6 w-6 text-blue-400 mt-1" />
+                          <div>
+                            <CardTitle className="text-lg mb-1 text-neutral-100">
+                              ¿Quieres enseñar?
+                            </CardTitle>
+                            <CardDescription className="text-neutral-400">
+                              Crea tu primer curso y conviértete en profesor. Podrás gestionar grupos, crear misiones y más.
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <Button 
+                          onClick={() => setCreateCourseModalOpen(true)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Crear Curso
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {myInscriptions.length === 0 ? (
                   <Card className="bg-[#1a1a1a] border-neutral-800">
                     <CardContent className="flex flex-col items-center justify-center py-12">
@@ -489,7 +529,7 @@ export default function DashboardPage() {
                   <Card
                     key={course.id}
                     className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
-                    onClick={() => router.push(`/main/dashboard/player?courseId=${course.id}`)}
+                    onClick={() => handleCourseClick(course)}
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -530,7 +570,7 @@ export default function DashboardPage() {
                         )}
 
                         <Button className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold">
-                          {course.hasCharacter ? 'Continuar Aventura' : 'Crear Personaje'}
+                          Entrar al curso
                         </Button>
                       </div>
                     </CardContent>
@@ -746,6 +786,7 @@ export default function DashboardPage() {
             onOpenChange={setCreateCourseModalOpen}
             onSuccess={refreshTeacherCourses}
             userId={user.id}
+            token={token || undefined}
           />
           {selectedCourse && (
             <InvitationModal

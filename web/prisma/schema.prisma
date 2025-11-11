@@ -65,6 +65,7 @@ model courses {
   teachers_courses teachers_courses[]
   quizzes          quizzes[]          // ⭐ NUEVO: Quizzes del curso
   events           events[]           // ⭐ NUEVO: Eventos custom del curso
+  characters       characters[]       // ⭐ NUEVO: Personajes del curso
 }
 
 model teachers_courses {
@@ -126,7 +127,8 @@ model characters {
   id         String   @id @default(uuid())
   name       String
   user_id    String
-  group_id   String
+  course_id  String   // Relación con el curso (obligatoria)
+  group_id   String?  // Relación con el grupo (opcional - asignada por el profesor después)
   class_id   String
   experience Int      @default(0)
   gold       Int      @default(0)
@@ -137,14 +139,15 @@ model characters {
   updated_at DateTime @updatedAt
 
   user            users                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  group           groups                 @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  course          courses                @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  group           groups?                @relation(fields: [group_id], references: [id], onDelete: Cascade)
   class           classes                @relation(fields: [class_id], references: [id])
   abilities       characters_abilities[]
   tasks           characters_tasks[]
   quizzes_history quizzes_history[]
   events_history  events_history[]
 
-  @@unique([user_id, group_id])
+  @@unique([user_id, course_id]) // Un usuario solo puede tener un personaje por curso
 }
 
 model classes {

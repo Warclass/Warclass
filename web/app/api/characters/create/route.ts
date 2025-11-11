@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCharacter } from '@/backend/services/character/character.service';
+import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
 /**
  * @swagger
  * /api/characters/create:
  *   post:
  *     summary: Crear personaje
- *     description: Crea un nuevo personaje para el usuario en un grupo específico
+ *     description: Crea un nuevo personaje para el usuario en un curso específico. El personaje se crea sin asignar a un grupo; el profesor asignará grupos posteriormente.
  *     tags: [Characters]
  *     security:
  *       - bearerAuth: []
@@ -19,7 +20,7 @@ import { createCharacter } from '@/backend/services/character/character.service'
  *             required:
  *               - name
  *               - classId
- *               - groupId
+ *               - courseId
  *             properties:
  *               name:
  *                 type: string
@@ -29,9 +30,9 @@ import { createCharacter } from '@/backend/services/character/character.service'
  *                 type: string
  *                 description: ID de la clase del personaje (UUID)
  *                 example: "550e8400-e29b-41d4-a716-446655440000"
- *               groupId:
+ *               courseId:
  *                 type: string
- *                 description: ID del grupo del curso (UUID)
+ *                 description: ID del curso (UUID)
  *                 example: "660e8400-e29b-41d4-a716-446655440001"
  *               appearance:
  *                 type: object
@@ -71,6 +72,12 @@ import { createCharacter } from '@/backend/services/character/character.service'
  */
 export async function POST(req: NextRequest) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
 
     if (!userId) {
@@ -81,11 +88,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, classId, groupId, appearance } = body;
+    const { name, classId, courseId, appearance } = body;
 
-    if (!name || !classId || !groupId) {
+    if (!name || !classId || !courseId) {
       return NextResponse.json(
-        { error: 'Datos incompletos: se requiere name, classId y groupId' },
+        { error: 'Datos incompletos: se requiere name, classId y courseId' },
         { status: 400 }
       );
     }
@@ -94,7 +101,7 @@ export async function POST(req: NextRequest) {
       name,
       classId,
       userId, // Usar el userId del header autenticado
-      groupId, // Grupo específico del curso
+      courseId, // Curso en el que se crea el personaje (sin grupo asignado aún)
       appearance // Personalización visual (opcional)
     });
 

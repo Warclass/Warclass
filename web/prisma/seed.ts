@@ -364,7 +364,8 @@ async function main() {
     data: {
       name: 'Marcos el Curandero',
       user_id: student1.id,
-      group_id: group1.id,
+      course_id: course1.id, // Programación Web
+      group_id: group1.id,    // Asignado a Grupo A
       class_id: healerClass.id,
       experience: 1000,
       gold: 100000,
@@ -382,7 +383,8 @@ async function main() {
     data: {
       name: 'Ismael el Guerrero',
       user_id: student2.id,
-      group_id: group1.id,
+      course_id: course1.id, // Programación Web
+      group_id: group1.id,    // Asignado a Grupo A
       class_id: warriorClass.id,
       experience: 750,
       gold: 850,
@@ -395,7 +397,8 @@ async function main() {
     data: {
       name: 'Cristian el Elfo',
       user_id: student3.id,
-      group_id: group1.id,
+      course_id: course1.id, // Programación Web
+      group_id: group1.id,    // Asignado a Grupo A
       class_id: elfClass.id,
       experience: 1200,
       gold: 1100,
@@ -409,7 +412,8 @@ async function main() {
     data: {
       name: 'Pedro el Mago',
       user_id: student4.id,
-      group_id: group2.id,
+      course_id: course2.id, // Base de Datos
+      group_id: group2.id,    // Asignado a Grupo A
       class_id: mageClass.id,
       experience: 650,
       gold: 750,
@@ -422,7 +426,8 @@ async function main() {
     data: {
       name: 'Tomas el Guerrero',
       user_id: student5.id,
-      group_id: group2.id,
+      course_id: course2.id, // Base de Datos
+      group_id: group2.id,    // Asignado a Grupo A
       class_id: warriorClass.id,
       experience: 450,
       gold: 520,
@@ -436,7 +441,8 @@ async function main() {
     data: {
       name: 'Karen la Elfa',
       user_id: student6.id,
-      group_id: group3.id,
+      course_id: course3.id, // Algoritmos
+      group_id: group3.id,    // Asignado a Grupo A
       class_id: elfClass.id,
       experience: 2000,
       gold: 1500,
@@ -450,7 +456,8 @@ async function main() {
     data: {
       name: user1.name + ' - Aventurero IA',
       user_id: user1.id,
-      group_id: group4.id, // IA
+      course_id: course4.id, // Inteligencia Artificial
+      group_id: group4.id,    // Asignado a Grupo A - IA
       class_id: mageClass.id,
       experience: 1300,
       gold: 800,
@@ -463,7 +470,8 @@ async function main() {
     data: {
       name: user1.name + ' - Matemático',
       user_id: user1.id,
-      group_id: group5.id, // Matemáticas
+      course_id: course5.id, // Matemáticas Discretas
+      group_id: group5.id,    // Asignado a Grupo A - Matemáticas
       class_id: mageClass.id,
       experience: 640,
       gold: 500,

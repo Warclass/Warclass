@@ -433,7 +433,7 @@ export class TeacherService {
         description: tc.course.description,
         studentsCount: tc.course.inscriptions.length,
         groupsCount: tc.course.groups.length,
-        charactersCount: tc.course.groups.reduce(
+        membersCount: tc.course.groups.reduce(
           (sum: number, group: any) => sum + group.characters.length,
           0
         ),

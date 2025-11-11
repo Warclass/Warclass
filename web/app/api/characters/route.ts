@@ -4,6 +4,7 @@ import {
   getUserCharacterForCourse,
   userHasCharacter
 } from '@/backend/services/character/character.service';
+import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
 /**
  * @swagger
@@ -64,6 +65,12 @@ import {
  */
 export async function GET(req: NextRequest) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     const { searchParams } = new URL(req.url);
     const courseId = searchParams.get('courseId');
