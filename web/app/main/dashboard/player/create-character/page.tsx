@@ -17,8 +17,9 @@ const characterClasses = [
   { id: 'warrior', name: 'Guerrero', icon: '⚔️', path: 'Warrior', model: 'warrior.fbx' },
 ]
 
+// Solo Female disponible por ahora (los modelos Male no están en el repositorio)
 const genders = [
-  { id: 'male', name: 'Masculino', icon: '♂️', path: 'Male' },
+  // { id: 'male', name: 'Masculino', icon: '♂️', path: 'Male' },  // No disponible
   { id: 'female', name: 'Femenino', icon: '♀️', path: 'Female' },
 ]
 

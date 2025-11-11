@@ -176,21 +176,28 @@ export default function CharacterPage() {
 
     const characterRotation = ambienceRotations[selectedAmbience]
 
-    // Convertir colores de character a appearance
+    // Usar la apariencia guardada del personaje
     const appearance: CharacterAppearance = {
-        Hair: characterData.hair_color || '#8B4513',
-        Eyes: characterData.eye_color || '#0000FF',
-        Skin: characterData.skin_color || '#FFE0BD',
-        Shirt: characterData.class?.color || '#FF0000',
-        Pants: '#2C3E50',
-        Shoes: '#1A1A1A'
+        Hair: characterData.appearance?.Hair || '#8B4513',
+        Eyes: characterData.appearance?.Eyes || '#0000FF',
+        Skin: characterData.appearance?.Skin || '#FFE0BD',
+        // Shirt: characterData.appearance?.Shirt || '#FF0000',
+        // Pants: characterData.appearance?.Pants || '#2C3E50',
+        // Shoes: characterData.appearance?.Shoes || '#1A1A1A'
     }
+
+    console.log('🎨 Character appearance:', {
+        saved: characterData.appearance,
+        applied: appearance
+    })
 
     // Determinar el path de la clase usando el mapeo
     const className = charClass?.name || 'Guerrero'
     const classPath = classPathMap[className] || 'Warrior' // Fallback a Warrior
     const modelFileName = classModelFileMap[classPath] || 'warrior.fbx' // Fallback a warrior.fbx
-    const genderPath = characterData.gender === 'male' ? 'Male' : 'Female'
+    
+    // Determinar género - por defecto Female (los modelos actuales solo están en Female)
+    const genderPath = 'Female'
     
     const modelPath = `/models/character_scene/Character/${classPath}/${genderPath}/${modelFileName}`
     const animationsPath = `/models/character_scene/Character/${classPath}/${genderPath}/State/`
