@@ -2,6 +2,84 @@ import { NextRequest, NextResponse } from 'next/server';
 import { EventService } from '@/backend/services/event/event.service';
 import { UpdateEventSchema } from '@/backend/validators/event.validator';
 
+/**
+ * @swagger
+ * /api/events/{id}:
+ *   get:
+ *     summary: Obtener evento por ID
+ *     description: Retorna la información de un evento específico
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del evento
+ *     responses:
+ *       200:
+ *         description: Información del evento
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 event:
+ *                   $ref: '#/components/schemas/Event'
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Evento no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ *   put:
+ *     summary: Actualizar evento
+ *     description: Actualiza la información de un evento
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del evento
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Evento actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 event:
+ *                   $ref: '#/components/schemas/Event'
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Evento no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -2,6 +2,55 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TaskService } from '@/backend/services/task/task.service';
 import { AssignTaskSchema } from '@/backend/validators/task.validator';
 
+/**
+ * @swagger
+ * /api/tasks/assign:
+ *   post:
+ *     summary: Asignar tarea a grupos
+ *     description: Asigna una tarea a uno o varios grupos
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - taskId
+ *               - groupIds
+ *             properties:
+ *               taskId:
+ *                 type: string
+ *                 description: ID de la tarea a asignar
+ *                 example: "15"
+ *               groupIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: IDs de los grupos a los que se asigna la tarea
+ *                 example: ["5", "7", "10"]
+ *     responses:
+ *       200:
+ *         description: Tarea asignada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tarea asignada correctamente
+ *       400:
+ *         description: Datos inválidos
+ *       404:
+ *         description: Tarea o grupo no encontrado
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');

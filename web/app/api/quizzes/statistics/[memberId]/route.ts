@@ -8,8 +8,44 @@ interface RouteParams {
 }
 
 /**
- * GET /api/quizzes/statistics/[memberId]
- * Obtener estadísticas de un miembro en quizzes
+ * @swagger
+ * /api/quizzes/statistics/{memberId}:
+ *   get:
+ *     summary: Obtener estadísticas de quizzes de un miembro
+ *     description: Retorna las estadísticas de desempeño en quizzes de un miembro específico
+ *     tags: [Quizzes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del miembro
+ *     responses:
+ *       200:
+ *         description: Estadísticas del miembro en quizzes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 statistics:
+ *                   type: object
+ *                   properties:
+ *                     totalQuizzes:
+ *                       type: integer
+ *                     averageScore:
+ *                       type: number
+ *                     bestScore:
+ *                       type: number
+ *                     completedQuizzes:
+ *                       type: integer
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {

@@ -5,8 +5,66 @@ import { TeacherService } from '@/backend/services/teacher/teacher.service';
 const prisma = new PrismaClient();
 
 /**
- * POST /api/members/update-stats
- * Actualiza experiencia y/u oro de un miembro
+ * @swagger
+ * /api/members/update-stats:
+ *   post:
+ *     summary: Actualizar estadísticas de un miembro
+ *     description: Actualiza experiencia y/u oro de un miembro (requiere ser profesor del curso)
+ *     tags: [Members]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - member_id
+ *             properties:
+ *               member_id:
+ *                 type: string
+ *                 description: ID del miembro
+ *               experience_delta:
+ *                 type: integer
+ *                 description: Cambio en puntos de experiencia (puede ser negativo)
+ *               gold_delta:
+ *                 type: integer
+ *                 description: Cambio en oro (puede ser negativo)
+ *               reason:
+ *                 type: string
+ *                 description: Razón del cambio de estadísticas
+ *     responses:
+ *       200:
+ *         description: Estadísticas actualizadas exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 member:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     experience:
+ *                       type: integer
+ *                     gold:
+ *                       type: integer
+ *                     level:
+ *                       type: integer
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Requiere ser profesor del curso
+ *       404:
+ *         description: Miembro no encontrado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function POST(req: NextRequest) {
   try {

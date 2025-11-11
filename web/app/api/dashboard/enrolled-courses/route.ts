@@ -3,8 +3,32 @@ import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 import { DashboardService } from '@/backend/services/dashboard/dashboard.service';
 
 /**
- * GET /api/dashboard/enrolled-courses
- * Get courses where user is enrolled as student
+ * @swagger
+ * /api/dashboard/enrolled-courses:
+ *   get:
+ *     summary: Obtener cursos inscritos
+ *     description: Retorna todos los cursos donde el usuario está inscrito como estudiante
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de cursos inscritos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Course'
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(request: NextRequest) {
   try {

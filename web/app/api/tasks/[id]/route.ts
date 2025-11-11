@@ -8,6 +8,39 @@ interface RouteParams {
   };
 }
 
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   get:
+ *     summary: Obtener tarea por ID
+ *     description: Retorna los detalles de una tarea específica
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la tarea
+ *     responses:
+ *       200:
+ *         description: Tarea encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 task:
+ *                   $ref: '#/components/schemas/Task'
+ *       404:
+ *         description: Tarea no encontrada
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const userId = req.headers.get('x-user-id');

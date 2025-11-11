@@ -3,8 +3,60 @@ import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 import { ProfileService } from '@/backend/services/profile/profile.service';
 
 /**
- * POST /api/profile/change-password
- * Change user password
+ * @swagger
+ * /api/profile/change-password:
+ *   post:
+ *     summary: Cambiar contraseña
+ *     description: Cambia la contraseña del usuario autenticado
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *               - confirmPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: Contraseña actual
+ *                 example: OldPassword123!
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: Nueva contraseña (mínimo 8 caracteres)
+ *                 example: NewPassword123!
+ *               confirmPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: Confirmación de nueva contraseña
+ *                 example: NewPassword123!
+ *     responses:
+ *       200:
+ *         description: Contraseña cambiada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Contraseña actualizada exitosamente
+ *       400:
+ *         description: Contraseña actual incorrecta o contraseñas no coinciden
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function POST(request: NextRequest) {
   try {

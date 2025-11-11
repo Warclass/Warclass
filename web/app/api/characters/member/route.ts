@@ -2,8 +2,44 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserMemberForCourse } from '@/backend/services/character/character.service';
 
 /**
- * GET /api/characters/member
- * Obtener el member ID de un usuario para un curso específico
+ * @swagger
+ * /api/characters/member:
+ *   get:
+ *     summary: Obtener member ID del usuario
+ *     description: Retorna el ID de membresía del usuario para un curso específico
+ *     tags: [Characters]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario
+ *       - in: query
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del curso
+ *     responses:
+ *       200:
+ *         description: Member ID encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 memberId:
+ *                   type: string
+ *                   description: ID de la membresía
+ *       400:
+ *         description: userId o courseId no proporcionados
+ *       404:
+ *         description: Membresía no encontrada
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(req: NextRequest) {
   try {

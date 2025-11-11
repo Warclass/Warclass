@@ -3,8 +3,33 @@ import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 import { ProfileService } from '@/backend/services/profile/profile.service';
 
 /**
- * GET /api/profile
- * Get user profile
+ * @swagger
+ * /api/profile:
+ *   get:
+ *     summary: Obtener perfil del usuario
+ *     description: Retorna la información completa del perfil del usuario autenticado
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Perfil obtenido exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Perfil no encontrado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(request: NextRequest) {
   try {
@@ -60,8 +85,56 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * PUT /api/profile
- * Update user profile
+ * @swagger
+ * /api/profile:
+ *   put:
+ *     summary: Actualizar perfil
+ *     description: Actualiza la información del perfil del usuario autenticado
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nuevo nombre del usuario
+ *                 example: Juan Pérez Actualizado
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Nuevo email del usuario
+ *                 example: nuevo@email.com
+ *               username:
+ *                 type: string
+ *                 description: Nuevo nombre de usuario
+ *                 example: juanperez123
+ *     responses:
+ *       200:
+ *         description: Perfil actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Perfil actualizado exitosamente
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function PUT(request: NextRequest) {
   try {

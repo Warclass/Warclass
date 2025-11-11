@@ -4,9 +4,85 @@ import { UpdateInstitutionSchema } from '@/backend/validators/institution.valida
 import { requireAdmin, requireAuth } from '@/backend/middleware/auth.middleware';
 
 /**
- * GET /api/institutions/:id
- * Obtener una institución por ID con sus teachers
- * 🔒 Requiere: Autenticación
+ * @swagger
+ * /api/institutions/{id}:
+ *   get:
+ *     summary: Obtener institución por ID
+ *     description: Retorna la información de una institución específica con sus profesores
+ *     tags: [Institutions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la institución
+ *     responses:
+ *       200:
+ *         description: Información de la institución
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 institution:
+ *                   $ref: '#/components/schemas/Institution'
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Institución no encontrada
+ *       500:
+ *         description: Error interno del servidor
+ *   patch:
+ *     summary: Actualizar institución
+ *     description: Actualiza la información de una institución (solo administradores)
+ *     tags: [Institutions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la institución
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Institución actualizada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 institution:
+ *                   $ref: '#/components/schemas/Institution'
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Requiere permisos de administrador
+ *       404:
+ *         description: Institución no encontrada
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(
   request: NextRequest,

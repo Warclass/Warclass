@@ -2,6 +2,55 @@ import { NextRequest, NextResponse } from 'next/server';
 import { EventService } from '@/backend/services/event/event.service';
 import { ApplyEventSchema } from '@/backend/validators/event.validator';
 
+/**
+ * @swagger
+ * /api/events/apply:
+ *   post:
+ *     summary: Aplicar evento a miembros
+ *     description: Registra miembros/personajes en un evento específico
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - eventId
+ *               - memberIds
+ *             properties:
+ *               eventId:
+ *                 type: integer
+ *                 description: ID del evento
+ *                 example: 10
+ *               memberIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: IDs de los miembros a registrar
+ *                 example: [25, 30, 35]
+ *     responses:
+ *       200:
+ *         description: Evento aplicado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Evento aplicado correctamente
+ *                 result:
+ *                   type: object
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');

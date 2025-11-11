@@ -3,6 +3,45 @@ import { PrismaClient } from '@/lib/generated/prisma';
 
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /api/courses/tasks:
+ *   get:
+ *     summary: Obtener tareas de un curso
+ *     description: Retorna todas las tareas disponibles para un curso específico
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del curso
+ *     responses:
+ *       200:
+ *         description: Lista de tareas del curso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 tasks:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: courseId no proporcionado
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No estás inscrito en este curso
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');

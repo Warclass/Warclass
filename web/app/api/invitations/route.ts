@@ -2,6 +2,48 @@ import { NextRequest, NextResponse } from 'next/server';
 import { InvitationService, getPendingInvitations } from '@/backend/services/invitation/invitation.service';
 import { TeacherService } from '@/backend/services/teacher/teacher.service';
 
+/**
+ * @swagger
+ * /api/invitations:
+ *   get:
+ *     summary: Obtener invitaciones pendientes
+ *     description: Retorna todas las invitaciones pendientes del usuario autenticado
+ *     tags: [Invitations]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de invitaciones pendientes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       courseId:
+ *                         type: string
+ *                       courseName:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(req: NextRequest) {
   try {
     // TODO: Obtener userId del token de sesión
@@ -33,6 +75,65 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * @swagger
+ * /api/invitations:
+ *   post:
+ *     summary: Crear nueva invitación
+ *     description: Permite a un profesor crear una invitación para un curso
+ *     tags: [Invitations]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - courseId
+ *               - name
+ *             properties:
+ *               courseId:
+ *                 type: string
+ *                 description: ID del curso
+ *               name:
+ *                 type: string
+ *                 description: Nombre de la invitación
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email opcional del invitado
+ *     responses:
+ *       201:
+ *         description: Invitación creada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     courseId:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No tienes permisos (requiere ser profesor)
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function POST(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id');

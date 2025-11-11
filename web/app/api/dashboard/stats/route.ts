@@ -3,8 +3,46 @@ import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 import { DashboardService } from '@/backend/services/dashboard/dashboard.service';
 
 /**
- * GET /api/dashboard/stats
- * Get dashboard statistics
+ * @swagger
+ * /api/dashboard/stats:
+ *   get:
+ *     summary: Obtener estadísticas del dashboard
+ *     description: Retorna estadísticas resumidas del usuario (experiencia, tareas completadas, quizzes, etc.)
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Estadísticas obtenidas exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalExperience:
+ *                       type: integer
+ *                       description: Experiencia total acumulada
+ *                     completedTasks:
+ *                       type: integer
+ *                       description: Número de tareas completadas
+ *                     completedQuizzes:
+ *                       type: integer
+ *                       description: Número de quizzes completados
+ *                     averageScore:
+ *                       type: number
+ *                       description: Promedio de puntaje en quizzes
+ *                     coursesEnrolled:
+ *                       type: integer
+ *                       description: Cursos inscritos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(request: NextRequest) {
   try {

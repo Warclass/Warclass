@@ -11,8 +11,43 @@ type RouteParams = {
 };
 
 /**
- * GET /api/tasks/course/[courseId]
- * Obtiene todas las tareas de un curso específico
+ * @swagger
+ * /api/tasks/course/{courseId}:
+ *   get:
+ *     summary: Obtener tareas de un curso
+ *     description: Retorna todas las tareas de un curso específico. Requiere ser profesor del curso o estar inscrito
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del curso
+ *     responses:
+ *       200:
+ *         description: Lista de tareas del curso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: courseId no proporcionado
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No tienes acceso a este curso
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {

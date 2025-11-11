@@ -3,6 +3,54 @@ import { PrismaClient } from '@/lib/generated/prisma';
 
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /api/courses/quizzes:
+ *   get:
+ *     summary: Obtener quizzes de un curso
+ *     description: Retorna todos los quizzes de un curso organizados por grupo, con historial de respuestas
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del curso
+ *     responses:
+ *       200:
+ *         description: Lista de quizzes del curso organizados por grupo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 groups:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       quizzes:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Quiz'
+ *       400:
+ *         description: courseId no proporcionado
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No estás inscrito en este curso
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');

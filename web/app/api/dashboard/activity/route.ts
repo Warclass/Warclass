@@ -3,8 +3,47 @@ import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 import { DashboardService } from '@/backend/services/dashboard/dashboard.service';
 
 /**
- * GET /api/dashboard/activity
- * Get recent activity for the dashboard
+ * @swagger
+ * /api/dashboard/activity:
+ *   get:
+ *     summary: Obtener actividad reciente
+ *     description: Retorna la actividad reciente del usuario (tareas completadas, quizzes realizados, eventos, etc.)
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Actividad obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                         description: Tipo de actividad
+ *                         example: TASK_COMPLETED
+ *                       description:
+ *                         type: string
+ *                         description: Descripción de la actividad
+ *                       timestamp:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Fecha y hora de la actividad
+ *                       experienceGained:
+ *                         type: integer
+ *                         description: Experiencia ganada (si aplica)
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(request: NextRequest) {
   try {

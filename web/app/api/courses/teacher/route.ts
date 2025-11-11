@@ -2,8 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TeacherService } from '@/backend/services/teacher/teacher.service';
 
 /**
- * GET /api/courses/teacher
- * Obtener cursos del profesor autenticado
+ * @swagger
+ * /api/courses/teacher:
+ *   get:
+ *     summary: Obtener cursos del profesor
+ *     description: Retorna todos los cursos donde el usuario autenticado es profesor
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de cursos del profesor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 courses:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Course'
+ *       403:
+ *         description: Usuario no es profesor
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(req: NextRequest) {
   try {

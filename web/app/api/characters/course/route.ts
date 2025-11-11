@@ -3,6 +3,43 @@ import { PrismaClient } from '@/lib/generated/prisma';
 
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /api/characters/course:
+ *   get:
+ *     summary: Obtener personaje por curso
+ *     description: Retorna el personaje del usuario para un curso específico
+ *     tags: [Characters]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del curso
+ *     responses:
+ *       200:
+ *         description: Personaje encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Character'
+ *       400:
+ *         description: courseId no proporcionado
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Personaje no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');
@@ -126,7 +163,7 @@ export async function GET(req: NextRequest) {
         id: inscription.course.id,
         name: inscription.course.name,
         description: inscription.course.description,
-        teacher: inscription.course.teacher.name
+        teacher: inscription.course.teacher
       }
     };
 

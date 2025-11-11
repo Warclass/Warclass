@@ -3,8 +3,50 @@ import { QuizService } from '@/backend/services/quiz/quiz.service';
 import { CreateQuizSchema, GetQuizzesQuerySchema } from '@/backend/validators/quiz.validator';
 
 /**
- * GET /api/quizzes
- * Obtener quizzes con filtros opcionales
+ * @swagger
+ * /api/quizzes:
+ *   get:
+ *     summary: Obtener quizzes
+ *     description: Retorna quizzes filtrados por grupo o curso
+ *     tags: [Quizzes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: groupId
+ *         schema:
+ *           type: string
+ *         description: ID del grupo para filtrar quizzes
+ *       - in: query
+ *         name: courseId
+ *         schema:
+ *           type: string
+ *         description: ID del curso para filtrar quizzes
+ *       - in: query
+ *         name: memberId
+ *         schema:
+ *           type: string
+ *         description: ID del miembro para obtener estado de completitud
+ *     responses:
+ *       200:
+ *         description: Lista de quizzes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Quiz'
+ *       400:
+ *         description: Parámetros inválidos o faltantes
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(req: NextRequest) {
   try {
@@ -57,8 +99,75 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * POST /api/quizzes
- * Crear un nuevo quiz
+ * @swagger
+ * /api/quizzes:
+ *   post:
+ *     summary: Crear quiz
+ *     description: Crea un nuevo cuestionario para un grupo o curso
+ *     tags: [Quizzes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - questions
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Título del quiz
+ *                 example: Quiz de Matemáticas - Capítulo 1
+ *               description:
+ *                 type: string
+ *                 description: Descripción del quiz
+ *               difficulty:
+ *                 type: string
+ *                 enum: [EASY, MEDIUM, HARD]
+ *                 description: Dificultad del quiz
+ *                 example: MEDIUM
+ *               experienceReward:
+ *                 type: integer
+ *                 description: Recompensa de experiencia
+ *                 example: 100
+ *               groupId:
+ *                 type: string
+ *                 description: ID del grupo (opcional)
+ *               courseId:
+ *                 type: string
+ *                 description: ID del curso (opcional)
+ *               questions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     question:
+ *                       type: string
+ *                     options:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     correctAnswer:
+ *                       type: string
+ *     responses:
+ *       201:
+ *         description: Quiz creado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 quiz:
+ *                   $ref: '#/components/schemas/Quiz'
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function POST(req: NextRequest) {
   try {

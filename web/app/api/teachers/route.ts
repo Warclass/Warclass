@@ -4,9 +4,53 @@ import { CreateTeacherSchema } from '@/backend/validators/teacher.validator';
 import { requireAdmin, requireAuth } from '@/backend/middleware/auth.middleware';
 
 /**
- * POST /api/teachers
- * Convertir un user en teacher
- * 🔒 Requiere: Autenticación + Admin
+ * @swagger
+ * /api/teachers:
+ *   post:
+ *     summary: Crear profesor
+ *     description: Convierte un usuario en profesor (requiere permisos de administrador)
+ *     tags: [Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID del usuario a convertir en profesor
+ *                 example: "123"
+ *               institutionId:
+ *                 type: string
+ *                 description: ID de la institución (opcional)
+ *                 example: "5"
+ *     responses:
+ *       201:
+ *         description: Profesor creado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 teacher:
+ *                   type: object
+ *       400:
+ *         description: Datos inválidos o usuario ya es profesor
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No tiene permisos de administrador
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function POST(request: NextRequest) {
   try {

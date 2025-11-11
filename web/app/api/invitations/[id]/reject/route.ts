@@ -1,6 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rejectInvitation } from '@/backend/services/invitation/invitation.service';
 
+/**
+ * @swagger
+ * /api/invitations/{id}/reject:
+ *   post:
+ *     summary: Rechazar invitación
+ *     description: Rechaza una invitación pendiente por su ID
+ *     tags: [Invitations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la invitación
+ *     responses:
+ *       200:
+ *         description: Invitación rechazada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Invitación no encontrada
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }

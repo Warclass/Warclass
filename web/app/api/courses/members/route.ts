@@ -3,6 +3,54 @@ import { PrismaClient } from '@/lib/generated/prisma';
 
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /api/courses/members:
+ *   get:
+ *     summary: Obtener miembros de un curso
+ *     description: Retorna todos los miembros de un curso agrupados por grupo, con sus personajes
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del curso
+ *     responses:
+ *       200:
+ *         description: Lista de miembros del curso organizados por grupo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 groups:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       members:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *       400:
+ *         description: courseId no proporcionado
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No estás inscrito en este curso
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');

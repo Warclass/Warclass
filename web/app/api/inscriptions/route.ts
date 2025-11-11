@@ -3,6 +3,47 @@ import { PrismaClient } from '@/lib/generated/prisma';
 
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /api/inscriptions:
+ *   get:
+ *     summary: Obtener inscripciones del usuario
+ *     description: Retorna todas las inscripciones del usuario autenticado con información detallada de los cursos
+ *     tags: [Inscriptions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de inscripciones del usuario
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 courses:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       teacher:
+ *                         type: object
+ *                       groups:
+ *                         type: array
+ *                       totalMembers:
+ *                         type: integer
+ *                       userCharacter:
+ *                         type: object
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');

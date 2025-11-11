@@ -2,8 +2,55 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/backend/config/prisma';
 
 /**
- * GET /api/quizzes/history
- * Obtener historial de quizzes de un miembro
+ * @swagger
+ * /api/quizzes/history:
+ *   get:
+ *     summary: Obtener historial de quizzes
+ *     description: Retorna el historial de quizzes completados por un miembro o curso
+ *     tags: [Quizzes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: memberId
+ *         schema:
+ *           type: string
+ *         description: ID del miembro para obtener su historial
+ *       - in: query
+ *         name: courseId
+ *         schema:
+ *           type: string
+ *         description: ID del curso para obtener historial de todos los miembros
+ *     responses:
+ *       200:
+ *         description: Historial de quizzes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 history:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       quizId:
+ *                         type: string
+ *                       memberId:
+ *                         type: string
+ *                       score:
+ *                         type: number
+ *                       answeredAt:
+ *                         type: string
+ *                         format: date-time
+ *       400:
+ *         description: Se requiere memberId o courseId
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(req: NextRequest) {
   try {

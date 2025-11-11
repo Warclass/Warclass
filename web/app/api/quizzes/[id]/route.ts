@@ -9,8 +9,88 @@ interface RouteParams {
 }
 
 /**
- * GET /api/quizzes/[id]
- * Obtener un quiz específico
+ * @swagger
+ * /api/quizzes/{id}:
+ *   get:
+ *     summary: Obtener quiz por ID
+ *     description: Retorna la información de un quiz específico, incluyendo preguntas y respuestas si aplica
+ *     tags: [Quizzes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del quiz
+ *       - in: query
+ *         name: memberId
+ *         schema:
+ *           type: string
+ *         description: ID del miembro para obtener su respuesta
+ *     responses:
+ *       200:
+ *         description: Información del quiz
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 quiz:
+ *                   $ref: '#/components/schemas/Quiz'
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Quiz no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ *   put:
+ *     summary: Actualizar quiz
+ *     description: Actualiza la información de un quiz
+ *     tags: [Quizzes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del quiz
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               questions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *     responses:
+ *       200:
+ *         description: Quiz actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 quiz:
+ *                   $ref: '#/components/schemas/Quiz'
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Quiz no encontrado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {

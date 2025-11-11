@@ -4,9 +4,55 @@ import { CreateInstitutionSchema } from '@/backend/validators/institution.valida
 import { requireAdmin, requireAuth } from '@/backend/middleware/auth.middleware';
 
 /**
- * POST /api/institutions
- * Crear una nueva institución
- * 🔒 Requiere: Autenticación + Admin
+ * @swagger
+ * /api/institutions:
+ *   post:
+ *     summary: Crear institución
+ *     description: Crea una nueva institución educativa (requiere permisos de administrador)
+ *     tags: [Institutions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - code
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nombre de la institución
+ *                 example: Universidad Nacional
+ *               code:
+ *                 type: string
+ *                 description: Código único de la institución
+ *                 example: UN-2024
+ *               description:
+ *                 type: string
+ *                 description: Descripción de la institución
+ *     responses:
+ *       201:
+ *         description: Institución creada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Institution'
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No tiene permisos de administrador
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function POST(request: NextRequest) {
   try {

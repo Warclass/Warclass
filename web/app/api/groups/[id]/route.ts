@@ -8,6 +8,80 @@ interface RouteParams {
   };
 }
 
+/**
+ * @swagger
+ * /api/groups/{id}:
+ *   get:
+ *     summary: Obtener grupo por ID
+ *     description: Retorna la información de un grupo específico
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del grupo
+ *     responses:
+ *       200:
+ *         description: Información del grupo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 group:
+ *                   $ref: '#/components/schemas/Group'
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Grupo no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ *   put:
+ *     summary: Actualizar grupo
+ *     description: Actualiza la información de un grupo
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del grupo
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nuevo nombre del grupo
+ *     responses:
+ *       200:
+ *         description: Grupo actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 group:
+ *                   $ref: '#/components/schemas/Group'
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Grupo no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const userId = req.headers.get('x-user-id');

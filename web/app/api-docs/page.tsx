@@ -13,6 +13,23 @@ export default function ApiDocsPage() {
 
   useEffect(() => {
     setMounted(true);
+
+    // Suprimir warnings de lifecycle methods de swagger-ui-react
+    const originalError = console.error;
+    console.error = (...args) => {
+      if (
+        typeof args[0] === 'string' &&
+        (args[0].includes('UNSAFE_componentWillReceiveProps') ||
+         args[0].includes('ModelCollapse'))
+      ) {
+        return;
+      }
+      originalError.apply(console, args);
+    };
+
+    return () => {
+      console.error = originalError;
+    };
   }, []);
 
   if (!mounted) {
