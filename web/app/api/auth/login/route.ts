@@ -3,6 +3,64 @@ import { AuthService } from '@/backend/services/auth/auth.service';
 import { loginSchema } from '@/backend/validators/auth.validator';
 import { ZodError } from 'zod';
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Iniciar sesión
+ *     description: Autentica un usuario con email y contraseña
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email del usuario
+ *                 example: usuario@ejemplo.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: Contraseña del usuario
+ *                 example: Password123!
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Login exitoso
+ *                 token:
+ *                   type: string
+ *                   description: JWT token de autenticación
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Credenciales inválidas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       400:
+ *         description: Datos de entrada inválidos
+ *       500:
+ *         description: Error interno del servidor
+ *     security: []
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
