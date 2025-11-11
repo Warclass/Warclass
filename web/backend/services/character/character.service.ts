@@ -21,7 +21,8 @@ export interface CharacterData {
 export interface CreateCharacterInput {
   name: string;
   classId: string;
-  memberId: string; // El ID del member al que pertenece el personaje
+  userId: string; // El ID del usuario propietario del character
+  groupId: string; // El ID del grupo al que pertenece
   appearance?: {
     Hair?: string;
     Eyes?: string;
@@ -34,38 +35,12 @@ export interface CreateCharacterInput {
  */
 export async function userHasCharacter(userId: string): Promise<boolean> {
   try {
-    // Buscar si el usuario tiene alguna inscripción con un member que tenga character
-    const inscriptions = await prisma.inscriptions.findMany({
-      where: { user_id: userId },
-      include: {
-        course: {
-          include: {
-            groups: {
-              include: {
-                members: {
-                  include: {
-                    characters: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+    // Buscar directamente si el usuario tiene algún character
+    const characterCount = await prisma.characters.count({
+      where: { user_id: userId }
     });
 
-    // Verificar si algún member tiene un character
-    for (const inscription of inscriptions) {
-      for (const group of inscription.course.groups) {
-        for (const member of group.members) {
-          if (member.characters) {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
+    return characterCount > 0;
   } catch (error) {
     console.error('Error al verificar si usuario tiene personaje:', error);
     return false;
@@ -77,37 +52,14 @@ export async function userHasCharacter(userId: string): Promise<boolean> {
  */
 export async function getUserCharacterForCourse(userId: string, courseId: string): Promise<CharacterData | null> {
   try {
-    // Buscar la inscripción del usuario al curso
+    // Verificar que el usuario está inscrito en el curso
     const inscription = await prisma.inscriptions.findUnique({
       where: {
         user_id_course_id: {
           user_id: userId,
           course_id: courseId
-        }
-      },
-      include: {
-        course: {
-          include: {
-            groups: {
-              include: {
-                members: {
-                  include: {
-                    characters: {
-                      include: {
-                        class: true,
-                        abilities: {
-                          include: {
-                            ability: true
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        },
+        is_active: true // Solo inscripciones activas
       }
     });
 
@@ -115,31 +67,43 @@ export async function getUserCharacterForCourse(userId: string, courseId: string
       return null;
     }
 
-    // Buscar el member y character correspondiente
-    for (const group of inscription.course.groups) {
-      for (const member of group.members) {
-        if (member.characters) {
-          const char = member.characters;
-          return {
-            id: char.id,
-            name: char.name,
-            experience: char.experience,
-            gold: char.gold,
-            energy: char.energy,
-            className: char.class.name,
-            classSpeed: char.class.speed,
-            abilities: char.abilities.map(ca => ({
-              id: ca.ability.id,
-              name: ca.ability.name,
-              description: ca.ability.description,
-              gold: ca.ability.gold
-            }))
-          };
+    // Buscar el character del usuario en algún grupo de este curso
+    const character = await prisma.characters.findFirst({
+      where: {
+        user_id: userId,
+        group: {
+          course_id: courseId
+        }
+      },
+      include: {
+        class: true,
+        abilities: {
+          include: {
+            ability: true
+          }
         }
       }
+    });
+
+    if (!character) {
+      return null;
     }
 
-    return null;
+    return {
+      id: character.id,
+      name: character.name,
+      experience: character.experience,
+      gold: character.gold,
+      energy: character.energy,
+      className: character.class.name,
+      classSpeed: character.class.speed,
+      abilities: character.abilities.map((ca: any) => ({
+        id: ca.ability.id,
+        name: ca.ability.name,
+        description: ca.ability.description,
+        gold: ca.ability.gold
+      }))
+    };
   } catch (error) {
     console.error('Error al obtener personaje del usuario:', error);
     return null;
@@ -147,26 +111,46 @@ export async function getUserCharacterForCourse(userId: string, courseId: string
 }
 
 /**
- * Crea un nuevo personaje para un member
+ * Crea un nuevo personaje para un usuario en un grupo específico
  */
 export async function createCharacter(data: CreateCharacterInput): Promise<CharacterData> {
   try {
-    // Verificar que el member existe
-    const member = await prisma.members.findUnique({
-      where: { id: data.memberId }
+    // Verificar que el grupo existe
+    const group = await prisma.groups.findUnique({
+      where: { id: data.groupId }
     });
 
-    if (!member) {
-      throw new Error('Member no encontrado');
+    if (!group) {
+      throw new Error('Grupo no encontrado');
     }
 
-    // Verificar que el member no tiene ya un personaje
+    // Verificar que el usuario está inscrito en el curso del grupo
+    const inscription = await prisma.inscriptions.findUnique({
+      where: {
+        user_id_course_id: {
+          user_id: data.userId,
+          course_id: group.course_id
+        },
+        is_active: true
+      }
+    });
+
+    if (!inscription) {
+      throw new Error('Usuario no inscrito en el curso de este grupo');
+    }
+
+    // Verificar que el usuario no tiene ya un personaje en este grupo
     const existingCharacter = await prisma.characters.findUnique({
-      where: { character_id: data.memberId }
+      where: {
+        user_id_group_id: {
+          user_id: data.userId,
+          group_id: data.groupId
+        }
+      }
     });
 
     if (existingCharacter) {
-      throw new Error('Este member ya tiene un personaje');
+      throw new Error('Ya tienes un personaje en este grupo');
     }
 
     // Verificar que la clase existe
@@ -178,15 +162,18 @@ export async function createCharacter(data: CreateCharacterInput): Promise<Chara
       throw new Error('Clase de personaje no encontrada');
     }
 
-    // Crear el personaje
+    // Crear el personaje con stats iniciales
     const character = await prisma.characters.create({
       data: {
         name: data.name,
-        character_id: data.memberId,
+        user_id: data.userId,
+        group_id: data.groupId,
         class_id: data.classId,
-        experience: member.experience,
-        gold: member.gold,
-        energy: member.energy
+        experience: 0,
+        gold: 500, // Oro inicial
+        energy: 100, // Energía inicial
+        health: 100, // Salud inicial
+        appearance: data.appearance ? JSON.parse(JSON.stringify(data.appearance)) : undefined
       },
       include: {
         class: true,
@@ -206,7 +193,7 @@ export async function createCharacter(data: CreateCharacterInput): Promise<Chara
       energy: character.energy,
       className: character.class.name,
       classSpeed: character.class.speed,
-      abilities: character.abilities.map(ca => ({
+      abilities: character.abilities.map((ca: any) => ({
         id: ca.ability.id,
         name: ca.ability.name,
         description: ca.ability.description,
@@ -238,27 +225,19 @@ export async function getCharacterClasses() {
 }
 
 /**
- * Obtiene el member ID de un usuario para un curso específico
+ * Obtiene los grupos disponibles para un usuario en un curso
+ * (donde puede crear un personaje si aún no tiene uno)
  */
-export async function getUserMemberForCourse(userId: string, courseId: string): Promise<string | null> {
+export async function getAvailableGroupsForUser(userId: string, courseId: string): Promise<Array<{ id: string; name: string; hasCharacter: boolean }> | null> {
   try {
+    // Verificar que está inscrito
     const inscription = await prisma.inscriptions.findUnique({
       where: {
         user_id_course_id: {
           user_id: userId,
           course_id: courseId
-        }
-      },
-      include: {
-        course: {
-          include: {
-            groups: {
-              include: {
-                members: true
-              }
-            }
-          }
-        }
+        },
+        is_active: true
       }
     });
 
@@ -266,17 +245,37 @@ export async function getUserMemberForCourse(userId: string, courseId: string): 
       return null;
     }
 
-    // Por ahora, devolvemos el primer member del primer grupo
-    // TODO: Implementar lógica para asignar correctamente el member
-    for (const group of inscription.course.groups) {
-      if (group.members.length > 0) {
-        return group.members[0].id;
+    // Obtener todos los grupos del curso
+    const groups = await prisma.groups.findMany({
+      where: { course_id: courseId },
+      select: {
+        id: true,
+        name: true
       }
-    }
+    });
 
-    return null;
+    // Verificar en cuáles tiene personaje
+    const characters = await prisma.characters.findMany({
+      where: {
+        user_id: userId,
+        group_id: {
+          in: groups.map(g => g.id)
+        }
+      },
+      select: {
+        group_id: true
+      }
+    });
+
+    const characterGroupIds = new Set(characters.map(c => c.group_id));
+
+    return groups.map(group => ({
+      id: group.id,
+      name: group.name,
+      hasCharacter: characterGroupIds.has(group.id)
+    }));
   } catch (error) {
-    console.error('Error al obtener member del usuario:', error);
+    console.error('Error al obtener grupos disponibles:', error);
     return null;
   }
 }

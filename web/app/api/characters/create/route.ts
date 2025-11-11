@@ -6,7 +6,7 @@ import { createCharacter } from '@/backend/services/character/character.service'
  * /api/characters/create:
  *   post:
  *     summary: Crear personaje
- *     description: Crea un nuevo personaje para el usuario en un curso específico
+ *     description: Crea un nuevo personaje para el usuario en un grupo específico
  *     tags: [Characters]
  *     security:
  *       - bearerAuth: []
@@ -19,30 +19,33 @@ import { createCharacter } from '@/backend/services/character/character.service'
  *             required:
  *               - name
  *               - classId
- *               - memberId
+ *               - groupId
  *             properties:
  *               name:
  *                 type: string
  *                 description: Nombre del personaje
- *                 example: Arthas
+ *                 example: Arthas el Valiente
  *               classId:
- *                 type: integer
- *                 description: ID de la clase del personaje
- *                 example: 1
- *               memberId:
- *                 type: integer
- *                 description: ID del miembro del curso
- *                 example: 5
+ *                 type: string
+ *                 description: ID de la clase del personaje (UUID)
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *               groupId:
+ *                 type: string
+ *                 description: ID del grupo del curso (UUID)
+ *                 example: "660e8400-e29b-41d4-a716-446655440001"
  *               appearance:
  *                 type: object
  *                 description: Apariencia del personaje (opcional)
  *                 properties:
- *                   skin:
+ *                   Hair:
  *                     type: string
- *                   hair:
+ *                     example: "Brown"
+ *                   Eyes:
  *                     type: string
- *                   eyes:
+ *                     example: "Blue"
+ *                   Skin:
  *                     type: string
+ *                     example: "Light"
  *     responses:
  *       200:
  *         description: Personaje creado exitosamente
@@ -78,11 +81,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, classId, memberId, appearance } = body;
+    const { name, classId, groupId, appearance } = body;
 
-    if (!name || !classId || !memberId) {
+    if (!name || !classId || !groupId) {
       return NextResponse.json(
-        { error: 'Datos incompletos: se requiere name, classId y memberId' },
+        { error: 'Datos incompletos: se requiere name, classId y groupId' },
         { status: 400 }
       );
     }
@@ -90,8 +93,9 @@ export async function POST(req: NextRequest) {
     const character = await createCharacter({
       name,
       classId,
-      memberId,
-      appearance // Pasamos el appearance al servicio
+      userId, // Usar el userId del header autenticado
+      groupId, // Grupo específico del curso
+      appearance // Personalización visual (opcional)
     });
 
     return NextResponse.json({

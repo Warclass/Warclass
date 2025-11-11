@@ -23,12 +23,12 @@ interface RouteParams {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del quiz
+ *         description: ID del quiz (UUID)
  *       - in: query
- *         name: memberId
+ *         name: characterId
  *         schema:
  *           type: string
- *         description: ID del miembro para obtener su respuesta
+ *         description: ID del personaje para obtener su respuesta (UUID)
  *     responses:
  *       200:
  *         description: Información del quiz
@@ -57,7 +57,7 @@ interface RouteParams {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del quiz
+ *         description: ID del quiz (UUID)
  *     requestBody:
  *       required: true
  *       content:
@@ -100,9 +100,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     const { searchParams } = new URL(req.url);
-    const memberId = searchParams.get('memberId');
+    const characterId = searchParams.get('characterId');
 
-    const quiz = await QuizService.getQuizById(params.id, memberId || undefined);
+    const quiz = await QuizService.getQuizById(params.id, characterId || undefined);
 
     return NextResponse.json({ quiz }, { status: 200 });
   } catch (error: any) {

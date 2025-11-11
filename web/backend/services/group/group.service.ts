@@ -52,7 +52,12 @@ export class GroupService {
       const group = await prisma.groups.findUnique({
         where: { id: groupId },
         include: {
-          members: true,
+          characters: {
+            include: {
+              class: true,
+              user: true
+            }
+          },
         },
       });
 
@@ -66,14 +71,14 @@ export class GroupService {
         courseId: group.course_id,
         createdAt: group.created_at,
         updatedAt: group.updated_at,
-        members: group.members.map((m) => ({
-          id: m.id,
-          name: m.name,
-          experience: m.experience,
-          gold: m.gold,
-          energy: m.energy,
+        members: group.characters.map((c) => ({
+          id: c.id,
+          name: c.name,
+          experience: c.experience,
+          gold: c.gold,
+          energy: c.energy,
         })),
-        memberCount: group.members.length,
+        memberCount: group.characters.length,
       };
     } catch (error) {
       console.error('Error getting group:', error);
@@ -86,7 +91,12 @@ export class GroupService {
       const groups = await prisma.groups.findMany({
         where: { course_id: courseId },
         include: {
-          members: true,
+          characters: {
+            include: {
+              class: true,
+              user: true
+            }
+          },
         },
         orderBy: { created_at: 'desc' },
       });
@@ -97,14 +107,14 @@ export class GroupService {
         courseId: group.course_id,
         createdAt: group.created_at,
         updatedAt: group.updated_at,
-        members: group.members.map((m) => ({
-          id: m.id,
-          name: m.name,
-          experience: m.experience,
-          gold: m.gold,
-          energy: m.energy,
+        members: group.characters.map((c) => ({
+          id: c.id,
+          name: c.name,
+          experience: c.experience,
+          gold: c.gold,
+          energy: c.energy,
         })),
-        memberCount: group.members.length,
+        memberCount: group.characters.length,
       }));
     } catch (error) {
       console.error('Error getting groups by course:', error);
@@ -153,6 +163,40 @@ export class GroupService {
     }
   }
 
+  /**
+   * Asignar personajes a un grupo
+   * Actualiza el group_id de cada personaje
+   */
+  static async assignCharacters(data: { groupId: string; characterIds: string[] }): Promise<{ count: number }> {
+    try {
+      const group = await prisma.groups.findUnique({
+        where: { id: data.groupId },
+      });
+
+      if (!group) {
+        throw new Error('Grupo no encontrado');
+      }
+
+      // Actualizar el group_id de cada personaje
+      const result = await prisma.characters.updateMany({
+        where: {
+          id: { in: data.characterIds },
+        },
+        data: {
+          group_id: data.groupId,
+        },
+      });
+
+      return { count: result.count };
+    } catch (error) {
+      console.error('Error assigning characters:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * @deprecated Usar assignCharacters en su lugar
+   */
   static async assignMembers(data: AssignMembersDTO): Promise<void> {
     try {
       const group = await prisma.groups.findUnique({
@@ -163,24 +207,34 @@ export class GroupService {
         throw new Error('Grupo no encontrado');
       }
 
-      await prisma.members.updateMany({
-        where: {
-          id: { in: data.memberIds },
-        },
-        data: {
-          group_id: data.groupId,
-        },
-      });
+      // Usar characters en lugar de members (deprecated)
+      throw new Error('Esta función está deprecada. Usar assignCharacters en su lugar');
     } catch (error) {
       console.error('Error assigning members:', error);
       throw error;
     }
   }
 
+  /**
+   * @deprecated Usar removeCharacterFromGroup o actualizar character.group_id directamente
+   */
   static async removeMemberFromGroup(memberId: string): Promise<void> {
     try {
-      await prisma.members.update({
-        where: { id: memberId },
+      // Esta función está deprecada porque members ya no existe
+      throw new Error('Esta función está deprecada. Actualizar character.group_id directamente');
+    } catch (error) {
+      console.error('Error removing member from group:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remover un personaje de un grupo
+   */
+  static async removeCharacterFromGroup(characterId: string): Promise<void> {
+    try {
+      await prisma.characters.update({
+        where: { id: characterId },
         data: {
           group_id: null as any,
         },
@@ -196,7 +250,7 @@ export class GroupService {
       const group = await prisma.groups.findUnique({
         where: { id: groupId },
         include: {
-          members: true,
+          characters: true,
           quizzes: {
             include: {
               quizzes_history: true,
@@ -209,19 +263,19 @@ export class GroupService {
         throw new Error('Grupo no encontrado');
       }
 
-      const totalMembers = group.members.length;
+      const totalMembers = group.characters.length;
       const averageExperience =
         totalMembers > 0
-          ? group.members.reduce((sum, m) => sum + m.experience, 0) / totalMembers
+          ? group.characters.reduce((sum: number, c) => sum + c.experience, 0) / totalMembers
           : 0;
       const averageGold =
-        totalMembers > 0 ? group.members.reduce((sum, m) => sum + m.gold, 0) / totalMembers : 0;
+        totalMembers > 0 ? group.characters.reduce((sum: number, c) => sum + c.gold, 0) / totalMembers : 0;
       const averageEnergy =
-        totalMembers > 0 ? group.members.reduce((sum, m) => sum + m.energy, 0) / totalMembers : 0;
+        totalMembers > 0 ? group.characters.reduce((sum: number, c) => sum + c.energy, 0) / totalMembers : 0;
 
       const totalQuizzes = group.quizzes.length;
       const completedQuizzes = group.quizzes.reduce(
-        (sum, quiz) => sum + quiz.quizzes_history.length,
+        (sum: number, quiz) => sum + quiz.quizzes_history.length,
         0
       );
 
@@ -239,6 +293,9 @@ export class GroupService {
     }
   }
 
+  /**
+   * Obtener usuarios no asignados a ningún grupo en un curso
+   */
   static async getUnassignedMembersByCourse(courseId: string) {
     try {
       const course = await prisma.courses.findUnique({
@@ -251,7 +308,11 @@ export class GroupService {
           },
           groups: {
             include: {
-              members: true,
+              characters: {
+                include: {
+                  user: true
+                }
+              },
             },
           },
         },
@@ -261,10 +322,14 @@ export class GroupService {
         throw new Error('Curso no encontrado');
       }
 
-      const assignedMemberNames = course.groups.flatMap((g) => g.members.map((m) => m.name));
+      // Obtener IDs de usuarios que ya tienen personajes en algún grupo
+      const assignedUserIds = new Set(
+        course.groups.flatMap((g) => g.characters.map((c) => c.user_id))
+      );
 
+      // Filtrar usuarios inscritos que no tienen personajes
       const unassignedUsers = course.inscriptions
-        .filter((i) => !assignedMemberNames.includes(i.user.name))
+        .filter((i) => !assignedUserIds.has(i.user_id))
         .map((i) => ({
           userId: i.user.id,
           userName: i.user.name,

@@ -16,17 +16,17 @@ import { CreateQuizSchema, GetQuizzesQuerySchema } from '@/backend/validators/qu
  *         name: groupId
  *         schema:
  *           type: string
- *         description: ID del grupo para filtrar quizzes
+ *         description: ID del grupo para filtrar quizzes (UUID)
  *       - in: query
  *         name: courseId
  *         schema:
  *           type: string
- *         description: ID del curso para filtrar quizzes
+ *         description: ID del curso para filtrar quizzes (UUID)
  *       - in: query
- *         name: memberId
+ *         name: characterId
  *         schema:
  *           type: string
- *         description: ID del miembro para obtener estado de completitud
+ *         description: ID del personaje para obtener estado de completitud (UUID)
  *     responses:
  *       200:
  *         description: Lista de quizzes
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const groupId = searchParams.get('groupId');
     const courseId = searchParams.get('courseId');
-    const memberId = searchParams.get('memberId');
+    const characterId = searchParams.get('characterId');
 
     // Validar parámetros
     const queryValidation = GetQuizzesQuerySchema.safeParse({
@@ -77,10 +77,10 @@ export async function GET(req: NextRequest) {
 
     if (groupId) {
       // Obtener quizzes de un grupo específico
-      quizzes = await QuizService.getQuizzesByGroup(groupId, memberId || undefined);
+      quizzes = await QuizService.getQuizzesByGroup(groupId, characterId || undefined);
     } else if (courseId) {
       // Obtener quizzes de un curso específico
-      quizzes = await QuizService.getQuizzesByCourse(courseId, memberId || undefined);
+      quizzes = await QuizService.getQuizzesByCourse(courseId, characterId || undefined);
     } else {
       return NextResponse.json(
         { error: 'Debe proporcionar groupId o courseId' },

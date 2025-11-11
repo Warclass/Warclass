@@ -39,25 +39,25 @@ export interface UpdateEventDTO {
 
 export interface ApplyEventDTO {
   eventId: string;
-  memberIds: string[];
+  characterIds: string[];
 }
 
 export interface EventHistory {
   id: string;
   eventId: string;
-  memberId: string;
+  characterId: string;
   appliedAt: Date;
   event: RandomEvent;
 }
 
 export interface EventResponse {
   event: RandomEvent;
-  affectedMembers: number;
+  affectedCharacters: number;
 }
 
 export interface EventImpact {
-  memberId: string;
-  memberName: string;
+  characterId: string;
+  characterName: string;
   experienceChange: number;
   goldChange: number;
   healthChange: number;

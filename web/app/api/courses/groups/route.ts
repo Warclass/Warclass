@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
  * /api/courses/groups:
  *   get:
  *     summary: Obtener grupos de un curso
- *     description: Retorna todos los grupos de un curso específico con sus miembros y personajes
+ *     description: Retorna todos los grupos de un curso específico con sus personajes
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
@@ -18,7 +18,7 @@ const prisma = new PrismaClient();
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del curso
+ *         description: ID del curso (UUID)
  *     responses:
  *       200:
  *         description: Lista de grupos del curso
@@ -32,7 +32,20 @@ const prisma = new PrismaClient();
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Group'
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       characterCount:
+ *                         type: integer
+ *                       statistics:
+ *                         type: object
+ *                       characters:
+ *                         type: array
+ *                         items:
+ *                           $ref: '#/components/schemas/Character'
  *       400:
  *         description: courseId no proporcionado
  *       401:
@@ -79,24 +92,27 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Obtener todos los grupos del curso con sus members y characters
+    // Obtener todos los grupos del curso con sus characters
     const groups = await prisma.groups.findMany({
       where: {
         course_id: courseId
       },
       include: {
-        members: {
+        characters: {
           include: {
-            characters: {
-              include: {
-                class: true
+            class: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
               }
             }
           }
         },
         _count: {
           select: {
-            members: true
+            characters: true
           }
         }
       },
@@ -108,40 +124,39 @@ export async function GET(req: NextRequest) {
     // Formatear respuesta
     const groupsData = groups.map(group => {
       // Calcular estadísticas del grupo
-      const totalExperience = group.members.reduce((sum, m) => sum + m.experience, 0);
-      const totalGold = group.members.reduce((sum, m) => sum + m.gold, 0);
-      const avgEnergy = group.members.length > 0 
-        ? Math.round(group.members.reduce((sum, m) => sum + m.energy, 0) / group.members.length)
+      const totalExperience = group.characters.reduce((sum, c) => sum + c.experience, 0);
+      const totalGold = group.characters.reduce((sum, c) => sum + c.gold, 0);
+      const avgEnergy = group.characters.length > 0 
+        ? Math.round(group.characters.reduce((sum, c) => sum + c.energy, 0) / group.characters.length)
         : 0;
 
       return {
         id: group.id,
         name: group.name,
-        memberCount: group._count.members,
+        characterCount: group._count.characters,
         statistics: {
           totalExperience,
           totalGold,
           averageEnergy: avgEnergy
         },
-        members: group.members.map(member => ({
-          id: member.id,
-          name: member.name,
-          experience: member.experience,
-          gold: member.gold,
-          energy: member.energy,
-          character: member.characters ? {
-            id: member.characters.id,
-            name: member.characters.name,
-            experience: member.characters.experience,
-            gold: member.characters.gold,
-            energy: member.characters.energy,
-            class: {
-              id: member.characters.class.id,
-              name: member.characters.class.name,
-              speed: member.characters.class.speed
-            },
-            level: Math.floor(member.characters.experience / 100) + 1
-          } : null
+        characters: group.characters.map(character => ({
+          id: character.id,
+          name: character.name,
+          experience: character.experience,
+          gold: character.gold,
+          energy: character.energy,
+          health: character.health,
+          user: {
+            id: character.user.id,
+            name: character.user.name,
+            email: character.user.email
+          },
+          class: {
+            id: character.class.id,
+            name: character.class.name,
+            speed: character.class.speed
+          },
+          level: Math.floor(character.experience / 100) + 1
         }))
       };
     });

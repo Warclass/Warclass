@@ -14,6 +14,7 @@ import type {
 export class TeacherService {
   /**
    * Verificar si un usuario es teacher
+   * Un teacher debe existir en la tabla teachers Y tener al menos un curso en teachers_courses
    */
   static async isTeacher(userId: string): Promise<boolean> {
     try {
@@ -21,9 +22,13 @@ export class TeacherService {
         where: {
           user_id: userId,
         },
+        include: {
+          teachers_courses: true
+        }
       });
 
-      return !!teacherRecord;
+      // Es teacher si existe el registro Y tiene al menos un curso asignado
+      return !!teacherRecord && teacherRecord.teachers_courses.length > 0;
     } catch (error) {
       console.error('Error checking if user is teacher:', error);
       return false;
@@ -164,9 +169,13 @@ export class TeacherService {
         include: {
           user: true,
           institution: true,
-          courses: {
+          teachers_courses: {
             include: {
-              groups: true,
+              course: {
+                include: {
+                  groups: true,
+                },
+              },
             },
           },
         },
@@ -214,14 +223,18 @@ export class TeacherService {
         include: {
           user: true,
           institution: true,
-          courses: {
+          teachers_courses: {
             include: {
-              groups: {
+              course: {
                 include: {
-                  members: true,
+                  groups: {
+                    include: {
+                      characters: true,
+                    },
+                  },
+                  inscriptions: true,
                 },
               },
-              inscriptions: true,
             },
           },
         },
@@ -342,7 +355,7 @@ export class TeacherService {
       const teacher = await prisma.teachers.findUnique({
         where: { id: teacherId },
         include: {
-          courses: true,
+          teachers_courses: true,
         },
       });
 
@@ -353,11 +366,11 @@ export class TeacherService {
         };
       }
 
-      // Verificar si tiene cursos asignados
-      if (teacher.courses.length > 0) {
+      // Verificar si tiene cursos asignados en teachers_courses
+      if (teacher.teachers_courses.length > 0) {
         return {
           success: false,
-          message: `No se puede eliminar el profesor porque tiene ${teacher.courses.length} curso(s) asignado(s)`,
+          message: `No se puede eliminar el profesor porque tiene ${teacher.teachers_courses.length} curso(s) asignado(s)`,
         };
       }
 
@@ -380,24 +393,32 @@ export class TeacherService {
   }
 
   /**
-   * Obtener cursos donde el teacher es el creador principal
+   * Obtener cursos donde el teacher está asignado via teachers_courses
    */
   static async getTeacherCourses(teacherId: string) {
     try {
-      const courses = await prisma.courses.findMany({
+      const teacherCourses = await prisma.teachers_courses.findMany({
         where: {
           teacher_id: teacherId,
         },
         include: {
-          groups: {
+          course: {
             include: {
-              members: true,
-            },
-          },
-          inscriptions: true,
-          teacher: {
-            include: {
-              institution: true,
+              groups: {
+                include: {
+                  characters: true,
+                },
+              },
+              inscriptions: true,
+              teachers_courses: {
+                include: {
+                  teacher: {
+                    include: {
+                      institution: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -406,18 +427,19 @@ export class TeacherService {
         },
       });
 
-      return courses.map((course: any) => ({
-        id: course.id,
-        name: course.name,
-        description: course.description,
-        studentsCount: course.inscriptions.length,
-        groupsCount: course.groups.length,
-        membersCount: course.groups.reduce(
-          (sum: number, group: any) => sum + group.members.length,
+      return teacherCourses.map((tc: any) => ({
+        id: tc.course.id,
+        name: tc.course.name,
+        description: tc.course.description,
+        studentsCount: tc.course.inscriptions.length,
+        groupsCount: tc.course.groups.length,
+        charactersCount: tc.course.groups.reduce(
+          (sum: number, group: any) => sum + group.characters.length,
           0
         ),
-        institutionId: course.teacher?.institution_id || null,
-        institutionName: course.teacher?.institution?.name || null,
+        // Obtener info del teacher principal (primero en teachers_courses)
+        institutionId: tc.course.teachers_courses[0]?.teacher?.institution_id || null,
+        institutionName: tc.course.teachers_courses[0]?.teacher?.institution?.name || null,
       }));
     } catch (error) {
       console.error('Error getting teacher courses:', error);
@@ -426,7 +448,7 @@ export class TeacherService {
   }
 
   /**
-   * Crear un curso asociado a un teacher
+   * Crear un curso y asociarlo automáticamente al teacher via teachers_courses
    */
   static async createCourse(
     teacherId: string,
@@ -454,11 +476,19 @@ export class TeacherService {
         throw new Error('El nombre del curso es requerido');
       }
 
+      // Crear el curso (SIN teacher_id porque ese campo ya no existe)
       const course = await prisma.courses.create({
         data: {
           name: data.name.trim(),
           description: data.description?.trim() || null,
+        },
+      });
+
+      // Crear automáticamente la relación en teachers_courses
+      await prisma.teachers_courses.create({
+        data: {
           teacher_id: teacherId,
+          course_id: course.id,
         },
       });
 

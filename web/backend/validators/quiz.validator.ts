@@ -44,7 +44,7 @@ export const UpdateQuizSchema = z.object({
 
 export const SubmitQuizAnswerSchema = z.object({
   quizId: z.string().uuid('ID de quiz inválido'),
-  memberId: z.string().uuid('ID de miembro inválido'),
+  characterId: z.string().uuid('ID de personaje inválido'),
   selectedAnswer: z.number().int().min(0).max(3, 'Respuesta inválida'),
   timeTaken: z.number().int().min(0, 'El tiempo no puede ser negativo'),
   isOnQuest: z.boolean().default(false),

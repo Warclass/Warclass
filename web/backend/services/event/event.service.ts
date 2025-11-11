@@ -151,7 +151,7 @@ export class EventService {
     }
   }
 
-  static async applyEventToMembers(data: ApplyEventDTO): Promise<EventResponse> {
+  static async applyEventToCharacters(data: ApplyEventDTO): Promise<EventResponse> {
     try {
       const event = await prisma.events.findUnique({
         where: { id: data.eventId },
@@ -161,13 +161,13 @@ export class EventService {
         throw new Error('Evento no encontrado');
       }
 
-      const updates = data.memberIds.map(async (memberId) => {
-        const member = await prisma.members.findUnique({
-          where: { id: memberId },
+      const updates = data.characterIds.map(async (characterId) => {
+        const character = await prisma.characters.findUnique({
+          where: { id: characterId },
         });
 
-        if (!member) {
-          console.warn(`Miembro ${memberId} no encontrado`);
+        if (!character) {
+          console.warn(`Personaje ${characterId} no encontrado`);
           return null;
         }
 
@@ -175,20 +175,21 @@ export class EventService {
           prisma.events_history.create({
             data: {
               event_id: event.id,
-              member_id: memberId,
+              character_id: characterId,
             },
           }),
-          prisma.members.update({
-            where: { id: memberId },
+          prisma.characters.update({
+            where: { id: characterId },
             data: {
               experience: { increment: event.experience },
               gold: { increment: event.gold },
               energy: { increment: event.energy },
+              health: { increment: event.health },
             },
           }),
         ]);
 
-        return memberId;
+        return characterId;
       });
 
       const results = await Promise.all(updates);
@@ -209,7 +210,7 @@ export class EventService {
           createdAt: event.created_at,
           updatedAt: event.updated_at,
         },
-        affectedMembers: affectedCount,
+        affectedCharacters: affectedCount,
       };
     } catch (error) {
       console.error('Error applying event:', error);
@@ -229,17 +230,17 @@ export class EventService {
 
       const group = await prisma.groups.findUnique({
         where: { id: groupId },
-        include: { members: true },
+        include: { characters: true },
       });
 
       if (!group) {
         throw new Error('Grupo no encontrado');
       }
 
-      const memberIds = group.members.map((m) => m.id);
-      return await this.applyEventToMembers({
+      const characterIds = group.characters.map((c) => c.id);
+      return await this.applyEventToCharacters({
         eventId: event.id,
-        memberIds,
+        characterIds,
       });
     } catch (error) {
       console.error('Error applying event to group:', error);
@@ -253,7 +254,7 @@ export class EventService {
         where: { event_id: eventId },
         include: {
           event: true,
-          member: true,
+          character: true,
         },
         orderBy: { applied_at: 'desc' },
       });
@@ -261,7 +262,7 @@ export class EventService {
       return history.map((h) => ({
         id: h.id,
         eventId: h.event_id,
-        memberId: h.member_id,
+        characterId: h.character_id,
         appliedAt: h.applied_at,
         event: {
           id: h.event.id,
@@ -284,10 +285,10 @@ export class EventService {
     }
   }
 
-  static async getMemberEventHistory(memberId: string): Promise<EventHistory[]> {
+  static async getCharacterEventHistory(characterId: string): Promise<EventHistory[]> {
     try {
       const history = await prisma.events_history.findMany({
-        where: { member_id: memberId },
+        where: { character_id: characterId },
         include: {
           event: true,
         },
@@ -297,7 +298,7 @@ export class EventService {
       return history.map((h) => ({
         id: h.id,
         eventId: h.event_id,
-        memberId: h.member_id,
+        characterId: h.character_id,
         appliedAt: h.applied_at,
         event: {
           id: h.event.id,
@@ -315,7 +316,7 @@ export class EventService {
         },
       }));
     } catch (error) {
-      console.error('Error getting member event history:', error);
+      console.error('Error getting character event history:', error);
       throw error;
     }
   }

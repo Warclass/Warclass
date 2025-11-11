@@ -73,15 +73,17 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const isTeacher = await TeacherService.isTeacher(userId);
     
     if (isTeacher) {
-      // Si es profesor, verificar que el curso le pertenezca
-      const course = await prisma.courses.findFirst({
+      // Si es profesor, verificar que tenga acceso al curso
+      const teacherCourse = await prisma.teachers_courses.findFirst({
         where: {
-          id: courseId,
-          teacher_id: userId
+          course_id: courseId,
+          teacher: {
+            user_id: userId
+          }
         }
       });
 
-      if (!course) {
+      if (!teacherCourse) {
         return NextResponse.json(
           { error: 'No tienes acceso a este curso' },
           { status: 403 }
@@ -106,7 +108,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Obtener todos los grupos del curso
+    // Obtener todos los grupos del curso con sus personajes
     const groups = await prisma.groups.findMany({
       where: {
         course_id: courseId
@@ -114,11 +116,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       select: {
         id: true,
         name: true,
-        members: {
+        characters: {
           select: {
             id: true,
             name: true,
-            teachers_courses_tasks: {
+            tasks: {
               include: {
                 task: true
               }
@@ -132,26 +134,26 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const tasksMap = new Map();
 
     groups.forEach(group => {
-      group.members.forEach(member => {
-        member.teachers_courses_tasks.forEach(tct => {
-          if (!tasksMap.has(tct.task.id)) {
-            tasksMap.set(tct.task.id, {
-              id: tct.task.id,
-              name: tct.task.name,
-              description: tct.task.description,
-              experience: tct.task.experience,
-              gold: tct.task.gold,
-              health: tct.task.health,
-              energy: tct.task.energy,
-              created_at: tct.task.created_at,
-              updated_at: tct.task.updated_at,
+      group.characters.forEach(character => {
+        character.tasks.forEach(ct => {
+          if (!tasksMap.has(ct.task.id)) {
+            tasksMap.set(ct.task.id, {
+              id: ct.task.id,
+              name: ct.task.name,
+              description: ct.task.description,
+              experience: ct.task.experience,
+              gold: ct.task.gold,
+              health: ct.task.health,
+              energy: ct.task.energy,
+              created_at: ct.task.created_at,
+              updated_at: ct.task.updated_at,
               assignedCount: 0,
               completedCount: 0
             });
           }
           
           // Incrementar contador de asignaciones
-          const task = tasksMap.get(tct.task.id);
+          const task = tasksMap.get(ct.task.id);
           task.assignedCount++;
         });
       });

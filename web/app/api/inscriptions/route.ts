@@ -63,16 +63,21 @@ export async function GET(req: NextRequest) {
       include: {
         course: {
           include: {
-            teacher: true,
+            teachers_courses: {
+              include: {
+                teacher: {
+                  include: {
+                    user: true
+                  }
+                }
+              }
+            },
             groups: {
               include: {
-                members: {
+                characters: {
                   include: {
-                    characters: {
-                      include: {
-                        class: true
-                      }
-                    }
+                    class: true,
+                    user: true
                   }
                 }
               }

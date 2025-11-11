@@ -24,7 +24,7 @@ export interface Quiz {
 export interface QuizHistory {
   id: string;
   quizId: string;
-  memberId: string;
+  characterId: string;
   isOnQuest: boolean;
   selectedAnswer: number;
   isCorrect: boolean;
@@ -54,7 +54,7 @@ export interface UpdateQuizDTO {
 
 export interface SubmitQuizAnswerDTO {
   quizId: string;
-  memberId: string;
+  characterId: string;
   selectedAnswer: number;
   timeTaken: number;
   isOnQuest?: boolean;
@@ -98,9 +98,9 @@ export interface QuizStatistics {
 
 export interface LeaderboardEntry {
   position: number;
-  memberId: string;
-  memberName: string;
-  characterName?: string;
+  characterId: string;
+  characterName: string;
+  className?: string;
   totalPoints: number;
   correctAnswers: number;
   totalAnswers: number;

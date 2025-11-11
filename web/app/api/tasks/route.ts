@@ -7,7 +7,7 @@ import { CreateTaskSchema } from '@/backend/validators/task.validator';
  * /api/tasks:
  *   get:
  *     summary: Obtener tareas
- *     description: Obtiene las tareas según los parámetros proporcionados (todas, por grupo, o por grupo y miembro)
+ *     description: Obtiene las tareas según los parámetros proporcionados (todas, por grupo, o por grupo y personaje)
  *     tags: [Tasks]
  *     security:
  *       - bearerAuth: []
@@ -16,12 +16,12 @@ import { CreateTaskSchema } from '@/backend/validators/task.validator';
  *         name: groupId
  *         schema:
  *           type: string
- *         description: ID del grupo para filtrar tareas
+ *         description: ID del grupo para filtrar tareas (UUID)
  *       - in: query
- *         name: memberId
+ *         name: characterId
  *         schema:
  *           type: string
- *         description: ID del miembro para obtener estado de completitud (requiere groupId)
+ *         description: ID del personaje para obtener estado de completitud (UUID, requiere groupId)
  *     responses:
  *       200:
  *         description: Lista de tareas obtenida exitosamente
@@ -48,11 +48,11 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const groupId = searchParams.get('groupId');
-    const memberId = searchParams.get('memberId');
+    const characterId = searchParams.get('characterId');
 
-    if (groupId && memberId) {
-      // Obtener tasks del grupo con estado de completitud por member
-      const tasks = await TaskService.getTasksByGroupForMember(groupId, memberId);
+    if (groupId && characterId) {
+      // Obtener tasks del grupo con estado de completitud por personaje
+      const tasks = await TaskService.getTasksByGroupForCharacter(groupId, characterId);
       return NextResponse.json({ tasks }, { status: 200 });
     } else if (groupId) {
       // Obtener todas las tasks del grupo sin estado específico

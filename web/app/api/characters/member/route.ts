@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserMemberForCourse } from '@/backend/services/character/character.service';
+import { getUserCharacterForCourse } from '@/backend/services/character/character.service';
 
 /**
  * @swagger
  * /api/characters/member:
  *   get:
- *     summary: Obtener member ID del usuario
- *     description: Retorna el ID de membresía del usuario para un curso específico
+ *     summary: Obtener personaje del usuario para un curso
+ *     description: Retorna el personaje activo del usuario en un curso específico
  *     tags: [Characters]
  *     security:
  *       - bearerAuth: []
@@ -16,28 +16,24 @@ import { getUserMemberForCourse } from '@/backend/services/character/character.s
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
+ *         description: ID del usuario (UUID)
  *       - in: query
  *         name: courseId
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del curso
+ *         description: ID del curso (UUID)
  *     responses:
  *       200:
- *         description: Member ID encontrado
+ *         description: Personaje encontrado
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 memberId:
- *                   type: string
- *                   description: ID de la membresía
+ *               $ref: '#/components/schemas/Character'
  *       400:
  *         description: userId o courseId no proporcionados
  *       404:
- *         description: Membresía no encontrada
+ *         description: Personaje no encontrado o inscripción inactiva
  *       500:
  *         description: Error interno del servidor
  */
@@ -54,20 +50,23 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const memberId = await getUserMemberForCourse(userId, courseId);
+    const character = await getUserCharacterForCourse(userId, courseId);
 
-    if (!memberId) {
+    if (!character) {
       return NextResponse.json(
-        { error: 'No se encontró membresía para este usuario y curso' },
+        { error: 'No se encontró personaje activo para este usuario y curso' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ memberId }, { status: 200 });
+    return NextResponse.json({ 
+      success: true,
+      data: character 
+    }, { status: 200 });
   } catch (error: any) {
     console.error('Error in GET /api/characters/member:', error);
     return NextResponse.json(
-      { error: error.message || 'Error al obtener member ID' },
+      { error: error.message || 'Error al obtener personaje del usuario' },
       { status: 500 }
     );
   }

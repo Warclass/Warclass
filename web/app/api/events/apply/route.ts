@@ -6,8 +6,8 @@ import { ApplyEventSchema } from '@/backend/validators/event.validator';
  * @swagger
  * /api/events/apply:
  *   post:
- *     summary: Aplicar evento a miembros
- *     description: Registra miembros/personajes en un evento específico
+ *     summary: Aplicar evento a personajes
+ *     description: Aplica efectos de un evento a múltiples personajes
  *     tags: [Events]
  *     security:
  *       - bearerAuth: []
@@ -19,18 +19,18 @@ import { ApplyEventSchema } from '@/backend/validators/event.validator';
  *             type: object
  *             required:
  *               - eventId
- *               - memberIds
+ *               - characterIds
  *             properties:
  *               eventId:
- *                 type: integer
- *                 description: ID del evento
- *                 example: 10
- *               memberIds:
+ *                 type: string
+ *                 description: ID del evento (UUID)
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *               characterIds:
  *                 type: array
  *                 items:
- *                   type: integer
- *                 description: IDs de los miembros a registrar
- *                 example: [25, 30, 35]
+ *                   type: string
+ *                 description: IDs de los personajes (UUIDs)
+ *                 example: ["660e8400-e29b-41d4-a716-446655440001", "770e8400-e29b-41d4-a716-446655440002"]
  *     responses:
  *       200:
  *         description: Evento aplicado exitosamente
@@ -44,6 +44,12 @@ import { ApplyEventSchema } from '@/backend/validators/event.validator';
  *                   example: Evento aplicado correctamente
  *                 result:
  *                   type: object
+ *                   properties:
+ *                     event:
+ *                       $ref: '#/components/schemas/Event'
+ *                     affectedCharacters:
+ *                       type: integer
+ *                       example: 2
  *       400:
  *         description: Datos inválidos
  *       401:
@@ -68,7 +74,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await EventService.applyEventToMembers(validation.data);
+    const result = await EventService.applyEventToCharacters(validation.data);
 
     return NextResponse.json(
       {

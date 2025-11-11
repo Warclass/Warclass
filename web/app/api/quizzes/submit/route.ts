@@ -6,8 +6,8 @@ import { SubmitQuizAnswerSchema } from '@/backend/validators/quiz.validator';
  * @swagger
  * /api/quizzes/submit:
  *   post:
- *     summary: Enviar respuestas de quiz
- *     description: Envía las respuestas de un quiz para calificación automática
+ *     summary: Enviar respuesta de quiz
+ *     description: Envía la respuesta de un quiz para calificación automática y actualización de stats del personaje
  *     tags: [Quizzes]
  *     security:
  *       - bearerAuth: []
@@ -19,32 +19,26 @@ import { SubmitQuizAnswerSchema } from '@/backend/validators/quiz.validator';
  *             type: object
  *             required:
  *               - quizId
- *               - memberId
- *               - answers
+ *               - characterId
+ *               - answerIndex
+ *               - timeTaken
  *             properties:
  *               quizId:
  *                 type: string
- *                 description: ID del quiz
- *                 example: "15"
- *               memberId:
+ *                 description: ID del quiz (UUID)
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *               characterId:
  *                 type: string
- *                 description: ID del miembro/personaje
- *                 example: "25"
- *               answers:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     questionId:
- *                       type: string
- *                     answer:
- *                       type: string
- *                 description: Respuestas del quiz
- *                 example:
- *                   - questionId: "1"
- *                     answer: "B"
- *                   - questionId: "2"
- *                     answer: "A"
+ *                 description: ID del personaje (UUID)
+ *                 example: "660e8400-e29b-41d4-a716-446655440001"
+ *               answerIndex:
+ *                 type: integer
+ *                 description: Índice de la respuesta seleccionada (0-based)
+ *                 example: 2
+ *               timeTaken:
+ *                 type: integer
+ *                 description: Tiempo tomado en segundos
+ *                 example: 45
  *     responses:
  *       201:
  *         description: Quiz enviado y calificado exitosamente
@@ -56,22 +50,16 @@ import { SubmitQuizAnswerSchema } from '@/backend/validators/quiz.validator';
  *                 result:
  *                   type: object
  *                   properties:
- *                     score:
+ *                     isCorrect:
+ *                       type: boolean
+ *                     pointsEarned:
  *                       type: integer
- *                       description: Puntaje obtenido
- *                     experienceGained:
- *                       type: integer
- *                       description: Experiencia ganada
- *                     correct:
- *                       type: integer
- *                       description: Respuestas correctas
- *                     total:
- *                       type: integer
- *                       description: Total de preguntas
+ *                     history:
+ *                       type: object
  *       400:
  *         description: Datos inválidos
  *       404:
- *         description: Quiz o miembro no encontrado
+ *         description: Quiz o personaje no encontrado
  *       409:
  *         description: Quiz ya completado anteriormente
  *       401:
@@ -97,15 +85,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TODO: Verificar que el memberId pertenece al usuario
-
     const result = await QuizService.submitAnswer(validation.data);
 
     return NextResponse.json({ result }, { status: 201 });
   } catch (error: any) {
     console.error('Error in POST /api/quizzes/submit:', error);
 
-    if (error.message === 'Quiz no encontrado' || error.message === 'Miembro no encontrado') {
+    if (error.message === 'Quiz no encontrado' || error.message === 'Personaje no encontrado') {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
 

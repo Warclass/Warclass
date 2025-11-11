@@ -24,6 +24,7 @@ model users {
   inscriptions inscriptions[]
   invitations  invitations[]
   teacher      teachers?
+  characters   characters[]
 }
 
 model sessions {
@@ -44,9 +45,8 @@ model teachers {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  user             users                      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  institution      institutions?              @relation(fields: [institution_id], references: [id], onDelete: SetNull)
-  courses          courses[]
+  user             users              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  institution      institutions?      @relation(fields: [institution_id], references: [id], onDelete: SetNull)
   teachers_courses teachers_courses[]
 }
 
@@ -56,9 +56,7 @@ model courses {
   description String?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-  teacher_id  String
 
-  teacher          teachers           @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   groups           groups[]
   invitations      invitations[]
   inscriptions     inscriptions[]
@@ -66,12 +64,15 @@ model courses {
 }
 
 model teachers_courses {
-  id         String @id @default(uuid())
+  id         String   @id @default(uuid())
   teacher_id String
   course_id  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  course  courses  @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  teacher teachers                 @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  course  courses                  @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  tasks   teachers_courses_tasks[]
 
   @@unique([teacher_id, course_id])
 }
@@ -83,9 +84,9 @@ model groups {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  course  courses   @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  members members[]
-  quizzes quizzes[]
+  course     courses      @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  characters characters[]
+  quizzes    quizzes[]
 }
 
 model invitations {
@@ -103,11 +104,13 @@ model invitations {
 }
 
 model inscriptions {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   user_id    String
   course_id  String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  is_active  Boolean   @default(true)
+  deleted_at DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
 
   user   users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   course courses @relation(fields: [course_id], references: [id], onDelete: Cascade)
@@ -115,39 +118,29 @@ model inscriptions {
   @@unique([user_id, course_id])
 }
 
-model members {
+model characters {
   id         String   @id @default(uuid())
   name       String
+  user_id    String
+  group_id   String
+  class_id   String
   experience Int      @default(0)
   gold       Int      @default(0)
   energy     Int      @default(100)
-  group_id   String
+  health     Int      @default(100)
+  appearance Json?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  group                   groups                    @relation(fields: [group_id], references: [id], onDelete: Cascade)
-  characters              characters?
-  tasks                   tasks[]
-  quizzes_history         quizzes_history[]
-  teachers_courses_tasks  teachers_courses_tasks[]
-  events_history          events_history[]
-}
+  user            users                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  group           groups                 @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  class           classes                @relation(fields: [class_id], references: [id])
+  abilities       characters_abilities[]
+  tasks           characters_tasks[]
+  quizzes_history quizzes_history[]
+  events_history  events_history[]
 
-model characters {
-  id           String   @id @default(uuid())
-  name         String
-  experience   Int      @default(0)
-  gold         Int      @default(0)
-  energy       Int      @default(100)
-  character_id String   @unique
-  class_id     String
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-
-  member    members                @relation(fields: [character_id], references: [id], onDelete: Cascade)
-  class     classes                @relation(fields: [class_id], references: [id])
-  abilities characters_abilities[]
-  tasks     characters_tasks[]
+  @@unique([user_id, group_id])
 }
 
 model classes {
@@ -199,7 +192,7 @@ model quizzes {
 model quizzes_history {
   id              String   @id @default(uuid())
   quiz_id         String
-  member_id       String
+  character_id    String
   is_on_quest     Boolean  @default(false)
   selected_answer Int
   is_correct      Boolean
@@ -207,10 +200,10 @@ model quizzes_history {
   time_taken      Int
   answered_at     DateTime @default(now())
 
-  member members  @relation(fields: [member_id], references: [id], onDelete: Cascade)
-  quiz   quizzes @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  character characters @relation(fields: [character_id], references: [id], onDelete: Cascade)
+  quiz      quizzes    @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
 
-  @@unique([quiz_id, member_id])
+  @@unique([quiz_id, character_id])
 }
 
 model tasks {
@@ -224,9 +217,8 @@ model tasks {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  members                 members[]
-  characters_tasks        characters_tasks[]
-  teachers_courses_tasks  teachers_courses_tasks[]
+  characters_tasks       characters_tasks[]
+  teachers_courses_tasks teachers_courses_tasks[]
 }
 
 model characters_tasks {
@@ -245,8 +237,8 @@ model teachers_courses_tasks {
   teacher_course_id String
   task_id           String
 
-  member members @relation(fields: [teacher_course_id], references: [id], onDelete: Cascade)
-  task   tasks   @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  teacher_course teachers_courses @relation(fields: [teacher_course_id], references: [id], onDelete: Cascade)
+  task           tasks            @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
   @@unique([teacher_course_id, task_id])
 }
@@ -269,13 +261,13 @@ model events {
 }
 
 model events_history {
-  id          String   @id @default(uuid())
-  event_id    String
-  member_id   String
-  applied_at  DateTime @default(now())
+  id           String   @id @default(uuid())
+  event_id     String
+  character_id String
+  applied_at   DateTime @default(now())
 
-  event  events  @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  member members @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  event     events     @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  character characters @relation(fields: [character_id], references: [id], onDelete: Cascade)
 }
 
 model institutions {

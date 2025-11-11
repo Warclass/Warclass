@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GroupService } from '@/backend/services/group/group.service';
-import { AssignMembersSchema } from '@/backend/validators/group.validator';
+import { AssignCharactersSchema } from '@/backend/validators/group.validator';
 
 /**
  * @swagger
  * /api/groups/assign:
  *   post:
- *     summary: Asignar miembros a grupo
- *     description: Asigna uno o varios miembros a un grupo específico
+ *     summary: Asignar personajes a grupo
+ *     description: Asigna uno o varios personajes a un grupo específico (cambia el grupo del personaje)
  *     tags: [Groups]
  *     security:
  *       - bearerAuth: []
@@ -19,29 +19,35 @@ import { AssignMembersSchema } from '@/backend/validators/group.validator';
  *             type: object
  *             required:
  *               - groupId
- *               - memberIds
+ *               - characterIds
  *             properties:
  *               groupId:
  *                 type: string
- *                 description: ID del grupo
- *                 example: "5"
- *               memberIds:
+ *                 description: ID del grupo destino (UUID)
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *               characterIds:
  *                 type: array
  *                 items:
  *                   type: string
- *                 description: IDs de los miembros a asignar
- *                 example: ["10", "15", "20"]
+ *                 description: IDs de los personajes a asignar (UUIDs)
+ *                 example: ["660e8400-e29b-41d4-a716-446655440001", "770e8400-e29b-41d4-a716-446655440002"]
  *     responses:
  *       200:
- *         description: Miembros asignados exitosamente
+ *         description: Personajes asignados exitosamente
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
- *                   example: Miembros asignados correctamente
+ *                   example: Personajes asignados correctamente
+ *                 count:
+ *                   type: integer
+ *                   example: 2
  *       400:
  *         description: Datos inválidos
  *       404:
@@ -60,7 +66,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    const validation = AssignMembersSchema.safeParse(body);
+    const validation = AssignCharactersSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Datos inválidos', details: validation.error.issues },
@@ -68,9 +74,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await GroupService.assignMembers(validation.data);
+    const result = await GroupService.assignCharacters(validation.data);
 
-    return NextResponse.json({ message: 'Miembros asignados correctamente' }, { status: 200 });
+    return NextResponse.json({ 
+      success: true,
+      message: 'Personajes asignados correctamente',
+      count: result.count
+    }, { status: 200 });
   } catch (error: any) {
     console.error('Error in POST /api/groups/assign:', error);
 
@@ -79,7 +89,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error.message || 'Error al asignar miembros' },
+      { error: error.message || 'Error al asignar personajes' },
       { status: 500 }
     );
   }

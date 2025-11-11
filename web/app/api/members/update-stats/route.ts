@@ -8,9 +8,9 @@ const prisma = new PrismaClient();
  * @swagger
  * /api/members/update-stats:
  *   post:
- *     summary: Actualizar estadísticas de un miembro
- *     description: Actualiza experiencia y/u oro de un miembro (requiere ser profesor del curso)
- *     tags: [Members]
+ *     summary: Actualizar estadísticas de un personaje
+ *     description: Actualiza experiencia y/u oro de un personaje (requiere ser profesor del curso)
+ *     tags: [Characters]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -20,11 +20,12 @@ const prisma = new PrismaClient();
  *           schema:
  *             type: object
  *             required:
- *               - member_id
+ *               - character_id
  *             properties:
- *               member_id:
+ *               character_id:
  *                 type: string
- *                 description: ID del miembro
+ *                 format: uuid
+ *                 description: ID del personaje
  *               experience_delta:
  *                 type: integer
  *                 description: Cambio en puntos de experiencia (puede ser negativo)
@@ -44,7 +45,7 @@ const prisma = new PrismaClient();
  *               properties:
  *                 success:
  *                   type: boolean
- *                 member:
+ *                 character:
  *                   type: object
  *                   properties:
  *                     id:
@@ -78,11 +79,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { member_id, experience_delta, gold_delta, reason } = body;
+    const { character_id, experience_delta, gold_delta, reason } = body;
 
-    if (!member_id) {
+    if (!character_id) {
       return NextResponse.json(
-        { error: 'member_id es requerido' },
+        { error: 'character_id es requerido' },
         { status: 400 }
       );
     }
@@ -94,9 +95,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Obtener el miembro actual
-    const member = await prisma.members.findUnique({
-      where: { id: member_id },
+    // Obtener el personaje actual
+    const character = await prisma.characters.findUnique({
+      where: { id: character_id },
       include: {
         group: {
           include: {
@@ -106,9 +107,9 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    if (!member) {
+    if (!character) {
       return NextResponse.json(
-        { error: 'Miembro no encontrado' },
+        { error: 'Personaje no encontrado' },
         { status: 404 }
       );
     }
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
       where: {
         user_id_course_id: {
           user_id: userId,
-          course_id: member.group.course_id
+          course_id: character.group.course_id
         }
       }
     });
@@ -144,31 +145,31 @@ export async function POST(req: NextRequest) {
     const updateData: any = {};
     
     if (experience_delta !== undefined) {
-      const newExperience = Math.max(0, member.experience + experience_delta);
+      const newExperience = Math.max(0, character.experience + experience_delta);
       updateData.experience = newExperience;
     }
 
     if (gold_delta !== undefined) {
-      const newGold = Math.max(0, member.gold + gold_delta);
+      const newGold = Math.max(0, character.gold + gold_delta);
       updateData.gold = newGold;
     }
 
-    // Actualizar el miembro
-    const updatedMember = await prisma.members.update({
-      where: { id: member_id },
+    // Actualizar el personaje
+    const updatedCharacter = await prisma.characters.update({
+      where: { id: character_id },
       data: updateData
     });
 
-    console.log(`Stats updated for member ${member_id}. Reason: ${reason || 'No reason provided'}`);
+    console.log(`Stats updated for character ${character_id}. Reason: ${reason || 'No reason provided'}`);
 
     return NextResponse.json({
       success: true,
-      member: {
-        id: updatedMember.id,
-        name: updatedMember.name,
-        experience: updatedMember.experience,
-        gold: updatedMember.gold,
-        energy: updatedMember.energy
+      character: {
+        id: updatedCharacter.id,
+        name: updatedCharacter.name,
+        experience: updatedCharacter.experience,
+        gold: updatedCharacter.gold,
+        energy: updatedCharacter.energy
       }
     });
 
@@ -209,35 +210,35 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Verificar que todos los miembros existan y obtener courseId
-    const memberIds = updates.map(u => u.member_id);
-    const members = await prisma.members.findMany({
+    // Verificar que todos los personajes existan y obtener courseId
+    const characterIds = updates.map(u => u.character_id);
+    const characters = await prisma.characters.findMany({
       where: {
-        id: { in: memberIds }
+        id: { in: characterIds }
       },
       include: {
         group: true
       }
     });
 
-    if (members.length !== memberIds.length) {
+    if (characters.length !== characterIds.length) {
       return NextResponse.json(
-        { error: 'Uno o más miembros no existen' },
+        { error: 'Uno o más personajes no existen' },
         { status: 404 }
       );
     }
 
     // Verificar permisos (todos deben ser del mismo curso)
-    const courseIds = [...new Set(members.map(m => m.group.course_id))];
+    const courseIds = [...new Set(characters.map(c => c.group.course_id))];
     
     if (courseIds.length > 1) {
       return NextResponse.json(
-        { error: 'Los miembros deben pertenecer al mismo curso' },
+        { error: 'Los personajes deben pertenecer al mismo curso' },
         { status: 400 }
       );
     }
 
-    const courseId = courseIds[0];
+    const courseId = courseIds[0] as string;
 
     // Verificar que el usuario sea profesor
     const isTeacher = await TeacherService.isTeacher(userId);
@@ -266,28 +267,28 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Actualizar todos los miembros
-    const updatedMembers = await Promise.all(
+    // Actualizar todos los personajes
+    const updatedCharacters = await Promise.all(
       updates.map(async (update) => {
-        const member = members.find(m => m.id === update.member_id);
-        if (!member) return null;
+        const character = characters.find(c => c.id === update.character_id);
+        if (!character) return null;
 
         const updateData: any = {};
 
         if (update.experience_delta !== undefined) {
-          updateData.experience = Math.max(0, member.experience + update.experience_delta);
+          updateData.experience = Math.max(0, character.experience + update.experience_delta);
         }
 
         if (update.gold_delta !== undefined) {
-          updateData.gold = Math.max(0, member.gold + update.gold_delta);
+          updateData.gold = Math.max(0, character.gold + update.gold_delta);
         }
 
         if (Object.keys(updateData).length === 0) {
-          return member;
+          return character;
         }
 
-        return await prisma.members.update({
-          where: { id: member.id },
+        return await prisma.characters.update({
+          where: { id: character.id },
           data: updateData
         });
       })
@@ -295,7 +296,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      updated: updatedMembers.filter(m => m !== null).length
+      updated: updatedCharacters.filter((c) => c !== null).length
     });
 
   } catch (error) {

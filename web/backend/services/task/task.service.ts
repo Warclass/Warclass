@@ -42,189 +42,39 @@ export class TaskService {
     }
   }
 
+  /**
+   * @deprecated Esta función usa teachers_courses_tasks que es legacy. Usar getTasksByGroupForCharacter en su lugar
+   */
   static async getTaskById(taskId: string): Promise<TaskWithAssignments> {
-    try {
-      const task = await prisma.tasks.findUnique({
-        where: { id: taskId },
-        include: {
-          teachers_courses_tasks: {
-            include: {
-              member: {
-                include: {
-                  group: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      if (!task) {
-        throw new Error('Tarea no encontrada');
-      }
-
-      const groupMap = new Map();
-      task.teachers_courses_tasks.forEach((tce) => {
-        const group = tce.member.group;
-        if (!groupMap.has(group.id)) {
-          groupMap.set(group.id, {
-            id: group.id,
-            name: group.name,
-            memberCount: 0,
-          });
-        }
-        groupMap.get(group.id).memberCount++;
-      });
-
-      return {
-        id: task.id,
-        name: task.name,
-        description: task.description,
-        experience: task.experience,
-        gold: task.gold,
-        health: task.health,
-        energy: task.energy,
-        createdAt: task.created_at,
-        updatedAt: task.updated_at,
-        assignedGroups: Array.from(groupMap.values()),
-        completedCount: task.teachers_courses_tasks.length,
-        totalAssigned: task.teachers_courses_tasks.length,
-      };
-    } catch (error) {
-      console.error('Error getting task:', error);
-      throw error;
-    }
+    throw new Error('getTaskById está deprecado. Usar getTasksByGroupForCharacter en su lugar');
   }
 
+  /**
+   * @deprecated Esta función usa teachers_courses_tasks que es legacy
+   */
   static async getAllTasks(): Promise<TaskWithAssignments[]> {
-    try {
-      const tasks = await prisma.tasks.findMany({
-        include: {
-          teachers_courses_tasks: {
-            include: {
-              member: {
-                include: {
-                  group: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { created_at: 'desc' },
-      });
-
-      return tasks.map((task) => {
-        const groupMap = new Map();
-        task.teachers_courses_tasks.forEach((tce) => {
-          const group = tce.member.group;
-          if (!groupMap.has(group.id)) {
-            groupMap.set(group.id, {
-              id: group.id,
-              name: group.name,
-              memberCount: 0,
-            });
-          }
-          groupMap.get(group.id).memberCount++;
-        });
-
-        return {
-          id: task.id,
-          name: task.name,
-          description: task.description,
-          experience: task.experience,
-          gold: task.gold,
-          health: task.health,
-          energy: task.energy,
-          createdAt: task.created_at,
-          updatedAt: task.updated_at,
-          assignedGroups: Array.from(groupMap.values()),
-          completedCount: task.teachers_courses_tasks.length,
-          totalAssigned: task.teachers_courses_tasks.length,
-        };
-      });
-    } catch (error) {
-      console.error('Error getting tasks:', error);
-      throw error;
-    }
+    throw new Error('getAllTasks está deprecado');
   }
 
+  /**
+   * @deprecated Usar getTasksByGroupForCharacter para obtener info de tareas por personaje
+   */
   static async updateTask(taskId: string, data: UpdateTaskDTO): Promise<TaskWithAssignments> {
-    try {
-      const updateData: any = {};
-      if (data.name !== undefined) updateData.name = data.name;
-      if (data.description !== undefined) updateData.description = data.description;
-      if (data.experience !== undefined) updateData.experience = data.experience;
-      if (data.gold !== undefined) updateData.gold = data.gold;
-      if (data.health !== undefined) updateData.health = data.health;
-      if (data.energy !== undefined) updateData.energy = data.energy;
-
-      const task = await prisma.tasks.update({
-        where: { id: taskId },
-        data: updateData,
-      });
-
-      return this.getTaskById(task.id);
-    } catch (error) {
-      console.error('Error updating task:', error);
-      throw error;
-    }
+    throw new Error('updateTask está deprecado');
   }
 
+  /**
+   * @deprecated No se usa en la nueva arquitectura
+   */
   static async deleteTask(taskId: string): Promise<void> {
-    try {
-      await prisma.tasks.delete({
-        where: { id: taskId },
-      });
-    } catch (error) {
-      console.error('Error deleting task:', error);
-      throw error;
-    }
+    throw new Error('deleteTask está deprecado');
   }
 
+  /**
+   * @deprecated Usar characters_tasks directamente. Esta función usa teachers_courses_tasks legacy
+   */
   static async assignTaskToGroups(data: AssignTaskDTO): Promise<void> {
-    try {
-      const task = await prisma.tasks.findUnique({
-        where: { id: data.taskId },
-      });
-
-      if (!task) {
-        throw new Error('Tarea no encontrada');
-      }
-
-      for (const groupId of data.groupIds) {
-        const group = await prisma.groups.findUnique({
-          where: { id: groupId },
-          include: { members: true },
-        });
-
-        if (!group) {
-          throw new Error(`Grupo ${groupId} no encontrado`);
-        }
-
-        for (const member of group.members) {
-          const existing = await prisma.teachers_courses_tasks.findUnique({
-            where: {
-              teacher_course_id_task_id: {
-                teacher_course_id: member.id,
-                task_id: data.taskId,
-              },
-            },
-          });
-
-          if (!existing) {
-            await prisma.teachers_courses_tasks.create({
-              data: {
-                teacher_course_id: member.id,
-                task_id: data.taskId,
-              },
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error assigning task to groups:', error);
-      throw error;
-    }
+    throw new Error('assignTaskToGroups está deprecado. Los tasks se asignan por course, no por grupos individuales');
   }
 
   static async completeTask(data: CompleteTaskDTO): Promise<void> {
@@ -237,36 +87,36 @@ export class TaskService {
         throw new Error('Tarea no encontrada');
       }
 
-      const member = await prisma.members.findUnique({
-        where: { id: data.memberId },
+      const character = await prisma.characters.findUnique({
+        where: { id: data.characterId },
       });
 
-      if (!member) {
-        throw new Error('Miembro no encontrado');
+      if (!character) {
+        throw new Error('Personaje no encontrado');
       }
 
-      const existing = await prisma.teachers_courses_tasks.findUnique({
+      const existing = await prisma.characters_tasks.findUnique({
         where: {
-          teacher_course_id_task_id: {
-            teacher_course_id: data.memberId,
+          character_id_task_id: {
+            character_id: data.characterId,
             task_id: data.taskId,
           },
         },
       });
 
       if (existing) {
-        throw new Error('Esta tarea ya fue completada por este miembro');
+        throw new Error('Esta tarea ya fue completada por este personaje');
       }
 
       await prisma.$transaction([
-        prisma.teachers_courses_tasks.create({
+        prisma.characters_tasks.create({
           data: {
-            teacher_course_id: data.memberId,
+            character_id: data.characterId,
             task_id: data.taskId,
           },
         }),
-        prisma.members.update({
-          where: { id: data.memberId },
+        prisma.characters.update({
+          where: { id: data.characterId },
           data: {
             experience: { increment: task.experience },
             gold: { increment: task.gold },
@@ -280,112 +130,32 @@ export class TaskService {
     }
   }
 
+  /**
+   * @deprecated Usar characters_tasks para tracking de progreso
+   */
   static async getTaskProgress(taskId: string): Promise<TaskProgress> {
-    try {
-      const task = await prisma.tasks.findUnique({
-        where: { id: taskId },
-        include: {
-          teachers_courses_tasks: {
-            include: {
-              member: true,
-            },
-          },
-        },
-      });
-
-      if (!task) {
-        throw new Error('Tarea no encontrada');
-      }
-
-      const completedMembers = task.teachers_courses_tasks.length;
-      const totalMembers = await prisma.members.count();
-
-      return {
-        taskId: task.id,
-        taskName: task.name,
-        totalMembers,
-        completedMembers,
-        progress: totalMembers > 0 ? (completedMembers / totalMembers) * 100 : 0,
-      };
-    } catch (error) {
-      console.error('Error getting task progress:', error);
-      throw error;
-    }
-  }
-
-  static async getTasksByGroup(groupId: string): Promise<TaskWithAssignments[]> {
-    try {
-      const group = await prisma.groups.findUnique({
-        where: { id: groupId },
-        include: {
-          members: {
-            include: {
-              teachers_courses_tasks: {
-                include: {
-                  task: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      if (!group) {
-        throw new Error('Grupo no encontrado');
-      }
-
-      const taskMap = new Map();
-      
-      group.members.forEach((member) => {
-        member.teachers_courses_tasks.forEach((tce) => {
-          const task = tce.task;
-          if (!taskMap.has(task.id)) {
-            taskMap.set(task.id, {
-              id: task.id,
-              name: task.name,
-              description: task.description,
-              experience: task.experience,
-              gold: task.gold,
-              health: task.health,
-              energy: task.energy,
-              createdAt: task.created_at,
-              updatedAt: task.updated_at,
-              assignedGroups: [{ id: group.id, name: group.name, memberCount: 0 }],
-              completedCount: 0,
-              totalAssigned: group.members.length,
-            });
-          }
-          taskMap.get(task.id).completedCount++;
-        });
-      });
-
-      return Array.from(taskMap.values());
-    } catch (error) {
-      console.error('Error getting tasks by group:', error);
-      throw error;
-    }
+    throw new Error('getTaskProgress está deprecado. Usar characters_tasks para calcular progreso');
   }
 
   /**
-   * Obtener tasks de un grupo con estado de completitud por member
+   * @deprecated Usar getTasksByGroupForCharacter en su lugar
    */
-  static async getTasksByGroupForMember(
+  static async getTasksByGroup(groupId: string): Promise<TaskWithAssignments[]> {
+    throw new Error('getTasksByGroup está deprecado. Usar getTasksByGroupForCharacter');
+  }
+
+  /**
+   * Obtener tasks de un grupo con estado de completitud por character
+   */
+  static async getTasksByGroupForCharacter(
     groupId: string,
-    memberId: string
+    characterId: string
   ): Promise<TaskWithAssignments[]> {
     try {
       const group = await prisma.groups.findUnique({
         where: { id: groupId },
         include: {
-          members: {
-            include: {
-              teachers_courses_tasks: {
-                include: {
-                  task: true,
-                },
-              },
-            },
-          },
+          characters: true,
         },
       });
 
@@ -393,46 +163,34 @@ export class TaskService {
         throw new Error('Grupo no encontrado');
       }
 
-      // Obtener todas las tasks asignadas al grupo
-      const taskMap = new Map();
-      
-      group.members.forEach((member) => {
-        member.teachers_courses_tasks.forEach((tce) => {
-          const task = tce.task;
-          if (!taskMap.has(task.id)) {
-            taskMap.set(task.id, {
-              id: task.id,
-              name: task.name,
-              description: task.description,
-              experience: task.experience,
-              gold: task.gold,
-              health: task.health,
-              energy: task.energy,
-              createdAt: task.created_at,
-              updatedAt: task.updated_at,
-              assignedGroups: [{ id: group.id, name: group.name, memberCount: group.members.length }],
-              completedCount: 0,
-              totalAssigned: group.members.length,
-              completed: false, // Se actualizará después
-            });
-          }
-        });
+      // Obtener todas las tareas con su estado de completitud para este personaje
+      const tasks = await prisma.tasks.findMany({
+        include: {
+          characters_tasks: {
+            where: {
+              character_id: characterId,
+            },
+          },
+        },
       });
 
-      // Verificar qué tasks completó este member específico
-      const memberData = group.members.find((m) => m.id === memberId);
-      if (memberData) {
-        memberData.teachers_courses_tasks.forEach((tce) => {
-          const task = taskMap.get(tce.task.id);
-          if (task) {
-            task.completed = true;
-          }
-        });
-      }
-
-      return Array.from(taskMap.values());
+      return tasks.map((task) => ({
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        experience: task.experience,
+        gold: task.gold,
+        health: task.health,
+        energy: task.energy,
+        createdAt: task.created_at,
+        updatedAt: task.updated_at,
+        assignedGroups: [{ id: group.id, name: group.name, memberCount: group.characters.length }],
+        completedCount: task.characters_tasks.length,
+        totalAssigned: group.characters.length,
+        completed: task.characters_tasks.length > 0,
+      }));
     } catch (error) {
-      console.error('Error getting tasks by group for member:', error);
+      console.error('Error getting tasks by group for character:', error);
       throw error;
     }
   }

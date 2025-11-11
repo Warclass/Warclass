@@ -46,7 +46,7 @@ export interface AssignTaskDTO {
 
 export interface CompleteTaskDTO {
   taskId: string;
-  memberId: string;
+  characterId: string;
 }
 
 export interface TaskProgress {

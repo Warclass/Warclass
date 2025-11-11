@@ -26,5 +26,5 @@ export const UpdateEventSchema = z.object({
 
 export const ApplyEventSchema = z.object({
   eventId: z.string().uuid('ID de evento inválido'),
-  memberIds: z.array(z.string().uuid()).min(1, 'Debe seleccionar al menos un miembro'),
+  characterIds: z.array(z.string().uuid()).min(1, 'Debe seleccionar al menos un personaje'),
 });

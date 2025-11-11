@@ -52,15 +52,15 @@ export class QuizService {
   /**
    * Obtener un quiz por ID (sin revelar la respuesta correcta)
    */
-  static async getQuizById(quizId: string, memberId?: string): Promise<QuizWithHistory> {
+  static async getQuizById(quizId: string, characterId?: string): Promise<QuizWithHistory> {
     try {
       const quiz = await prisma.quizzes.findUnique({
         where: { id: quizId },
         include: {
           group: true,
-          quizzes_history: memberId
+          quizzes_history: characterId
             ? {
-                where: { member_id: memberId },
+                where: { character_id: characterId },
                 take: 1,
               }
             : false,
@@ -113,16 +113,16 @@ export class QuizService {
    */
   static async getQuizzesByGroup(
     groupId: string,
-    memberId?: string
+    characterId?: string
   ): Promise<QuizResponse[]> {
     try {
       const quizzes = await prisma.quizzes.findMany({
         where: { group_id: groupId },
         include: {
           group: true,
-          quizzes_history: memberId
+          quizzes_history: characterId
             ? {
-                where: { member_id: memberId },
+                where: { character_id: characterId },
               }
             : false,
         },
@@ -141,7 +141,7 @@ export class QuizService {
    */
   static async getQuizzesByCourse(
     courseId: string,
-    memberId?: string
+    characterId?: string
   ): Promise<QuizResponse[]> {
     try {
       const quizzes = await prisma.quizzes.findMany({
@@ -152,9 +152,9 @@ export class QuizService {
         },
         include: {
           group: true,
-          quizzes_history: memberId
+          quizzes_history: characterId
             ? {
-                where: { member_id: memberId },
+                where: { character_id: characterId },
               }
             : false,
         },
@@ -226,21 +226,21 @@ export class QuizService {
         throw new Error('Quiz no encontrado');
       }
 
-      // Verificar que el miembro existe
-      const member = await prisma.members.findUnique({
-        where: { id: data.memberId },
+      // Verificar que el personaje existe
+      const character = await prisma.characters.findUnique({
+        where: { id: data.characterId },
       });
 
-      if (!member) {
-        throw new Error('Miembro no encontrado');
+      if (!character) {
+        throw new Error('Personaje no encontrado');
       }
 
       // Verificar si ya respondió este quiz
       const existingHistory = await prisma.quizzes_history.findUnique({
         where: {
-          quiz_id_member_id: {
+          quiz_id_character_id: {
             quiz_id: data.quizId,
-            member_id: data.memberId,
+            character_id: data.characterId,
           },
         },
       });
@@ -264,7 +264,7 @@ export class QuizService {
       const history = await prisma.quizzes_history.create({
         data: {
           quiz_id: data.quizId,
-          member_id: data.memberId,
+          character_id: data.characterId,
           selected_answer: data.selectedAnswer,
           is_correct: isCorrect,
           points_earned: pointsEarned,
@@ -273,10 +273,10 @@ export class QuizService {
         },
       });
 
-      // Actualizar experiencia y oro del miembro si es correcto
+      // Actualizar experiencia y oro del personaje si es correcto
       if (isCorrect) {
-        await prisma.members.update({
-          where: { id: data.memberId },
+        await prisma.characters.update({
+          where: { id: data.characterId },
           data: {
             experience: { increment: pointsEarned },
             gold: { increment: Math.round(pointsEarned / 10) },
@@ -302,22 +302,24 @@ export class QuizService {
   /**
    * Obtener estadísticas de un miembro en quizzes
    */
-  static async getMemberStatistics(memberId: string): Promise<QuizStatistics> {
+  static async getCharacterStatistics(characterId: string): Promise<QuizStatistics> {
     try {
       const history = await prisma.quizzes_history.findMany({
-        where: { member_id: memberId },
+        where: { character_id: characterId },
       });
 
-      const totalQuizzes = await prisma.quizzes.count({
-        where: {
+      const character = await prisma.characters.findUnique({
+        where: { id: characterId },
+        include: {
           group: {
-            members: {
-              some: { id: memberId },
+            include: {
+              quizzes: true,
             },
           },
         },
       });
 
+      const totalQuizzes = character?.group?.quizzes?.length || 0;
       const completedQuizzes = history.length;
       const correctAnswers = history.filter((h) => h.is_correct).length;
       const incorrectAnswers = completedQuizzes - correctAnswers;
@@ -348,29 +350,29 @@ export class QuizService {
    */
   static async getGroupLeaderboard(groupId: string): Promise<LeaderboardEntry[]> {
     try {
-      const members = await prisma.members.findMany({
+      const characters = await prisma.characters.findMany({
         where: { group_id: groupId },
         include: {
           quizzes_history: true,
-          characters: true,
+          class: true,
         },
       });
 
-      const leaderboard = members.map((member) => {
-        const correctAnswers = member.quizzes_history.filter((h) => h.is_correct).length;
-        const totalAnswers = member.quizzes_history.length;
-        const totalPoints = member.quizzes_history.reduce((sum, h) => sum + h.points_earned, 0);
+      const leaderboard = characters.map((character) => {
+        const correctAnswers = character.quizzes_history.filter((h) => h.is_correct).length;
+        const totalAnswers = character.quizzes_history.length;
+        const totalPoints = character.quizzes_history.reduce((sum, h) => sum + h.points_earned, 0);
         const averageTimeTaken =
           totalAnswers > 0
-            ? member.quizzes_history.reduce((sum, h) => sum + h.time_taken, 0) / totalAnswers
+            ? character.quizzes_history.reduce((sum, h) => sum + h.time_taken, 0) / totalAnswers
             : 0;
         const accuracy = totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0;
 
         return {
           position: 0, // Se calcula después
-          memberId: member.id,
-          memberName: member.name,
-          characterName: member.characters?.name,
+          characterId: character.id,
+          characterName: character.name,
+          className: character.class?.name,
           totalPoints,
           correctAnswers,
           totalAnswers,
@@ -404,7 +406,7 @@ export class QuizService {
    */
   static async getCourseLeaderboard(courseId: string): Promise<LeaderboardEntry[]> {
     try {
-      const members = await prisma.members.findMany({
+      const characters = await prisma.characters.findMany({
         where: {
           group: {
             course_id: courseId,
@@ -412,25 +414,25 @@ export class QuizService {
         },
         include: {
           quizzes_history: true,
-          characters: true,
+          class: true,
         },
       });
 
-      const leaderboard = members.map((member) => {
-        const correctAnswers = member.quizzes_history.filter((h) => h.is_correct).length;
-        const totalAnswers = member.quizzes_history.length;
-        const totalPoints = member.quizzes_history.reduce((sum, h) => sum + h.points_earned, 0);
+      const leaderboard = characters.map((character) => {
+        const correctAnswers = character.quizzes_history.filter((h) => h.is_correct).length;
+        const totalAnswers = character.quizzes_history.length;
+        const totalPoints = character.quizzes_history.reduce((sum, h) => sum + h.points_earned, 0);
         const averageTimeTaken =
           totalAnswers > 0
-            ? member.quizzes_history.reduce((sum, h) => sum + h.time_taken, 0) / totalAnswers
+            ? character.quizzes_history.reduce((sum, h) => sum + h.time_taken, 0) / totalAnswers
             : 0;
         const accuracy = totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0;
 
         return {
           position: 0,
-          memberId: member.id,
-          memberName: member.name,
-          characterName: member.characters?.name,
+          characterId: character.id,
+          characterName: character.name,
+          className: character.class?.name,
           totalPoints,
           correctAnswers,
           totalAnswers,

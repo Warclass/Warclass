@@ -3,29 +3,29 @@ import { QuizService } from '@/backend/services/quiz/quiz.service';
 
 interface RouteParams {
   params: {
-    memberId: string;
+    characterId: string;
   };
 }
 
 /**
  * @swagger
- * /api/quizzes/statistics/{memberId}:
+ * /api/quizzes/statistics/{characterId}:
  *   get:
- *     summary: Obtener estadísticas de quizzes de un miembro
- *     description: Retorna las estadísticas de desempeño en quizzes de un miembro específico
+ *     summary: Obtener estadísticas de quizzes de un personaje
+ *     description: Retorna las estadísticas de desempeño en quizzes de un personaje específico
  *     tags: [Quizzes]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: memberId
+ *         name: characterId
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del miembro
+ *         description: ID del personaje (UUID)
  *     responses:
  *       200:
- *         description: Estadísticas del miembro en quizzes
+ *         description: Estadísticas del personaje en quizzes
  *         content:
  *           application/json:
  *             schema:
@@ -36,12 +36,18 @@ interface RouteParams {
  *                   properties:
  *                     totalQuizzes:
  *                       type: integer
- *                     averageScore:
- *                       type: number
- *                     bestScore:
- *                       type: number
  *                     completedQuizzes:
  *                       type: integer
+ *                     correctAnswers:
+ *                       type: integer
+ *                     incorrectAnswers:
+ *                       type: integer
+ *                     totalPoints:
+ *                       type: integer
+ *                     averageTimeTaken:
+ *                       type: number
+ *                     accuracy:
+ *                       type: number
  *       401:
  *         description: No autorizado
  *       500:
@@ -54,13 +60,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // TODO: Verificar que el usuario tiene acceso a este miembro
-
-    const statistics = await QuizService.getMemberStatistics(params.memberId);
+    const statistics = await QuizService.getCharacterStatistics(params.characterId);
 
     return NextResponse.json({ statistics }, { status: 200 });
   } catch (error: any) {
-    console.error('Error in GET /api/quizzes/statistics/[memberId]:', error);
+    console.error('Error in GET /api/quizzes/statistics/[characterId]:', error);
     return NextResponse.json(
       { error: error.message || 'Error al obtener estadísticas' },
       { status: 500 }

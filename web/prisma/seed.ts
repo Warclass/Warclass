@@ -14,7 +14,6 @@ async function main() {
   await prisma.teachers_courses_tasks.deleteMany();
   await prisma.quizzes_history.deleteMany();
   await prisma.characters.deleteMany();
-  await prisma.members.deleteMany();
   await prisma.quizzes.deleteMany();
   await prisma.groups.deleteMany();
   await prisma.invitations.deleteMany();
@@ -187,13 +186,12 @@ async function main() {
     },
   });
 
-  // 5. Crear cursos
+  // 5. Crear cursos (SIN teacher_id - solo usar teachers_courses)
   console.log('📚 Creating courses...');
   const course1 = await prisma.courses.create({
     data: {
       name: 'Programación Web',
       description: 'Aprende desarrollo web moderno con React y Next.js',
-      teacher_id: teacher3.id,
     },
   });
 
@@ -201,7 +199,6 @@ async function main() {
     data: {
       name: 'Base de Datos',
       description: 'Fundamentos de bases de datos relacionales y SQL',
-      teacher_id: teacher3.id,
     },
   });
 
@@ -209,7 +206,6 @@ async function main() {
     data: {
       name: 'Algoritmos',
       description: 'Estructuras de datos y algoritmos fundamentales',
-      teacher_id: teacher3.id,
     },
   });
 
@@ -217,7 +213,6 @@ async function main() {
     data: {
       name: 'Inteligencia Artificial',
       description: 'Introducción a IA y Machine Learning',
-      teacher_id: teacher1.id,
     },
   });
 
@@ -225,39 +220,45 @@ async function main() {
     data: {
       name: 'Matemáticas Discretas',
       description: 'Teoría de grafos, lógica y combinatoria',
-      teacher_id: teacher2.id,
     },
   });
 
-  // 6. Crear relación teachers_courses
+  // 6. Crear relación teachers_courses (individualmente para obtener IDs)
   console.log('🔗 Creating teacher-course relationships...');
-  await prisma.teachers_courses.createMany({
-    data: [
-      { teacher_id: teacher3.id, course_id: course1.id },
-      { teacher_id: teacher3.id, course_id: course2.id },
-      { teacher_id: teacher3.id, course_id: course3.id },
-      { teacher_id: teacher1.id, course_id: course4.id },
-      { teacher_id: teacher2.id, course_id: course5.id },
-    ],
+  const tc1 = await prisma.teachers_courses.create({
+    data: { teacher_id: teacher3.id, course_id: course1.id },
   });
 
-  // 7. Crear inscripciones (user1 inscrito en los cursos)
+  const tc2 = await prisma.teachers_courses.create({
+    data: { teacher_id: teacher3.id, course_id: course2.id },
+  });
+
+  const tc3 = await prisma.teachers_courses.create({
+    data: { teacher_id: teacher3.id, course_id: course3.id },
+  });
+
+  const tc4 = await prisma.teachers_courses.create({
+    data: { teacher_id: teacher1.id, course_id: course4.id },
+  });
+
+  const tc5 = await prisma.teachers_courses.create({
+    data: { teacher_id: teacher2.id, course_id: course5.id },
+  });
+
+  // 7. Crear inscripciones (user1 inscrito en los cursos) CON SOFT DELETE
   console.log('📝 Creating course enrollments...');
   await prisma.inscriptions.createMany({
     data: [
       // user1 es estudiante en cursos 4 y 5
-      { user_id: user1.id, course_id: course4.id },
-      { user_id: user1.id, course_id: course5.id },
-      // user2 es estudiante en curso 1
-      { user_id: user2.id, course_id: course1.id },
-      { user_id: user2.id, course_id: course4.id },
+      { user_id: user1.id, course_id: course4.id, is_active: true },
+      { user_id: user1.id, course_id: course5.id, is_active: true },
+      // user2 es estudiante en curso 1 y 4
+      { user_id: user2.id, course_id: course1.id, is_active: true },
+      { user_id: user2.id, course_id: course4.id, is_active: true },
       // user3 es estudiante en cursos 2 y 3
-      { user_id: user3.id, course_id: course2.id },
-      { user_id: user3.id, course_id: course3.id },
-      // teacherUser es docente en cursos 1, 2, 3
-      { user_id: teacherUser.id, course_id: course1.id },
-      { user_id: teacherUser.id, course_id: course2.id },
-      { user_id: teacherUser.id, course_id: course3.id },
+      { user_id: user3.id, course_id: course2.id, is_active: true },
+      { user_id: user3.id, course_id: course3.id, is_active: true },
+      // teacherUser NO necesita inscripciones (es profesor, no alumno)
     ],
   });
 
@@ -298,158 +299,177 @@ async function main() {
     },
   });
 
-  // 9. Crear miembros (estudiantes en grupos)
-  console.log('🎮 Creating group members...');
-  const member1 = await prisma.members.create({
+  // 9. Crear usuarios estudiantes adicionales (necesarios para characters con user_id)
+  console.log('👨‍� Creating additional student users...');
+  const student1 = await prisma.users.create({
     data: {
       name: 'Chocce, Marcos',
+      email: 'marcos.chocce@example.com',
+      username: 'mchocce',
+      password: hashedPassword,
+    },
+  });
+
+  const student2 = await prisma.users.create({
+    data: {
+      name: 'Torres, Ismael',
+      email: 'ismael.torres@example.com',
+      username: 'itorres',
+      password: hashedPassword,
+    },
+  });
+
+  const student3 = await prisma.users.create({
+    data: {
+      name: 'Rojas, Cristian',
+      email: 'cristian.rojas@example.com',
+      username: 'crojas',
+      password: hashedPassword,
+    },
+  });
+
+  const student4 = await prisma.users.create({
+    data: {
+      name: 'Jimenez, Pedro',
+      email: 'pedro.jimenez@example.com',
+      username: 'pjimenez',
+      password: hashedPassword,
+    },
+  });
+
+  const student5 = await prisma.users.create({
+    data: {
+      name: 'Lopez, Tomas',
+      email: 'tomas.lopez@example.com',
+      username: 'tlopez',
+      password: hashedPassword,
+    },
+  });
+
+  const student6 = await prisma.users.create({
+    data: {
+      name: 'Sanches, Karen',
+      email: 'karen.sanches@example.com',
+      username: 'ksanches',
+      password: hashedPassword,
+    },
+  });
+
+  // 10. Crear personajes directamente (SIN tabla members)
+  // Characters ahora tiene user_id + group_id directamente
+  console.log('🦸 Creating characters...');
+  
+  // Personajes del grupo 1 (Programación Web)
+  const char1 = await prisma.characters.create({
+    data: {
+      name: 'Marcos el Curandero',
+      user_id: student1.id,
+      group_id: group1.id,
+      class_id: healerClass.id,
       experience: 1000,
       gold: 100000,
       energy: 1000,
-      group_id: group1.id,
+      health: 100,
+      appearance: {
+        Hair: 'Brown',
+        Eyes: 'Green',
+        Skin: 'Light',
+      },
     },
   });
 
-  const member2 = await prisma.members.create({
+  const char2 = await prisma.characters.create({
     data: {
-      name: 'Torres, Ismael',
+      name: 'Ismael el Guerrero',
+      user_id: student2.id,
+      group_id: group1.id,
+      class_id: warriorClass.id,
       experience: 750,
       gold: 850,
       energy: 900,
-      group_id: group1.id,
+      health: 100,
     },
   });
 
-  const member3 = await prisma.members.create({
+  const char3 = await prisma.characters.create({
     data: {
-      name: 'Rojas, Cristian',
+      name: 'Cristian el Elfo',
+      user_id: student3.id,
+      group_id: group1.id,
+      class_id: elfClass.id,
       experience: 1200,
       gold: 1100,
       energy: 600,
-      group_id: group1.id,
+      health: 100,
     },
   });
 
-  const member4 = await prisma.members.create({
+  // Personajes del grupo 2 (Base de Datos)
+  const char4 = await prisma.characters.create({
     data: {
-      name: 'Jimenez, Pedro',
+      name: 'Pedro el Mago',
+      user_id: student4.id,
+      group_id: group2.id,
+      class_id: mageClass.id,
       experience: 650,
       gold: 750,
       energy: 900,
-      group_id: group2.id,
+      health: 100,
     },
   });
 
-  const member5 = await prisma.members.create({
+  const char5 = await prisma.characters.create({
     data: {
-      name: 'Lopez, Tomas',
+      name: 'Tomas el Guerrero',
+      user_id: student5.id,
+      group_id: group2.id,
+      class_id: warriorClass.id,
       experience: 450,
       gold: 520,
       energy: 500,
-      group_id: group2.id,
+      health: 100,
     },
   });
 
-  const member6 = await prisma.members.create({
+  // Personaje del grupo 3 (Algoritmos)
+  const char6 = await prisma.characters.create({
     data: {
-      name: 'Sanches, Karen',
+      name: 'Karen la Elfa',
+      user_id: student6.id,
+      group_id: group3.id,
+      class_id: elfClass.id,
       experience: 2000,
       gold: 1500,
       energy: 600,
-      group_id: group3.id,
+      health: 100,
     },
   });
 
-  // Miembros para grupos 4 y 5 (cursos de user1)
-  const member7 = await prisma.members.create({
+  // Personajes de user1 (inscrito en cursos 4 y 5)
+  const char7 = await prisma.characters.create({
     data: {
-      name: user1.name,
+      name: user1.name + ' - Aventurero IA',
+      user_id: user1.id,
+      group_id: group4.id, // IA
+      class_id: mageClass.id,
       experience: 1300,
       gold: 800,
       energy: 750,
-      group_id: group4.id, // IA
+      health: 100,
     },
   });
 
-  const member8 = await prisma.members.create({
+  const char8 = await prisma.characters.create({
     data: {
-      name: user1.name,
+      name: user1.name + ' - Matemático',
+      user_id: user1.id,
+      group_id: group5.id, // Matemáticas
+      class_id: mageClass.id,
       experience: 640,
       gold: 500,
       energy: 650,
-      group_id: group5.id, // Matemáticas
+      health: 100,
     },
-  });
-
-  // 10. Crear personajes
-  console.log('🦸 Creating characters...');
-  await prisma.characters.createMany({
-    data: [
-      {
-        name: 'Marcos el Curandero',
-        experience: 1000,
-        gold: 100000,
-        energy: 1000,
-        character_id: member1.id,
-        class_id: healerClass.id,
-      },
-      {
-        name: 'Ismael el Guerrero',
-        experience: 750,
-        gold: 850,
-        energy: 900,
-        character_id: member2.id,
-        class_id: warriorClass.id,
-      },
-      {
-        name: 'Cristian el Elfo',
-        experience: 1200,
-        gold: 1100,
-        energy: 600,
-        character_id: member3.id,
-        class_id: elfClass.id,
-      },
-      {
-        name: 'Pedro el Mago',
-        experience: 650,
-        gold: 750,
-        energy: 900,
-        character_id: member4.id,
-        class_id: mageClass.id,
-      },
-      {
-        name: 'Tomas el Guerrero',
-        experience: 450,
-        gold: 520,
-        energy: 500,
-        character_id: member5.id,
-        class_id: warriorClass.id,
-      },
-      {
-        name: 'Karen la Elfa',
-        experience: 2000,
-        gold: 1500,
-        energy: 600,
-        character_id: member6.id,
-        class_id: elfClass.id,
-      },
-      {
-        name: user1.name + ' - Aventurero IA',
-        experience: 1300,
-        gold: 800,
-        energy: 750,
-        character_id: member7.id,
-        class_id: mageClass.id,
-      },
-      {
-        name: user1.name + ' - Matemático',
-        experience: 640,
-        gold: 500,
-        energy: 650,
-        character_id: member8.id,
-        class_id: mageClass.id,
-      },
-    ],
   });
 
   console.log('🎯 Creating tasks...');
@@ -836,14 +856,14 @@ async function main() {
     },
   });
 
-  // Crear historial de quizzes para algunos miembros
+  // Crear historial de quizzes para algunos characters
   console.log('📊 Creating quiz history...');
   await prisma.quizzes_history.createMany({
     data: [
-      // member1 responde algunos quizzes del grupo 1
+      // char1 responde algunos quizzes del grupo 1
       {
         quiz_id: quiz1.id,
-        member_id: member1.id,
+        character_id: char1.id,
         selected_answer: 0,
         is_correct: true,
         points_earned: 120,
@@ -852,27 +872,27 @@ async function main() {
       },
       {
         quiz_id: quiz2.id,
-        member_id: member1.id,
+        character_id: char1.id,
         selected_answer: 0,
         is_correct: true,
         points_earned: 180,
         time_taken: 30,
         is_on_quest: true,
       },
-      // member2 responde quiz1
+      // char2 responde quiz1
       {
         quiz_id: quiz1.id,
-        member_id: member2.id,
+        character_id: char2.id,
         selected_answer: 1,
         is_correct: false,
         points_earned: 0,
         time_taken: 28,
         is_on_quest: false,
       },
-      // member4 responde quizzes del grupo 2
+      // char4 responde quizzes del grupo 2
       {
         quiz_id: quiz4.id,
-        member_id: member4.id,
+        character_id: char4.id,
         selected_answer: 0,
         is_correct: true,
         points_earned: 110,
@@ -881,17 +901,17 @@ async function main() {
       },
       {
         quiz_id: quiz5.id,
-        member_id: member4.id,
+        character_id: char4.id,
         selected_answer: 0,
         is_correct: true,
         points_earned: 125,
         time_taken: 18,
         is_on_quest: false,
       },
-      // member7 responde quizzes del grupo 4 (IA)
+      // char7 responde quizzes del grupo 4 (IA)
       {
         quiz_id: quiz9.id,
-        member_id: member7.id,
+        character_id: char7.id,
         selected_answer: 0,
         is_correct: true,
         points_earned: 175,
@@ -904,14 +924,14 @@ async function main() {
   console.log('🎯 Creating task assignments (teachers_courses_tasks)...');
   await prisma.teachers_courses_tasks.createMany({
     data: [
-      { teacher_course_id: member1.id, task_id: task1.id },
-      { teacher_course_id: member2.id, task_id: task1.id },
-      { teacher_course_id: member3.id, task_id: task1.id },
-      { teacher_course_id: member4.id, task_id: task2.id },
-      { teacher_course_id: member5.id, task_id: task2.id },
-      { teacher_course_id: member6.id, task_id: task2.id },
-      { teacher_course_id: member7.id, task_id: task3.id },
-      { teacher_course_id: member8.id, task_id: task4.id },
+      // Asignar task1 a curso1 (Programación Web - teacher3)
+      { teacher_course_id: tc1.id, task_id: task1.id },
+      // Asignar task2 a curso2 (Base de Datos - teacher3)
+      { teacher_course_id: tc2.id, task_id: task2.id },
+      // Asignar task3 a curso4 (IA - teacher1)
+      { teacher_course_id: tc4.id, task_id: task3.id },
+      // Asignar task4 a curso5 (Matemáticas - teacher2)
+      { teacher_course_id: tc5.id, task_id: task4.id },
     ],
   });
 
@@ -919,9 +939,9 @@ async function main() {
   console.log('\n📊 Summary:');
   console.log(`- Users: ${await prisma.users.count()}`);
   console.log(`- Teachers: ${await prisma.teachers.count()}`);
+  console.log(`- Teachers-Courses: ${await prisma.teachers_courses.count()}`);
   console.log(`- Courses: ${await prisma.courses.count()}`);
   console.log(`- Groups: ${await prisma.groups.count()}`);
-  console.log(`- Members: ${await prisma.members.count()}`);
   console.log(`- Characters: ${await prisma.characters.count()}`);
   console.log(`- Tasks: ${await prisma.tasks.count()}`);
   console.log(`- Random Events: ${await prisma.events.count()}`);
@@ -936,6 +956,9 @@ async function main() {
   console.log('Email: juan@example.com | Password: password123');
   console.log('Email: garcia@example.com | Password: password123');
   console.log('Email: martinez@example.com | Password: password123');
+  console.log('\n👨‍🎓 Student credentials:');
+  console.log('Email: marcos.chocce@example.com | Password: password123');
+  console.log('Email: ismael.torres@example.com | Password: password123');
 }
 
 main()

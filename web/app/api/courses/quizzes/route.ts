@@ -98,9 +98,9 @@ export async function GET(req: NextRequest) {
           include: {
             quizzes_history: {
               include: {
-                member: {
+                character: {
                   include: {
-                    characters: true
+                    class: true
                   }
                 }
               }
@@ -113,14 +113,13 @@ export async function GET(req: NextRequest) {
     // Obtener el character del usuario en este curso
     const userCharacter = await prisma.characters.findFirst({
       where: {
-        member: {
-          group: {
-            course_id: courseId
-          }
+        user_id: userId,
+        group: {
+          course_id: courseId
         }
       },
       include: {
-        member: true
+        class: true
       }
     });
 
@@ -132,7 +131,7 @@ export async function GET(req: NextRequest) {
         if (!quizzesMap.has(quiz.id)) {
           // Verificar si el usuario ya hizo este quiz
           const userHistory = quiz.quizzes_history.find(
-            history => history.member.id === userCharacter?.member.id
+            history => history.character.id === userCharacter?.id
           );
 
           quizzesMap.set(quiz.id, {
