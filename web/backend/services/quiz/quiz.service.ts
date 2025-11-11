@@ -15,18 +15,33 @@ export class QuizService {
   /**
    * Crear un nuevo quiz
    */
-  static async createQuiz(data: CreateQuizDTO): Promise<QuizResponse> {
+  static async createQuiz(data: CreateQuizDTO, teacherId?: string): Promise<QuizResponse> {
     try {
-      // Verificar que el grupo existe
+      // Verificar que el grupo existe y obtener el curso
       const group = await prisma.groups.findUnique({
         where: { id: data.groupId },
+        include: { course: true },
       });
 
       if (!group) {
         throw new Error('Grupo no encontrado');
       }
 
-      // Crear el quiz
+      // Si se proporciona teacherId, verificar que sea profesor del curso
+      if (teacherId) {
+        const isTeacher = await prisma.teachers_courses.findFirst({
+          where: {
+            teacher_id: teacherId,
+            course_id: group.course_id,
+          },
+        });
+
+        if (!isTeacher) {
+          throw new Error('No tienes permiso para crear quizzes en este curso');
+        }
+      }
+
+      // Crear el quiz con course_id y teacher_id
       const quiz = await prisma.quizzes.create({
         data: {
           question: data.question,
@@ -36,9 +51,22 @@ export class QuizService {
           points: data.points || 100,
           time_limit: data.timeLimit || 30,
           group_id: data.groupId,
+          course_id: group.course_id,
+          teacher_id: teacherId || null,
         },
         include: {
           group: true,
+          course: true,
+          teacher: teacherId ? {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          } : false,
         },
       });
 
@@ -146,12 +174,21 @@ export class QuizService {
     try {
       const quizzes = await prisma.quizzes.findMany({
         where: {
-          group: {
-            course_id: courseId,
-          },
+          course_id: courseId,
         },
         include: {
           group: true,
+          course: true,
+          teacher: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
           quizzes_history: characterId
             ? {
                 where: { character_id: characterId },
@@ -487,6 +524,10 @@ export class QuizService {
       timeLimit: quiz.time_limit,
       groupId: quiz.group_id,
       groupName: quiz.group?.name,
+      courseId: quiz.course_id,
+      courseName: quiz.course?.name,
+      teacherId: quiz.teacher_id,
+      teacherName: quiz.teacher?.user?.name,
       completed: !!history,
       score: history ? (history.is_correct ? 100 : 0) : undefined,
       timeTaken: history?.time_taken,

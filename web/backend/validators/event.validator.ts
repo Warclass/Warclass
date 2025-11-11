@@ -10,6 +10,8 @@ export const CreateEventSchema = z.object({
   health: z.number().optional().default(0),
   energy: z.number().optional().default(0),
   isActive: z.boolean().optional().default(true),
+  isGlobal: z.boolean().optional().default(true),
+  courseId: z.string().uuid('ID de curso inválido').optional(),
 });
 
 export const UpdateEventSchema = z.object({
@@ -22,6 +24,7 @@ export const UpdateEventSchema = z.object({
   health: z.number().optional(),
   energy: z.number().optional(),
   isActive: z.boolean().optional(),
+  isGlobal: z.boolean().optional(),
 });
 
 export const ApplyEventSchema = z.object({

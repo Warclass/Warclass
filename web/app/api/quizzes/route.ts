@@ -187,9 +187,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TODO: Verificar que el usuario es profesor del curso/grupo
+    // Obtener el teacher_id del usuario autenticado
+    const { prisma } = await import('@/backend/config/prisma');
+    const teacher = await prisma.teachers.findFirst({
+      where: { user_id: userId },
+    });
 
-    const quiz = await QuizService.createQuiz(validation.data);
+    // Crear el quiz (con teacher_id si el usuario es profesor)
+    const quiz = await QuizService.createQuiz(
+      validation.data,
+      teacher?.id
+    );
 
     return NextResponse.json({ quiz }, { status: 201 });
   } catch (error: any) {

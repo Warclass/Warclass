@@ -518,6 +518,8 @@ async function main() {
   });
 
   console.log('🎲 Creating random events...');
+  
+  // Eventos GLOBALES del sistema (is_global = true, sin course_id ni teacher_id)
   await prisma.events.createMany({
     data: [
       {
@@ -528,15 +530,19 @@ async function main() {
         health: -10,
         gold: -500,
         energy: -80,
+        is_global: true,
+        is_active: true,
       },
       {
-        name: '� Ataque de Dragón Ancestral',
+        name: '🐉 Ataque de Dragón Ancestral',
         description: 'Un dragón legendario emerge de las montañas y ataca la ciudad. Todos pierden salud y oro considerable.',
         type: 'disaster',
         rank: 'A',
         health: -7,
         gold: -300,
         energy: -50,
+        is_global: true,
+        is_active: true,
       },
       {
         name: '⚡ Tormenta Mágica Intensa',
@@ -545,6 +551,8 @@ async function main() {
         rank: 'B',
         energy: -60,
         health: -3,
+        is_global: true,
+        is_active: true,
       },
       {
         name: '🌑 Eclipse Solar Prolongado',
@@ -553,13 +561,17 @@ async function main() {
         rank: 'C',
         energy: -30,
         health: -2,
+        is_global: true,
+        is_active: true,
       },
       {
-        name: '�️ Día Lluvioso',
+        name: '🌧️ Día Lluvioso',
         description: 'Un día lluvioso normal. Todos sienten un poco de cansancio adicional.',
         type: 'neutral',
         rank: 'D',
         energy: -10,
+        is_global: true,
+        is_active: true,
       },
       {
         name: '💎 Tesoro Legendario Descubierto',
@@ -569,6 +581,8 @@ async function main() {
         gold: 1000,
         experience: 500,
         energy: 100,
+        is_global: true,
+        is_active: true,
       },
       {
         name: '🎁 Festival Imperial',
@@ -578,6 +592,8 @@ async function main() {
         gold: 500,
         experience: 300,
         energy: 80,
+        is_global: true,
+        is_active: true,
       },
       {
         name: '✨ Lluvia de Estrellas',
@@ -587,14 +603,18 @@ async function main() {
         energy: 50,
         gold: 200,
         experience: 100,
+        is_global: true,
+        is_active: true,
       },
       {
-        name: '� Celebración Local',
+        name: '🎉 Celebración Local',
         description: 'El pueblo celebra una festividad tradicional. Todos se sienten renovados.',
         type: 'fortune',
         rank: 'C',
         gold: 100,
         energy: 30,
+        is_global: true,
+        is_active: true,
       },
       {
         name: '☀️ Día Soleado Agradable',
@@ -602,8 +622,76 @@ async function main() {
         type: 'neutral',
         rank: 'D',
         energy: 10,
+        is_global: true,
+        is_active: true,
       },
     ],
+  });
+
+  // Eventos CUSTOM creados por profesores específicos para sus cursos
+  console.log('🎨 Creating custom events...');
+  
+  // Eventos custom de teacher3 para curso1 (Programación Web)
+  await prisma.events.create({
+    data: {
+      name: '💻 Hackathon Exitoso',
+      description: 'El equipo ganó el hackathon de programación web. ¡Felicitaciones!',
+      type: 'fortune',
+      rank: 'A',
+      experience: 200,
+      gold: 300,
+      energy: -20,
+      is_global: false,
+      is_active: true,
+      course_id: course1.id,
+      teacher_id: teacher3.id,
+    },
+  });
+
+  await prisma.events.create({
+    data: {
+      name: '🐛 Bug Crítico en Producción',
+      description: 'Se detectó un bug grave en el código. Todos deben trabajar tiempo extra.',
+      type: 'disaster',
+      rank: 'B',
+      energy: -40,
+      gold: -50,
+      is_global: false,
+      is_active: true,
+      course_id: course1.id,
+      teacher_id: teacher3.id,
+    },
+  });
+
+  await prisma.events.create({
+    data: {
+      name: '🤖 Modelo Entrenado con Éxito',
+      description: 'Tu red neuronal alcanzó 99% de precisión. ¡Excelente trabajo!',
+      type: 'fortune',
+      rank: 'A',
+      experience: 250,
+      gold: 400,
+      energy: 20,
+      is_global: false,
+      is_active: true,
+      course_id: course4.id,
+      teacher_id: teacher1.id,
+    },
+  });
+
+  await prisma.events.create({
+    data: {
+      name: '📐 Demostración Matemática Perfecta',
+      description: 'Resolviste el problema del profesor de manera elegante.',
+      type: 'fortune',
+      rank: 'B',
+      experience: 150,
+      gold: 200,
+      is_global: false,
+      is_active: true,
+      course_id: course5.id,
+      teacher_id: teacher2.id,
+    },
   });
 
   console.log('✉️ Creating invitations...');
@@ -647,7 +735,7 @@ async function main() {
   // 13. Crear quizzes tipo Kahoot
   console.log('📝 Creating quizzes...');
   
-  // Quizzes para Desarrollo Web (group1)
+  // Quizzes para Desarrollo Web (group1) - creados por teacher3
   const quiz1 = await prisma.quizzes.create({
     data: {
       question: '¿Qué significa HTML?',
@@ -662,6 +750,8 @@ async function main() {
       points: 100,
       time_limit: 30,
       group_id: group1.id,
+      course_id: course1.id,      // ⭐ NUEVO
+      teacher_id: teacher3.id,     // ⭐ NUEVO
     },
   });
 
@@ -679,6 +769,8 @@ async function main() {
       points: 150,
       time_limit: 45,
       group_id: group1.id,
+      course_id: course1.id,      // ⭐ NUEVO
+      teacher_id: teacher3.id,     // ⭐ NUEVO
     },
   });
 
@@ -696,10 +788,12 @@ async function main() {
       points: 100,
       time_limit: 30,
       group_id: group1.id,
+      course_id: course1.id,      // ⭐ NUEVO
+      teacher_id: teacher3.id,     // ⭐ NUEVO
     },
   });
 
-  // Quizzes para Bases de Datos (group2)
+  // Quizzes para Bases de Datos (group2) - creados por teacher3
   const quiz4 = await prisma.quizzes.create({
     data: {
       question: '¿Qué es una clave primaria (Primary Key)?',
@@ -714,6 +808,8 @@ async function main() {
       points: 100,
       time_limit: 30,
       group_id: group2.id,
+      course_id: course2.id,      // ⭐ NUEVO
+      teacher_id: teacher3.id,     // ⭐ NUEVO
     },
   });
 
@@ -731,6 +827,8 @@ async function main() {
       points: 100,
       time_limit: 25,
       group_id: group2.id,
+      course_id: course2.id,      // ⭐ NUEVO
+      teacher_id: teacher3.id,     // ⭐ NUEVO
     },
   });
 
@@ -748,10 +846,12 @@ async function main() {
       points: 200,
       time_limit: 60,
       group_id: group2.id,
+      course_id: course2.id,      // ⭐ NUEVO
+      teacher_id: teacher3.id,     // ⭐ NUEVO
     },
   });
 
-  // Quizzes para Algoritmos (group3)
+  // Quizzes para Algoritmos (group3) - creados por teacher3
   const quiz7 = await prisma.quizzes.create({
     data: {
       question: '¿Cuál es la complejidad temporal del algoritmo de búsqueda binaria?',
@@ -766,6 +866,8 @@ async function main() {
       points: 150,
       time_limit: 45,
       group_id: group3.id,
+      course_id: course3.id,      // ⭐ NUEVO
+      teacher_id: teacher3.id,     // ⭐ NUEVO
     },
   });
 
@@ -783,10 +885,12 @@ async function main() {
       points: 100,
       time_limit: 30,
       group_id: group3.id,
+      course_id: course3.id,      // ⭐ NUEVO
+      teacher_id: teacher3.id,     // ⭐ NUEVO
     },
   });
 
-  // Quizzes para IA (group4)
+  // Quizzes para IA (group4) - creados por teacher1
   const quiz9 = await prisma.quizzes.create({
     data: {
       question: '¿Qué tipo de aprendizaje automático usa datos etiquetados?',
@@ -801,6 +905,8 @@ async function main() {
       points: 150,
       time_limit: 40,
       group_id: group4.id,
+      course_id: course4.id,      // ⭐ NUEVO
+      teacher_id: teacher1.id,     // ⭐ NUEVO (diferente profesor)
     },
   });
 
@@ -818,10 +924,12 @@ async function main() {
       points: 200,
       time_limit: 60,
       group_id: group4.id,
+      course_id: course4.id,      // ⭐ NUEVO
+      teacher_id: teacher1.id,     // ⭐ NUEVO
     },
   });
 
-  // Quizzes para Matemáticas (group5)
+  // Quizzes para Matemáticas (group5) - creados por teacher2
   const quiz11 = await prisma.quizzes.create({
     data: {
       question: '¿Cuál es el valor de π (pi) aproximadamente?',
@@ -836,6 +944,8 @@ async function main() {
       points: 100,
       time_limit: 20,
       group_id: group5.id,
+      course_id: course5.id,      // ⭐ NUEVO
+      teacher_id: teacher2.id,     // ⭐ NUEVO (diferente profesor)
     },
   });
 
@@ -853,6 +963,8 @@ async function main() {
       points: 100,
       time_limit: 30,
       group_id: group5.id,
+      course_id: course5.id,      // ⭐ NUEVO
+      teacher_id: teacher2.id,     // ⭐ NUEVO
     },
   });
 

@@ -195,6 +195,25 @@ export class InvitationService {
         throw new Error('Este código de invitación ya ha sido usado');
       }
 
+      // ⚠️ VALIDACIÓN CRÍTICA: Un profesor NO puede ser alumno de su propio curso
+      const teacher = await prisma.teachers.findUnique({
+        where: { user_id: data.userId },
+        select: { id: true }
+      });
+
+      if (teacher) {
+        const isTeacherOfThisCourse = await prisma.teachers_courses.findFirst({
+          where: {
+            teacher_id: teacher.id,
+            course_id: invitation.course_id,
+          },
+        });
+
+        if (isTeacherOfThisCourse) {
+          throw new Error('No puedes ser alumno de tu propio curso. Ya eres profesor de este curso.');
+        }
+      }
+
       const existingInscription = await prisma.inscriptions.findUnique({
         where: {
           user_id_course_id: {
@@ -377,6 +396,7 @@ export class InvitationService {
   /**
    * Obtiene todas las invitaciones de los cursos impartidos por un profesor.
    * Incluye información del curso y (si existe) el usuario destinatario.
+   * Usa teachers_courses para obtener los cursos del profesor (nueva arquitectura).
    */
   static async getInvitationsByTeacher(teacherId: string): Promise<
     Array<{
@@ -394,10 +414,23 @@ export class InvitationService {
     }>
   > {
     try {
+      // Primero obtener los course_ids donde el teacher está asignado
+      const teacherCourses = await prisma.teachers_courses.findMany({
+        where: { teacher_id: teacherId },
+        select: { course_id: true },
+      });
+
+      const courseIds = teacherCourses.map(tc => tc.course_id);
+
+      if (courseIds.length === 0) {
+        return [];
+      }
+
+      // Obtener invitaciones de esos cursos
       const invitations = await prisma.invitations.findMany({
         where: {
-          course: {
-            teacher_id: teacherId,
+          course_id: {
+            in: courseIds,
           },
         },
         include: {
@@ -440,6 +473,25 @@ export async function acceptInvitation(userId: string, invitationId: string): Pr
 
     if (invitation.used) {
       throw new Error('Esta invitación ya ha sido utilizada');
+    }
+
+    // ⚠️ VALIDACIÓN CRÍTICA: Un profesor NO puede ser alumno de su propio curso
+    const teacher = await prisma.teachers.findUnique({
+      where: { user_id: userId },
+      select: { id: true }
+    });
+
+    if (teacher) {
+      const isTeacherOfThisCourse = await prisma.teachers_courses.findFirst({
+        where: {
+          teacher_id: teacher.id,
+          course_id: invitation.course_id,
+        },
+      });
+
+      if (isTeacherOfThisCourse) {
+        throw new Error('No puedes ser alumno de tu propio curso. Ya eres profesor de este curso.');
+      }
     }
 
     const existingInscription = await prisma.inscriptions.findUnique({

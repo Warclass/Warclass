@@ -48,6 +48,8 @@ model teachers {
   user             users              @relation(fields: [user_id], references: [id], onDelete: Cascade)
   institution      institutions?      @relation(fields: [institution_id], references: [id], onDelete: SetNull)
   teachers_courses teachers_courses[]
+  quizzes          quizzes[]          // ⭐ NUEVO: Quizzes creados por el profesor
+  events           events[]           // ⭐ NUEVO: Eventos custom del profesor
 }
 
 model courses {
@@ -61,6 +63,8 @@ model courses {
   invitations      invitations[]
   inscriptions     inscriptions[]
   teachers_courses teachers_courses[]
+  quizzes          quizzes[]          // ⭐ NUEVO: Quizzes del curso
+  events           events[]           // ⭐ NUEVO: Eventos custom del curso
 }
 
 model teachers_courses {
@@ -182,10 +186,14 @@ model quizzes {
   points               Int      @default(100)
   time_limit           Int      @default(30)
   group_id             String
+  course_id            String   // ⭐ NUEVO: Para saber a qué curso pertenece
+  teacher_id           String?  // ⭐ NUEVO: Profesor que lo creó (opcional para retrocompatibilidad)
   created_at           DateTime @default(now())
   updated_at           DateTime @updatedAt
 
   group           groups            @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  course          courses           @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  teacher         teachers?         @relation(fields: [teacher_id], references: [id], onDelete: SetNull)
   quizzes_history quizzes_history[]
 }
 
@@ -222,9 +230,10 @@ model tasks {
 }
 
 model characters_tasks {
-  id           String @id @default(uuid())
+  id           String    @id @default(uuid())
   character_id String
   task_id      String
+  completed_at DateTime  @default(now()) // ⭐ NUEVO: Fecha de completación
 
   character characters @relation(fields: [character_id], references: [id], onDelete: Cascade)
   task      tasks      @relation(fields: [task_id], references: [id], onDelete: Cascade)
@@ -254,9 +263,14 @@ model events {
   health      Int      @default(0)
   energy      Int      @default(0)
   is_active   Boolean  @default(true)
+  is_global   Boolean  @default(true)    // ⭐ NUEVO: true = evento del sistema, false = custom del profesor
+  course_id   String?                    // ⭐ NUEVO: Para eventos custom por curso (null = global)
+  teacher_id  String?                    // ⭐ NUEVO: Profesor que lo creó (null = sistema)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
+  course         courses?         @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  teacher        teachers?        @relation(fields: [teacher_id], references: [id], onDelete: SetNull)
   events_history events_history[]
 }
 

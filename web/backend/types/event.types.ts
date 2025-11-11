@@ -9,6 +9,11 @@ export interface RandomEvent {
   health: number;
   energy: number;
   isActive: boolean;
+  isGlobal: boolean;
+  courseId?: string | null;
+  courseName?: string;
+  teacherId?: string | null;
+  teacherName?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +28,8 @@ export interface CreateEventDTO {
   health?: number;
   energy?: number;
   isActive?: boolean;
+  isGlobal?: boolean;
+  courseId?: string;
 }
 
 export interface UpdateEventDTO {
@@ -35,6 +42,7 @@ export interface UpdateEventDTO {
   health?: number;
   energy?: number;
   isActive?: boolean;
+  isGlobal?: boolean;
 }
 
 export interface ApplyEventDTO {

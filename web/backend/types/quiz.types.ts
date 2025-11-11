@@ -69,6 +69,10 @@ export interface QuizResponse {
   timeLimit: number;
   groupId: string;
   groupName?: string;
+  courseId?: string;
+  courseName?: string;
+  teacherId?: string | null;
+  teacherName?: string;
   completed?: boolean;
   score?: number;
   timeTaken?: number;
