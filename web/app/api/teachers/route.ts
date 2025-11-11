@@ -96,6 +96,34 @@ export async function POST(request: NextRequest) {
  * Obtener todos los teachers
  * 🔒 Requiere: Autenticación
  */
+/**
+ * @swagger
+ * /api/teachers:
+ *   get:
+ *     summary: Listar profesores
+ *     description: Retorna la lista de todos los profesores registrados
+ *     tags: [Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de profesores
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 teachers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function GET(request: NextRequest) {
   try {
     // Verificar autenticación

@@ -1,6 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EventService } from '@/backend/services/event/event.service';
 
+/**
+ * @swagger
+ * /api/events/apply/group:
+ *   post:
+ *     summary: Aplicar evento a grupo
+ *     description: Aplica un evento a todos los estudiantes de un grupo
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - eventId
+ *               - groupId
+ *             properties:
+ *               eventId:
+ *                 type: string
+ *                 description: ID del evento (UUID)
+ *               groupId:
+ *                 type: string
+ *                 description: ID del grupo (UUID)
+ *     responses:
+ *       200:
+ *         description: Evento aplicado al grupo exitosamente
+ *       400:
+ *         description: Faltan campos requeridos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id');

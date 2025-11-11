@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TeacherService } from '@/backend/services/teacher/teacher.service';
+import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
 /**
  * @swagger
  * /api/courses/teacher:
  *   get:
  *     summary: Obtener cursos del profesor
- *     description: Retorna todos los cursos donde el usuario autenticado es profesor
+ *     description: Retorna todos los cursos donde el usuario autenticado es profesor. Si el usuario aún no es profesor, retorna lista vacía.
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de cursos del profesor
+ *         description: Lista de cursos del profesor (puede estar vacía si aún no es profesor)
  *         content:
  *           application/json:
  *             schema:
@@ -20,12 +21,15 @@ import { TeacherService } from '@/backend/services/teacher/teacher.service';
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 courses:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Course'
- *       403:
- *         description: Usuario no es profesor
+ *                 message:
+ *                   type: string
+ *                   description: Mensaje informativo cuando aún no es profesor
+ *                   example: El usuario aún no es profesor. Crea tu primer curso para comenzar.
  *       401:
  *         description: No autorizado
  *       500:
@@ -33,6 +37,12 @@ import { TeacherService } from '@/backend/services/teacher/teacher.service';
  */
 export async function GET(req: NextRequest) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -41,10 +51,15 @@ export async function GET(req: NextRequest) {
     // Obtener teacher por userId
     const teacherRes = await TeacherService.getTeacherByUserId(userId);
 
+    // Si no es profesor, retornar lista vacía (aún no ha creado cursos)
     if (!teacherRes.success || !teacherRes.teacher) {
       return NextResponse.json(
-        { error: 'Usuario no es profesor' },
-        { status: 403 }
+        {
+          success: true,
+          courses: [],
+          message: 'El usuario aún no es profesor. Crea tu primer curso para comenzar.',
+        },
+        { status: 200 }
       );
     }
 
@@ -68,24 +83,86 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * POST /api/courses/teacher
- * Crear un nuevo curso
+ * @swagger
+ * /api/courses/teacher:
+ *   post:
+ *     summary: Crear un nuevo curso
+ *     description: Crea un curso y lo asocia automáticamente al profesor. Si el usuario no es profesor, se crea el registro automáticamente.
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nombre del curso
+ *                 example: Programación Web
+ *               description:
+ *                 type: string
+ *                 description: Descripción del curso
+ *                 example: Curso de desarrollo web con HTML, CSS y JavaScript
+ *     responses:
+ *       201:
+ *         description: Curso creado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 course:
+ *                   type: object
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function POST(req: NextRequest) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Obtener teacher por userId
-    const teacherRes = await TeacherService.getTeacherByUserId(userId);
+    // Obtener o crear teacher por userId
+    let teacherRes = await TeacherService.getTeacherByUserId(userId);
 
+    // Si no es profesor, crearlo automáticamente
     if (!teacherRes.success || !teacherRes.teacher) {
-      return NextResponse.json(
-        { error: 'Usuario no es profesor' },
-        { status: 403 }
-      );
+      console.log('Usuario no es profesor, creando registro de profesor...');
+      
+      const createTeacherRes = await TeacherService.createTeacher({
+        userId: userId,
+        // institutionId se puede agregar después si es necesario
+      });
+
+      if (!createTeacherRes.success || !createTeacherRes.teacher) {
+        return NextResponse.json(
+          { error: 'Error al crear el registro de profesor' },
+          { status: 500 }
+        );
+      }
+
+      teacherRes = {
+        success: true,
+        teacher: createTeacherRes.teacher,
+      };
     }
 
     const body = await req.json();
@@ -98,7 +175,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const course = await TeacherService.createCourse(teacherRes.teacher.id, {
+    const course = await TeacherService.createCourse(teacherRes.teacher!.id, {
       name,
       description,
     });

@@ -65,6 +65,56 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   put:
+ *     summary: Actualizar tarea
+ *     description: Actualiza la información de una tarea existente
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la tarea (UUID)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Título de la tarea
+ *               description:
+ *                 type: string
+ *                 description: Descripción de la tarea
+ *               experience:
+ *                 type: integer
+ *                 description: Experiencia que otorga
+ *               gold:
+ *                 type: integer
+ *                 description: Oro que otorga
+ *               energy:
+ *                 type: integer
+ *                 description: Energía que consume
+ *     responses:
+ *       200:
+ *         description: Tarea actualizada exitosamente
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Tarea no encontrada
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
     const userId = req.headers.get('x-user-id');
@@ -99,6 +149,32 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   delete:
+ *     summary: Eliminar tarea
+ *     description: Elimina una tarea existente del sistema
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la tarea (UUID)
+ *     responses:
+ *       200:
+ *         description: Tarea eliminada exitosamente
+ *       401:
+ *         description: No autorizado
+ *       404:
+ *         description: Tarea no encontrada
+ *       500:
+ *         description: Error interno del servidor
+ */
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
     const userId = req.headers.get('x-user-id');

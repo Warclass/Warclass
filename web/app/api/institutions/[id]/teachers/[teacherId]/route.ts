@@ -3,9 +3,38 @@ import { InstitutionService } from '@/backend/services/institution/institution.s
 import { requireAdmin } from '@/backend/middleware/auth.middleware';
 
 /**
- * DELETE /api/institutions/:id/teachers/:teacherId
- * Remover un teacher de una institución (lo hace independiente)
- * 🔒 Requiere: Autenticación + Admin
+ * @swagger
+ * /api/institutions/{id}/teachers/{teacherId}:
+ *   delete:
+ *     summary: Remover profesor de institución
+ *     description: Remueve un profesor de una institución haciéndolo independiente (requiere admin)
+ *     tags: [Institutions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la institución (UUID)
+ *       - in: path
+ *         name: teacherId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del profesor (UUID)
+ *     responses:
+ *       200:
+ *         description: Profesor removido exitosamente de la institución
+ *       400:
+ *         description: Error al remover profesor
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: No tiene permisos de administrador
+ *       500:
+ *         description: Error interno del servidor
  */
 export async function DELETE(
   request: NextRequest,
