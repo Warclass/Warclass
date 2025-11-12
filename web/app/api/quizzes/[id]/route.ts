@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { QuizService } from '@/backend/services/quiz/quiz.service';
 import { UpdateQuizSchema } from '@/backend/validators/quiz.validator';
+import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
 interface RouteParams {
   params: {
@@ -94,6 +95,12 @@ interface RouteParams {
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -125,6 +132,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
  */
 export async function PUT(req: NextRequest, { params }: RouteParams) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -166,6 +179,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });

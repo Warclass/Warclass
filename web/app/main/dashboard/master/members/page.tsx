@@ -51,7 +51,7 @@ interface Member {
 export default function MembersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { toast } = useToast();
   const courseId = searchParams.get('courseId');
 
@@ -76,21 +76,41 @@ export default function MembersPage() {
     }
 
     fetchMembers();
-  }, [courseId, user?.id, router]);
+  }, [courseId, user?.id, token, router]);
 
   const fetchMembers = async () => {
-    if (!user?.id || !courseId) return;
+    if (!user?.id || !courseId || !token) return;
 
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/courses/members?courseId=${courseId}`, {
-        headers: { 'x-user-id': user.id }
-      });
+      const response = await fetch(
+        `/api/characters?action=listByCourse&courseId=${courseId}`, 
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
-        setMembers(data.data || []);
+        // Transformar los datos de characters al formato esperado por Member
+        const charactersData = data.data || [];
+        const transformedMembers = charactersData.map((char: any) => ({
+          id: char.user.id,
+          name: char.user.name,
+          experience: char.experience,
+          gold: char.gold,
+          energy: char.energy,
+          group: char.group,
+          character: {
+            id: char.id,
+            name: char.name,
+            class: char.class
+          }
+        }));
+        setMembers(transformedMembers);
       } else {
         toast({
           title: 'Error',
@@ -130,7 +150,7 @@ export default function MembersPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           member_id: selectedMember.id,

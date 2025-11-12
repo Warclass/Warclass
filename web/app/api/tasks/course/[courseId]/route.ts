@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/lib/generated/prisma';
 import { TeacherService } from '@/backend/services/teacher/teacher.service';
+import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
 const prisma = new PrismaClient();
 
@@ -51,6 +52,12 @@ type RouteParams = {
  */
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
 
     if (!userId) {
@@ -108,7 +115,18 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Obtener todos los grupos del curso con sus personajes
+    // Obtener todas las tareas que pertenecen al curso a través de teachers_courses_tasks
+    // O si no hay relación directa, obtener todas las tareas del sistema
+    // (Por ahora vamos a obtener todas las tareas ya que no hay relación directa curso-tarea)
+    
+    // OPCIÓN 1: Si quieres mostrar TODAS las tareas del sistema
+    const allTasks = await prisma.tasks.findMany({
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+
+    // Obtener información de asignación por grupo del curso
     const groups = await prisma.groups.findMany({
       where: {
         course_id: courseId
@@ -130,36 +148,39 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       }
     });
 
-    // Extraer todas las tareas únicas del curso
-    const tasksMap = new Map();
+    // Crear mapa de contadores de asignación
+    const assignmentMap = new Map();
 
     groups.forEach(group => {
       group.characters.forEach(character => {
         character.tasks.forEach(ct => {
-          if (!tasksMap.has(ct.task.id)) {
-            tasksMap.set(ct.task.id, {
-              id: ct.task.id,
-              name: ct.task.name,
-              description: ct.task.description,
-              experience: ct.task.experience,
-              gold: ct.task.gold,
-              health: ct.task.health,
-              energy: ct.task.energy,
-              created_at: ct.task.created_at,
-              updated_at: ct.task.updated_at,
+          if (!assignmentMap.has(ct.task.id)) {
+            assignmentMap.set(ct.task.id, {
               assignedCount: 0,
               completedCount: 0
             });
           }
           
-          // Incrementar contador de asignaciones
-          const task = tasksMap.get(ct.task.id);
-          task.assignedCount++;
+          const counts = assignmentMap.get(ct.task.id);
+          counts.assignedCount++;
         });
       });
     });
 
-    const tasks = Array.from(tasksMap.values());
+    // Combinar tareas con información de asignación
+    const tasks = allTasks.map(task => ({
+      id: task.id,
+      name: task.name,
+      description: task.description,
+      experience: task.experience,
+      gold: task.gold,
+      health: task.health,
+      energy: task.energy,
+      created_at: task.created_at,
+      updated_at: task.updated_at,
+      assignedCount: assignmentMap.get(task.id)?.assignedCount || 0,
+      completedCount: assignmentMap.get(task.id)?.completedCount || 0
+    }));
 
     return NextResponse.json({
       success: true,

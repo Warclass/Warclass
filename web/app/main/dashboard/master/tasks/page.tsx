@@ -43,7 +43,7 @@ interface Task {
 export default function TasksPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { toast } = useToast();
   const courseId = searchParams.get('courseId');
 
@@ -71,16 +71,18 @@ export default function TasksPage() {
     }
 
     fetchTasks();
-  }, [courseId, user?.id, router]);
+  }, [courseId, user?.id, token, router]);
 
   const fetchTasks = async () => {
-    if (!user?.id || !courseId) return;
+    if (!user?.id || !courseId || !token) return;
 
     try {
       setLoading(true);
 
       const response = await fetch(`/api/tasks/course/${courseId}`, {
-        headers: { 'x-user-id': user.id }
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (response.ok) {
@@ -120,7 +122,7 @@ export default function TasksPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(taskForm)
       });
@@ -168,7 +170,7 @@ export default function TasksPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(taskForm)
       });
@@ -205,7 +207,9 @@ export default function TasksPage() {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'DELETE',
-        headers: { 'x-user-id': user!.id }
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (response.ok) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { QuizService } from '@/backend/services/quiz/quiz.service';
 import { CreateQuizSchema, GetQuizzesQuerySchema } from '@/backend/validators/quiz.validator';
+import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
 /**
  * @swagger
@@ -50,6 +51,12 @@ import { CreateQuizSchema, GetQuizzesQuerySchema } from '@/backend/validators/qu
  */
 export async function GET(req: NextRequest) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -171,6 +178,12 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });

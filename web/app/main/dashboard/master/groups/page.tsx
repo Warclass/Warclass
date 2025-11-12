@@ -30,8 +30,10 @@ interface Group {
 }
 
 interface Member {
-  id: string;
-  name: string;
+  id: string; // ID del personaje
+  userId?: string; // ID del usuario
+  name: string; // Nombre del usuario
+  characterName?: string; // Nombre del personaje
   experience: number;
   gold: number;
   energy: number;
@@ -44,7 +46,7 @@ interface Member {
 export default function GroupsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { toast } = useToast();
   const courseId = searchParams.get('courseId');
 
@@ -72,17 +74,19 @@ export default function GroupsPage() {
     }
 
     fetchData();
-  }, [courseId, user?.id, router]);
+  }, [courseId, user?.id, token, router]);
 
   const fetchData = async () => {
-    if (!user?.id || !courseId) return;
+    if (!user?.id || !courseId || !token) return;
 
     try {
       setLoading(true);
 
       // Obtener grupos del curso
       const groupsResponse = await fetch(`/api/groups?courseId=${courseId}`, {
-        headers: { 'x-user-id': user.id }
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (groupsResponse.ok) {
@@ -90,14 +94,30 @@ export default function GroupsPage() {
         setGroups(groupsData.groups || []);
       }
 
-      // Obtener todos los miembros del curso
-      const membersResponse = await fetch(`/api/courses/members?courseId=${courseId}`, {
-        headers: { 'x-user-id': user.id }
-      });
+      // Obtener todos los personajes del curso (reemplaza /api/courses/members deprecado)
+      const charactersResponse = await fetch(
+        `/api/characters?action=listByCourse&courseId=${courseId}`, 
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
 
-      if (membersResponse.ok) {
-        const membersData = await membersResponse.json();
-        setAllMembers(membersData.members || []);
+      if (charactersResponse.ok) {
+        const charactersData = await charactersResponse.json();
+        // Transformar personajes al formato de Member
+        const members = charactersData.data?.map((char: any) => ({
+          id: char.id, // ID del personaje (character)
+          userId: char.user.id, // ID del usuario
+          name: char.user.name,
+          characterName: char.name, // Nombre del personaje
+          experience: char.experience,
+          gold: char.gold,
+          energy: char.energy,
+          group: char.group
+        })) || [];
+        setAllMembers(members);
       }
 
     } catch (error) {
@@ -127,12 +147,12 @@ export default function GroupsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           name: newGroup.name,
           description: newGroup.description,
-          course_id: courseId
+          courseId: courseId
         })
       });
 
@@ -177,11 +197,11 @@ export default function GroupsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          group_id: selectedGroup.id,
-          member_ids: selectedMembers
+          groupId: selectedGroup.id,
+          characterIds: selectedMembers
         })
       });
 
@@ -217,7 +237,9 @@ export default function GroupsPage() {
     try {
       const response = await fetch(`/api/groups/${groupId}`, {
         method: 'DELETE',
-        headers: { 'x-user-id': user!.id }
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (response.ok) {

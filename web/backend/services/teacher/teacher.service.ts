@@ -404,11 +404,8 @@ export class TeacherService {
         include: {
           course: {
             include: {
-              groups: {
-                include: {
-                  characters: true,
-                },
-              },
+              groups: true,
+              characters: true, // Incluir todos los personajes del curso
               inscriptions: true,
               teachers_courses: {
                 include: {
@@ -433,10 +430,7 @@ export class TeacherService {
         description: tc.course.description,
         studentsCount: tc.course.inscriptions.length,
         groupsCount: tc.course.groups.length,
-        membersCount: tc.course.groups.reduce(
-          (sum: number, group: any) => sum + group.characters.length,
-          0
-        ),
+        membersCount: tc.course.characters.length, // Contar todos los personajes del curso
         // Obtener info del teacher principal (primero en teachers_courses)
         institutionId: tc.course.teachers_courses[0]?.teacher?.institution_id || null,
         institutionName: tc.course.teachers_courses[0]?.teacher?.institution?.name || null,

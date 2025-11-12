@@ -28,7 +28,7 @@ interface Quiz {
 
 export default function QuizzesPage() {
   const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -66,7 +66,7 @@ export default function QuizzesPage() {
           `/api/quizzes?courseId=${courseId}&memberId=${memberId}`,
           {
             headers: {
-              'x-user-id': user.id
+              'Authorization': `Bearer ${token}`
             }
           }
         )

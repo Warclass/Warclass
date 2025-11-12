@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TaskService } from '@/backend/services/task/task.service';
 import { AssignTaskSchema } from '@/backend/validators/task.validator';
+import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
 /**
  * @swagger
@@ -53,6 +54,12 @@ import { AssignTaskSchema } from '@/backend/validators/task.validator';
  */
 export async function POST(req: NextRequest) {
   try {
+    // Autenticar token
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });

@@ -318,3 +318,65 @@ export async function getAvailableGroupsForUser(userId: string, courseId: string
     return null;
   }
 }
+
+/**
+ * Obtiene todos los personajes de un curso (para vista del profesor)
+ * Incluye personajes con y sin grupo asignado
+ */
+export async function getAllCharactersInCourse(courseId: string) {
+  try {
+    const characters = await prisma.characters.findMany({
+      where: {
+        course_id: courseId
+      },
+      include: {
+        class: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        group: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: [
+        { group_id: 'asc' }, // Primero los que tienen grupo
+        { name: 'asc' }      // Luego por nombre
+      ]
+    });
+
+    return characters.map((character) => ({
+      id: character.id,
+      name: character.name,
+      experience: character.experience,
+      gold: character.gold,
+      energy: character.energy,
+      health: character.health,
+      appearance: character.appearance,
+      class: {
+        id: character.class.id,
+        name: character.class.name,
+        speed: character.class.speed
+      },
+      user: {
+        id: character.user.id,
+        name: character.user.name,
+        email: character.user.email
+      },
+      group: character.group ? {
+        id: character.group.id,
+        name: character.group.name
+      } : null,
+      hasGroup: !!character.group_id
+    }));
+  } catch (error) {
+    console.error('Error al obtener personajes del curso:', error);
+    throw error;
+  }
+}

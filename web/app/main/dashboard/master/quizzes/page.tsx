@@ -55,7 +55,7 @@ interface Group {
 export default function QuizzesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { toast } = useToast();
   const courseId = searchParams.get('courseId');
 
@@ -85,17 +85,19 @@ export default function QuizzesPage() {
     }
 
     fetchData();
-  }, [courseId, user?.id, router]);
+  }, [courseId, user?.id, token, router]);
 
   const fetchData = async () => {
-    if (!user?.id || !courseId) return;
+    if (!user?.id || !courseId || !token) return;
 
     try {
       setLoading(true);
 
       // Obtener grupos del curso
       const groupsResponse = await fetch(`/api/groups?courseId=${courseId}`, {
-        headers: { 'x-user-id': user.id }
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (groupsResponse.ok) {
@@ -123,7 +125,9 @@ export default function QuizzesPage() {
   const fetchQuizzes = async (groupId: string) => {
     try {
       const response = await fetch(`/api/quizzes?groupId=${groupId}`, {
-        headers: { 'x-user-id': user!.id }
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (response.ok) {
@@ -176,7 +180,7 @@ export default function QuizzesPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           ...quizForm,
@@ -252,7 +256,7 @@ export default function QuizzesPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           question: quizForm.question,
@@ -296,7 +300,9 @@ export default function QuizzesPage() {
     try {
       const response = await fetch(`/api/quizzes/${quizId}`, {
         method: 'DELETE',
-        headers: { 'x-user-id': user!.id }
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (response.ok) {

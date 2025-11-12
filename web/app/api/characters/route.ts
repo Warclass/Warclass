@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   getCharacterClasses,
   getUserCharacterForCourse,
-  userHasCharacter
+  userHasCharacter,
+  getAllCharactersInCourse
 } from '@/backend/services/character/character.service';
 import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
 
@@ -20,13 +21,17 @@ import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
  *         name: action
  *         schema:
  *           type: string
- *           enum: [classes, check]
- *         description: Acción a realizar (classes para obtener clases, check para verificar si tiene personaje)
+ *           enum: [classes, check, listByCourse]
+ *         description: |
+ *           Acción a realizar:
+ *           - classes: Obtener clases de personajes disponibles
+ *           - check: Verificar si el usuario tiene personaje
+ *           - listByCourse: Listar todos los personajes de un curso (requiere courseId)
  *       - in: query
  *         name: courseId
  *         schema:
  *           type: string
- *         description: ID del curso para obtener el personaje asociado
+ *         description: ID del curso (requerido para listByCourse, opcional para obtener personaje del usuario)
  *     responses:
  *       200:
  *         description: Operación exitosa
@@ -101,7 +106,25 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Endpoint para obtener personaje de un curso
+    // Endpoint para obtener todos los personajes de un curso (para profesores)
+    if (action === 'listByCourse' && courseId) {
+      try {
+        const characters = await getAllCharactersInCourse(courseId);
+        return NextResponse.json({
+          success: true,
+          data: characters,
+          count: characters.length
+        });
+      } catch (error) {
+        console.error('Error al obtener personajes del curso:', error);
+        return NextResponse.json({
+          success: false,
+          error: 'Error al obtener personajes del curso'
+        }, { status: 500 });
+      }
+    }
+
+    // Endpoint para obtener personaje de un curso (para el usuario actual)
     if (courseId) {
       const character = await getUserCharacterForCourse(userId, courseId);
       

@@ -27,7 +27,7 @@ interface CourseStats {
 export default function MasterCourseDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const courseId = searchParams.get('courseId');
   
   const [loading, setLoading] = useState(true);
@@ -39,6 +39,7 @@ export default function MasterCourseDashboard() {
     averageProgress: 0
   });
   const [courseData, setCourseData] = useState<any>(null);
+  const [characters, setCharacters] = useState<any[]>([]);
 
   useEffect(() => {
     if (!courseId) {
@@ -47,14 +48,16 @@ export default function MasterCourseDashboard() {
     }
 
     const fetchDashboardData = async () => {
-      if (!user?.id) return;
+      if (!user?.id || !token) return;
 
       try {
         setLoading(true);
 
         // Obtener información del curso
         const courseResponse = await fetch(`/api/courses/${courseId}`, {
-          headers: { 'x-user-id': user.id }
+          headers: { 
+            'Authorization': `Bearer ${token}`
+          }
         });
         
         if (courseResponse.ok) {
@@ -62,24 +65,32 @@ export default function MasterCourseDashboard() {
           setCourseData(courseDataResponse.course);
         }
 
-        // Obtener miembros del curso
-        const membersResponse = await fetch(`/api/courses/members?courseId=${courseId}`, {
-          headers: { 'x-user-id': user.id }
-        });
+        // Obtener todos los personajes del curso
+        const charactersResponse = await fetch(
+          `/api/characters?action=listByCourse&courseId=${courseId}`, 
+          {
+            headers: { 
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
 
-        if (membersResponse.ok) {
-          const membersData = await membersResponse.json();
-          const members = membersData.members || [];
+        if (charactersResponse.ok) {
+          const charactersData = await charactersResponse.json();
+          const allCharacters = charactersData.data || [];
+          setCharacters(allCharacters);
           
           setStats(prev => ({
             ...prev,
-            totalStudents: members.length
+            totalStudents: allCharacters.length
           }));
         }
 
         // Obtener grupos del curso
         const groupsResponse = await fetch(`/api/groups?courseId=${courseId}`, {
-          headers: { 'x-user-id': user.id }
+          headers: { 
+            'Authorization': `Bearer ${token}`
+          }
         });
 
         if (groupsResponse.ok) {
@@ -92,7 +103,9 @@ export default function MasterCourseDashboard() {
 
         // Obtener tareas del curso
         const tasksResponse = await fetch(`/api/tasks/course/${courseId}`, {
-          headers: { 'x-user-id': user.id }
+          headers: { 
+            'Authorization': `Bearer ${token}`
+          }
         });
 
         if (tasksResponse.ok) {
@@ -105,7 +118,9 @@ export default function MasterCourseDashboard() {
 
         // Obtener quizzes del curso
         const quizzesResponse = await fetch(`/api/quizzes/course/${courseId}`, {
-          headers: { 'x-user-id': user.id }
+          headers: { 
+            'Authorization': `Bearer ${token}`
+          }
         });
 
         if (quizzesResponse.ok) {
@@ -124,7 +139,7 @@ export default function MasterCourseDashboard() {
     };
 
     fetchDashboardData();
-  }, [courseId, user?.id, router]);
+  }, [courseId, user?.id, token, router]);
 
   if (!courseId) {
     return null;
@@ -301,6 +316,108 @@ export default function MasterCourseDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Personajes del Curso */}
+        <Card className="bg-[#1a1a1a] border-neutral-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-[#D89216]" />
+              Personajes del Curso
+              <Badge variant="secondary" className="ml-2">
+                {characters.length}
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              Estudiantes que han creado sus personajes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {characters.length === 0 ? (
+              <div className="text-center py-8 text-neutral-500">
+                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Aún no hay personajes creados en este curso</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {characters.map((character: any) => (
+                  <Card 
+                    key={character.id} 
+                    className="bg-[#0f0f0f] border-neutral-700 hover:border-[#D89216] transition-colors"
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg text-neutral-100">
+                            {character.name}
+                          </CardTitle>
+                          <p className="text-sm text-neutral-400 mt-1">
+                            {character.user.name}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {character.user.email}
+                          </p>
+                        </div>
+                        <Badge 
+                          variant={character.hasGroup ? "default" : "secondary"}
+                          className={character.hasGroup ? "bg-green-600" : "bg-neutral-600"}
+                        >
+                          {character.hasGroup ? "Con Grupo" : "Sin Grupo"}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {/* Clase */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-neutral-400">Clase:</span>
+                        <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
+                          {character.class.name}
+                        </Badge>
+                      </div>
+
+                      {/* Grupo */}
+                      {character.group && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-neutral-400">Grupo:</span>
+                          <span className="text-sm text-neutral-100">
+                            {character.group.name}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-700">
+                        <div>
+                          <p className="text-xs text-neutral-500">Experiencia</p>
+                          <p className="text-sm font-semibold text-neutral-100">
+                            {character.experience} XP
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-neutral-500">Oro</p>
+                          <p className="text-sm font-semibold text-[#D89216]">
+                            {character.gold}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-neutral-500">Energía</p>
+                          <p className="text-sm font-semibold text-blue-400">
+                            {character.energy}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-neutral-500">Salud</p>
+                          <p className="text-sm font-semibold text-green-400">
+                            {character.health}%
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Recent Activity */}
         <Card className="bg-[#1a1a1a] border-neutral-800">
