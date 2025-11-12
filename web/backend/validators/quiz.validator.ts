@@ -23,7 +23,7 @@ export const CreateQuizSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
   points: z.number().int().min(10).max(1000).default(100),
   timeLimit: z.number().int().min(5).max(300).default(30),
-  groupId: z.string().uuid('ID de grupo inválido'),
+  courseId: z.string().uuid('ID de curso inválido'),
 });
 
 export const UpdateQuizSchema = z.object({

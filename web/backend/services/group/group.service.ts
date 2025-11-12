@@ -251,11 +251,6 @@ export class GroupService {
         where: { id: groupId },
         include: {
           characters: true,
-          quizzes: {
-            include: {
-              quizzes_history: true,
-            },
-          },
         },
       });
 
@@ -266,18 +261,26 @@ export class GroupService {
       const totalMembers = group.characters.length;
       const averageExperience =
         totalMembers > 0
-          ? group.characters.reduce((sum: number, c) => sum + c.experience, 0) / totalMembers
+          ? group.characters.reduce((sum: number, c: any) => sum + c.experience, 0) / totalMembers
           : 0;
       const averageGold =
-        totalMembers > 0 ? group.characters.reduce((sum: number, c) => sum + c.gold, 0) / totalMembers : 0;
+        totalMembers > 0 ? group.characters.reduce((sum: number, c: any) => sum + c.gold, 0) / totalMembers : 0;
       const averageEnergy =
-        totalMembers > 0 ? group.characters.reduce((sum: number, c) => sum + c.energy, 0) / totalMembers : 0;
+        totalMembers > 0 ? group.characters.reduce((sum: number, c: any) => sum + c.energy, 0) / totalMembers : 0;
 
-      const totalQuizzes = group.quizzes.length;
-      const completedQuizzes = group.quizzes.reduce(
-        (sum: number, quiz) => sum + quiz.quizzes_history.length,
-        0
-      );
+      // Los quizzes ahora están a nivel de curso, no de grupo
+      const totalQuizzes = await prisma.quizzes.count({
+        where: { course_id: group.course_id }
+      });
+      
+      // Contar quizzes completados por los miembros del grupo
+      const completedQuizzes = await prisma.quizzes_history.count({
+        where: {
+          character: {
+            group_id: groupId
+          }
+        }
+      });
 
       return {
         totalMembers,

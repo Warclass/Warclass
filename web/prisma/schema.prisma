@@ -91,7 +91,6 @@ model groups {
 
   course     courses      @relation(fields: [course_id], references: [id], onDelete: Cascade)
   characters characters[]
-  quizzes    quizzes[]
 }
 
 model invitations {
@@ -188,13 +187,11 @@ model quizzes {
   difficulty           String   @default("medium")
   points               Int      @default(100)
   time_limit           Int      @default(30)
-  group_id             String
-  course_id            String   // ⭐ NUEVO: Para saber a qué curso pertenece
-  teacher_id           String?  // ⭐ NUEVO: Profesor que lo creó (opcional para retrocompatibilidad)
+  course_id            String   // Para saber a qué curso pertenece
+  teacher_id           String?  // Profesor que lo creó (opcional)
   created_at           DateTime @default(now())
   updated_at           DateTime @updatedAt
 
-  group           groups            @relation(fields: [group_id], references: [id], onDelete: Cascade)
   course          courses           @relation(fields: [course_id], references: [id], onDelete: Cascade)
   teacher         teachers?         @relation(fields: [teacher_id], references: [id], onDelete: SetNull)
   quizzes_history quizzes_history[]

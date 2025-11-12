@@ -88,75 +88,55 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Obtener todos los grupos del curso
-    const groups = await prisma.groups.findMany({
-      where: {
-        course_id: courseId
-      },
-      include: {
-        quizzes: {
-          include: {
-            quizzes_history: {
-              include: {
-                character: {
-                  include: {
-                    class: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-
     // Obtener el character del usuario en este curso
     const userCharacter = await prisma.characters.findFirst({
       where: {
         user_id: userId,
-        group: {
-          course_id: courseId
-        }
+        course_id: courseId
       },
       include: {
         class: true
       }
     });
 
-    // Recopilar todos los quizzes únicos
-    const quizzesMap = new Map();
-    
-    groups.forEach(group => {
-      group.quizzes.forEach(quiz => {
-        if (!quizzesMap.has(quiz.id)) {
-          // Verificar si el usuario ya hizo este quiz
-          const userHistory = quiz.quizzes_history.find(
-            history => history.character.id === userCharacter?.id
-          );
-
-          quizzesMap.set(quiz.id, {
-            id: quiz.id,
-            question: quiz.question,
-            answers: quiz.answers,
-            createdAt: quiz.created_at,
-            completed: !!userHistory,
-            isOnQuest: userHistory?.is_on_quest || false,
-            group: {
-              id: group.id,
-              name: group.name
-            }
-          });
+    // Obtener todos los quizzes del curso
+    const quizzes = await prisma.quizzes.findMany({
+      where: {
+        course_id: courseId
+      },
+      include: {
+        quizzes_history: {
+          where: userCharacter ? {
+            character_id: userCharacter.id
+          } : undefined
         }
-      });
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
     });
 
-    const quizzesData = Array.from(quizzesMap.values()).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    // Formatear respuesta
+    const formattedQuizzes = quizzes.map((quiz: any) => {
+      const userHistory = quiz.quizzes_history[0];
+
+      return {
+        id: quiz.id,
+        question: quiz.question,
+        answers: quiz.answers,
+        createdAt: quiz.created_at,
+        completed: !!userHistory,
+        isOnQuest: userHistory?.is_on_quest || false,
+        course: {
+          id: courseId,
+          name: '' // Se puede agregar si es necesario
+        }
+      };
+    });
 
     return NextResponse.json({
       success: true,
-      data: quizzesData
+      data: formattedQuizzes
     });
   } catch (error) {
     console.error('Error en GET /api/courses/quizzes:', error);

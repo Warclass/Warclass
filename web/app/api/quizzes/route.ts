@@ -82,15 +82,15 @@ export async function GET(req: NextRequest) {
 
     let quizzes;
 
-    if (groupId) {
-      // Obtener quizzes de un grupo específico
-      quizzes = await QuizService.getQuizzesByGroup(groupId, characterId || undefined);
-    } else if (courseId) {
+    if (courseId) {
       // Obtener quizzes de un curso específico
       quizzes = await QuizService.getQuizzesByCourse(courseId, characterId || undefined);
+    } else if (groupId) {
+      // Mantener compatibilidad con groupId (deprecado)
+      quizzes = await QuizService.getQuizzesByGroup(groupId, characterId || undefined);
     } else {
       return NextResponse.json(
-        { error: 'Debe proporcionar groupId o courseId' },
+        { error: 'Debe proporcionar courseId' },
         { status: 400 }
       );
     }

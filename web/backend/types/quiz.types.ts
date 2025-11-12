@@ -16,7 +16,7 @@ export interface Quiz {
   difficulty: 'easy' | 'medium' | 'hard';
   points: number;
   timeLimit: number; // segundos
-  groupId: string;
+  courseId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,7 +40,7 @@ export interface CreateQuizDTO {
   difficulty?: 'easy' | 'medium' | 'hard';
   points?: number;
   timeLimit?: number;
-  groupId: string;
+  courseId: string;
 }
 
 export interface UpdateQuizDTO {
@@ -67,9 +67,7 @@ export interface QuizResponse {
   difficulty: string;
   points: number;
   timeLimit: number;
-  groupId: string;
-  groupName?: string;
-  courseId?: string;
+  courseId: string;
   courseName?: string;
   teacherId?: string | null;
   teacherName?: string;
@@ -120,7 +118,7 @@ export interface QuizWithHistory {
   difficulty: 'easy' | 'medium' | 'hard';
   points: number;
   timeLimit: number;
-  groupId: string;
+  courseId: string;
   createdAt: Date;
   updatedAt: Date;
   completed: boolean;

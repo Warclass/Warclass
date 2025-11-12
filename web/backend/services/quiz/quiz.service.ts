@@ -17,14 +17,13 @@ export class QuizService {
    */
   static async createQuiz(data: CreateQuizDTO, teacherId?: string): Promise<QuizResponse> {
     try {
-      // Verificar que el grupo existe y obtener el curso
-      const group = await prisma.groups.findUnique({
-        where: { id: data.groupId },
-        include: { course: true },
+      // Verificar que el curso existe
+      const course = await prisma.courses.findUnique({
+        where: { id: data.courseId },
       });
 
-      if (!group) {
-        throw new Error('Grupo no encontrado');
+      if (!course) {
+        throw new Error('Curso no encontrado');
       }
 
       // Si se proporciona teacherId, verificar que sea profesor del curso
@@ -32,7 +31,7 @@ export class QuizService {
         const isTeacher = await prisma.teachers_courses.findFirst({
           where: {
             teacher_id: teacherId,
-            course_id: group.course_id,
+            course_id: data.courseId,
           },
         });
 
@@ -50,12 +49,10 @@ export class QuizService {
           difficulty: data.difficulty || 'medium',
           points: data.points || 100,
           time_limit: data.timeLimit || 30,
-          group_id: data.groupId,
-          course_id: group.course_id,
+          course_id: data.courseId,
           teacher_id: teacherId || null,
         },
         include: {
-          group: true,
           course: true,
           teacher: teacherId ? {
             include: {
@@ -85,7 +82,7 @@ export class QuizService {
       const quiz = await prisma.quizzes.findUnique({
         where: { id: quizId },
         include: {
-          group: true,
+          course: true,
           quizzes_history: characterId
             ? {
                 where: { character_id: characterId },
@@ -122,7 +119,7 @@ export class QuizService {
         difficulty: quiz.difficulty as 'easy' | 'medium' | 'hard',
         points: quiz.points,
         timeLimit: quiz.time_limit,
-        groupId: quiz.group_id,
+        courseId: quiz.course_id,
         createdAt: quiz.created_at,
         updatedAt: quiz.updated_at,
         completed: !!history,
@@ -137,31 +134,25 @@ export class QuizService {
   }
 
   /**
-   * Obtener todos los quizzes de un grupo
+   * Obtener todos los quizzes de un curso
+   * @deprecated Use getQuizzesByCourse instead
    */
   static async getQuizzesByGroup(
     groupId: string,
     characterId?: string
   ): Promise<QuizResponse[]> {
-    try {
-      const quizzes = await prisma.quizzes.findMany({
-        where: { group_id: groupId },
-        include: {
-          group: true,
-          quizzes_history: characterId
-            ? {
-                where: { character_id: characterId },
-              }
-            : false,
-        },
-        orderBy: { created_at: 'desc' },
-      });
+    // Mantener por compatibilidad, pero redirigir a getQuizzesByCourse
+    // Necesitamos obtener el courseId del grupo
+    const group = await prisma.groups.findUnique({
+      where: { id: groupId },
+      select: { course_id: true },
+    });
 
-      return quizzes.map((quiz) => this.formatQuizResponse(quiz));
-    } catch (error) {
-      console.error('Error getting quizzes by group:', error);
-      throw error;
+    if (!group) {
+      throw new Error('Grupo no encontrado');
     }
+
+    return this.getQuizzesByCourse(group.course_id, characterId);
   }
 
   /**
@@ -177,7 +168,6 @@ export class QuizService {
           course_id: courseId,
         },
         include: {
-          group: true,
           course: true,
           teacher: {
             include: {
@@ -228,7 +218,7 @@ export class QuizService {
         where: { id: quizId },
         data: updateData,
         include: {
-          group: true,
+          course: true,
         },
       });
 
@@ -354,15 +344,17 @@ export class QuizService {
       const character = await prisma.characters.findUnique({
         where: { id: characterId },
         include: {
-          group: {
-            include: {
-              quizzes: true,
-            },
-          },
+          course: true,
         },
       });
 
-      const totalQuizzes = character?.group?.quizzes?.length || 0;
+      // Obtener total de quizzes del curso
+      const totalQuizzes = character?.course_id 
+        ? await prisma.quizzes.count({
+            where: { course_id: character.course_id }
+          })
+        : 0;
+      
       const completedQuizzes = history.length;
       const correctAnswers = history.filter((h) => h.is_correct).length;
       const incorrectAnswers = completedQuizzes - correctAnswers;
@@ -528,8 +520,6 @@ export class QuizService {
       difficulty: quiz.difficulty,
       points: quiz.points,
       timeLimit: quiz.time_limit,
-      groupId: quiz.group_id,
-      groupName: quiz.group?.name,
       courseId: quiz.course_id,
       courseName: quiz.course?.name,
       teacherId: quiz.teacher_id,

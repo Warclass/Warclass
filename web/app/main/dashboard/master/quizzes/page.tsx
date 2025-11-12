@@ -44,7 +44,7 @@ interface Quiz {
   difficulty: 'easy' | 'medium' | 'hard';
   points: number;
   timeLimit: number;
-  groupId: string;
+  courseId: string;
   created_at: Date;
 }
 
@@ -79,7 +79,7 @@ export default function QuizzesPage() {
     difficulty: 'medium' as 'easy' | 'medium' | 'hard',
     points: 100,
     timeLimit: 30,
-    groupId: ''
+    courseId: courseId || ''
   });
 
   useEffect(() => {
@@ -97,22 +97,8 @@ export default function QuizzesPage() {
     try {
       setLoading(true);
 
-      // Obtener grupos del curso
-      const groupsResponse = await fetch(`/api/groups?courseId=${courseId}`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (groupsResponse.ok) {
-        const groupsData = await groupsResponse.json();
-        setGroups(groupsData.groups || []);
-        
-        // Si hay grupos, cargar quizzes del primer grupo como default
-        if (groupsData.groups.length > 0) {
-          await fetchQuizzes(groupsData.groups[0].id);
-        }
-      }
+      // Cargar quizzes del curso directamente
+      await fetchQuizzes(courseId);
 
     } catch (error) {
       console.error('Error cargando datos:', error);
@@ -126,9 +112,9 @@ export default function QuizzesPage() {
     }
   };
 
-  const fetchQuizzes = async (groupId: string) => {
+  const fetchQuizzes = async (currentCourseId: string) => {
     try {
-      const response = await fetch(`/api/quizzes?groupId=${groupId}`, {
+      const response = await fetch(`/api/quizzes?courseId=${currentCourseId}`, {
         headers: { 
           'Authorization': `Bearer ${token}`
         }
@@ -163,10 +149,10 @@ export default function QuizzesPage() {
       return;
     }
 
-    if (!quizForm.groupId) {
+    if (!quizForm.courseId) {
       toast({
         title: 'Error',
-        description: 'Selecciona un grupo',
+        description: 'Debe haber un curso seleccionado',
         variant: 'destructive'
       });
       return;
@@ -204,10 +190,10 @@ export default function QuizzesPage() {
           difficulty: 'medium',
           points: 100,
           timeLimit: 30,
-          groupId: groups[0]?.id || ''
+          courseId: courseId || ''
         });
         setCreateModalOpen(false);
-        fetchQuizzes(quizForm.groupId);
+        fetchQuizzes(courseId || '');
       } else {
         const error = await response.json();
         toast({
@@ -279,7 +265,7 @@ export default function QuizzesPage() {
         });
         setEditModalOpen(false);
         setSelectedQuiz(null);
-        fetchQuizzes(selectedQuiz.groupId);
+        fetchQuizzes(courseId || '');
       } else {
         const error = await response.json();
         toast({
@@ -298,7 +284,7 @@ export default function QuizzesPage() {
     }
   };
 
-  const handleDeleteQuiz = async (quizId: string, groupId: string) => {
+  const handleDeleteQuiz = async (quizId: string) => {
     if (!confirm('¿Estás seguro de eliminar este examen?')) return;
 
     try {
@@ -314,7 +300,7 @@ export default function QuizzesPage() {
           title: 'Éxito',
           description: 'Examen eliminado correctamente'
         });
-        fetchQuizzes(groupId);
+        fetchQuizzes(courseId || '');
       } else {
         toast({
           title: 'Error',
@@ -340,7 +326,7 @@ export default function QuizzesPage() {
       difficulty: 'medium',
       points: 100,
       timeLimit: 30,
-      groupId: groups[0]?.id || ''
+      courseId: courseId || ''
     });
     setCreateModalOpen(true);
   };
@@ -359,7 +345,7 @@ export default function QuizzesPage() {
       difficulty: quiz.difficulty,
       points: quiz.points,
       timeLimit: quiz.timeLimit,
-      groupId: quiz.groupId
+      courseId: quiz.courseId
     });
     setEditModalOpen(true);
   };
@@ -598,7 +584,7 @@ export default function QuizzesPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleDeleteQuiz(quiz.id, quiz.groupId)}
+                                onClick={() => handleDeleteQuiz(quiz.id)}
                                 className="border-red-600 text-red-600 hover:bg-red-950/20"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -662,25 +648,6 @@ export default function QuizzesPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="create-group" className="text-neutral-300">Grupo *</Label>
-                  <Select
-                    value={quizForm.groupId}
-                    onValueChange={(value) => setQuizForm({ ...quizForm, groupId: value })}
-                  >
-                    <SelectTrigger className="bg-[#0a0a0a] border-neutral-700 text-neutral-100">
-                      <SelectValue placeholder="Selecciona un grupo" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#1a1a1a] border-neutral-700">
-                      {groups.map((group) => (
-                        <SelectItem key={group.id} value={group.id} className="text-neutral-100">
-                          {group.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div>
                   <Label htmlFor="create-difficulty" className="text-neutral-300">Dificultad</Label>
                   <Select
