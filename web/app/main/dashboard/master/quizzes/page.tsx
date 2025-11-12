@@ -48,11 +48,6 @@ interface Quiz {
   created_at: Date;
 }
 
-interface Group {
-  id: string;
-  name: string;
-}
-
 export default function QuizzesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,7 +60,6 @@ export default function QuizzesPage() {
 
   const [loading, setLoading] = useState(true);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -412,127 +406,89 @@ export default function QuizzesPage() {
           <Button 
             onClick={openCreateModal}
             className="bg-[#D89216] hover:bg-[#b6770f] text-black"
-            disabled={groups.length === 0}
           >
             <Plus className="h-4 w-4 mr-2" />
             Crear Examen
           </Button>
         </div>
 
-        {groups.length === 0 ? (
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-[#1a1a1a] border-neutral-800">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <ClipboardList className="h-16 w-16 text-neutral-600 mb-4" />
-              <p className="text-neutral-400 text-center mb-2">
-                No hay grupos creados
-              </p>
-              <p className="text-neutral-500 text-sm text-center">
-                Debes crear al menos un grupo antes de crear exámenes
-              </p>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-neutral-400">
+                Total Exámenes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-neutral-100">{quizzes.length}</div>
             </CardContent>
           </Card>
-        ) : (
-          <>
-            {/* Estadísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-[#1a1a1a] border-neutral-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-neutral-400">
-                    Total Exámenes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-neutral-100">{quizzes.length}</div>
-                </CardContent>
-              </Card>
 
-              <Card className="bg-[#1a1a1a] border-neutral-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-neutral-400">
-                    Puntos Totales
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-neutral-100">
-                    {quizzes.reduce((sum, q) => sum + q.points, 0).toLocaleString()}
-                  </div>
-                </CardContent>
-              </Card>
+          <Card className="bg-[#1a1a1a] border-neutral-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-neutral-400">
+                Puntos Totales
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-neutral-100">
+                {quizzes.reduce((sum, q) => sum + q.points, 0).toLocaleString()}
+              </div>
+            </CardContent>
+          </Card>
 
-              <Card className="bg-[#1a1a1a] border-neutral-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-neutral-400">
-                    Tiempo Promedio
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-neutral-100">
-                    {quizzes.length > 0 
-                      ? Math.round(quizzes.reduce((sum, q) => sum + q.timeLimit, 0) / quizzes.length)
-                      : 0
-                    }s
-                  </div>
-                </CardContent>
-              </Card>
+          <Card className="bg-[#1a1a1a] border-neutral-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-neutral-400">
+                Tiempo Promedio
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-neutral-100">
+                {quizzes.length > 0 
+                  ? Math.round(quizzes.reduce((sum, q) => sum + q.timeLimit, 0) / quizzes.length)
+                  : 0
+                }s
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Buscador */}
+        <Card className="bg-[#1a1a1a] border-neutral-800">
+          <CardContent className="pt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-[#0a0a0a] border-neutral-700 text-neutral-100"
+                placeholder="Buscar por pregunta..."
+              />
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Selector de Grupo y Buscador */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-[#1a1a1a] border-neutral-800">
-                <CardContent className="pt-6">
-                  <Label className="text-neutral-300 mb-2 block">Filtrar por Grupo</Label>
-                  <Select
-                    value={groups[0]?.id}
-                    onValueChange={(value) => fetchQuizzes(value)}
+        {/* Lista de Exámenes */}
+        <Card className="bg-[#1a1a1a] border-neutral-800">
+          <CardContent className="pt-6">
+            {filteredQuizzes.length === 0 ? (
+              <div className="text-center py-12">
+                <ClipboardList className="h-16 w-16 text-neutral-600 mx-auto mb-4" />
+                <p className="text-neutral-400 mb-2">
+                  {searchQuery ? 'No se encontraron exámenes' : 'No hay exámenes creados'}
+                </p>
+                {!searchQuery && (
+                  <Button 
+                    onClick={openCreateModal}
+                    variant="outline"
+                    className="border-neutral-700 text-neutral-100 hover:bg-neutral-800 mt-4"
                   >
-                    <SelectTrigger className="bg-[#0a0a0a] border-neutral-700 text-neutral-100">
-                      <SelectValue placeholder="Selecciona un grupo" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#1a1a1a] border-neutral-700">
-                      {groups.map((group) => (
-                        <SelectItem key={group.id} value={group.id} className="text-neutral-100">
-                          {group.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-[#1a1a1a] border-neutral-800">
-                <CardContent className="pt-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 bg-[#0a0a0a] border-neutral-700 text-neutral-100"
-                      placeholder="Buscar por pregunta..."
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Lista de Exámenes */}
-            <Card className="bg-[#1a1a1a] border-neutral-800">
-              <CardContent className="pt-6">
-                {filteredQuizzes.length === 0 ? (
-                  <div className="text-center py-12">
-                    <ClipboardList className="h-16 w-16 text-neutral-600 mx-auto mb-4" />
-                    <p className="text-neutral-400 mb-2">
-                      {searchQuery ? 'No se encontraron exámenes' : 'No hay exámenes creados'}
-                    </p>
-                    {!searchQuery && (
-                      <Button 
-                        onClick={openCreateModal}
-                        variant="outline"
-                        className="border-neutral-700 text-neutral-100 hover:bg-neutral-800 mt-4"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Crear tu primer examen
-                      </Button>
-                    )}
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear tu primer examen
+                  </Button>
+                )}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -598,8 +554,6 @@ export default function QuizzesPage() {
                 )}
               </CardContent>
             </Card>
-          </>
-        )}
 
         {/* Modal Crear Examen */}
         <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
