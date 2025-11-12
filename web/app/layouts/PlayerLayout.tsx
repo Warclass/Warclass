@@ -112,8 +112,7 @@ export default function PlayerLayout({
     return () => clearInterval(interval);
   }, [memberId, user?.id]);
 
-  // Eliminado: fetchCourseData - ahora usamos courseName prop directamente
-  // El endpoint /api/courses/members está deprecado (410)
+  // El endpoint /api/courses/members ahora devuelve los miembros del mismo grupo
 
   useEffect(() => {
     // Cargar el conteo de invitaciones pendientes
