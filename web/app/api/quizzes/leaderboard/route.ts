@@ -5,22 +5,31 @@ import { QuizService } from '@/backend/services/quiz/quiz.service';
  * @swagger
  * /api/quizzes/leaderboard:
  *   get:
- *     summary: Obtener tabla de líderes
- *     description: Retorna el ranking de estudiantes por puntaje en quizzes de un grupo o curso
+ *     summary: Obtener tabla de líderes de quizzes
+ *     description: |
+ *       Retorna el ranking de estudiantes por puntaje en quizzes de un curso.
+ *       Los quizzes ahora están a nivel de curso, por lo que el leaderboard
+ *       muestra el ranking de todos los estudiantes del curso.
+ *       
+ *       Nota: El parámetro `groupId` está deprecado pero se mantiene por compatibilidad.
  *     tags: [Quizzes]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: groupId
- *         schema:
- *           type: string
- *         description: ID del grupo para filtrar el leaderboard
- *       - in: query
  *         name: courseId
+ *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
  *         description: ID del curso para filtrar el leaderboard
+ *       - in: query
+ *         name: groupId
+ *         deprecated: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: (DEPRECADO) Usar courseId en su lugar
  *     responses:
  *       200:
  *         description: Leaderboard obtenido exitosamente
@@ -29,6 +38,9 @@ import { QuizService } from '@/backend/services/quiz/quiz.service';
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 leaderboard:
  *                   type: array
  *                   items:
@@ -37,20 +49,25 @@ import { QuizService } from '@/backend/services/quiz/quiz.service';
  *                       rank:
  *                         type: integer
  *                         description: Posición en el ranking
+ *                         example: 1
  *                       characterName:
  *                         type: string
  *                         description: Nombre del personaje
+ *                         example: "Mago Oscuro"
  *                       totalScore:
  *                         type: integer
  *                         description: Puntaje total acumulado
+ *                         example: 850
  *                       quizzesCompleted:
  *                         type: integer
  *                         description: Número de quizzes completados
+ *                         example: 12
  *                       averageScore:
  *                         type: number
  *                         description: Promedio de puntaje
+ *                         example: 70.83
  *       400:
- *         description: groupId o courseId no proporcionados
+ *         description: courseId no proporcionado
  *       401:
  *         description: No autorizado
  *       500:

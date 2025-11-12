@@ -7,30 +7,39 @@ import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
  * @swagger
  * /api/quizzes:
  *   get:
- *     summary: Obtener quizzes
- *     description: Retorna quizzes filtrados por grupo o curso
+ *     summary: Obtener quizzes de un curso
+ *     description: |
+ *       Retorna todos los quizzes de un curso. Los quizzes están ahora a nivel de curso,
+ *       no de grupo, por lo que todos los estudiantes del curso ven los mismos quizzes.
+ *       
+ *       Nota: El parámetro `groupId` está deprecado pero se mantiene por compatibilidad.
  *     tags: [Quizzes]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: groupId
- *         schema:
- *           type: string
- *         description: ID del grupo para filtrar quizzes (UUID)
- *       - in: query
  *         name: courseId
+ *         required: true
  *         schema:
  *           type: string
- *         description: ID del curso para filtrar quizzes (UUID)
+ *           format: uuid
+ *         description: ID del curso (requerido)
  *       - in: query
  *         name: characterId
  *         schema:
  *           type: string
- *         description: ID del personaje para obtener estado de completitud (UUID)
+ *           format: uuid
+ *         description: ID del personaje para incluir estado de completitud
+ *       - in: query
+ *         name: groupId
+ *         deprecated: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: (DEPRECADO) Usar courseId en su lugar
  *     responses:
  *       200:
- *         description: Lista de quizzes
+ *         description: Lista de quizzes del curso
  *         content:
  *           application/json:
  *             schema:
@@ -38,12 +47,38 @@ import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Quiz'
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       question:
+ *                         type: string
+ *                       answers:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             text:
+ *                               type: string
+ *                       difficulty:
+ *                         type: string
+ *                         enum: [easy, medium, hard]
+ *                       points:
+ *                         type: integer
+ *                       timeLimit:
+ *                         type: integer
+ *                       courseId:
+ *                         type: string
+ *                         format: uuid
+ *                       completed:
+ *                         type: boolean
  *       400:
- *         description: Parámetros inválidos o faltantes
+ *         description: Parámetros inválidos (falta courseId)
  *       401:
  *         description: No autorizado
  *       500:
@@ -109,8 +144,12 @@ export async function GET(req: NextRequest) {
  * @swagger
  * /api/quizzes:
  *   post:
- *     summary: Crear quiz
- *     description: Crea un nuevo cuestionario para un grupo o curso
+ *     summary: Crear quiz para un curso
+ *     description: |
+ *       Crea un nuevo cuestionario a nivel de curso. El quiz estará disponible
+ *       para todos los estudiantes inscritos en el curso, independientemente de su grupo.
+ *       
+ *       Solo los profesores pueden crear quizzes.
  *     tags: [Quizzes]
  *     security:
  *       - bearerAuth: []
@@ -122,6 +161,7 @@ export async function GET(req: NextRequest) {
  *             type: object
  *             required:
  *               - title
+ *               - courseId
  *               - questions
  *             properties:
  *               title:
@@ -140,25 +180,31 @@ export async function GET(req: NextRequest) {
  *                 type: integer
  *                 description: Recompensa de experiencia
  *                 example: 100
- *               groupId:
- *                 type: string
- *                 description: ID del grupo (opcional)
  *               courseId:
  *                 type: string
- *                 description: ID del curso (opcional)
+ *                 format: uuid
+ *                 description: ID del curso (requerido)
  *               questions:
  *                 type: array
+ *                 description: Lista de preguntas del quiz
  *                 items:
  *                   type: object
+ *                   required:
+ *                     - question
+ *                     - options
+ *                     - correctAnswer
  *                   properties:
  *                     question:
  *                       type: string
+ *                       example: ¿Cuánto es 2 + 2?
  *                     options:
  *                       type: array
  *                       items:
  *                         type: string
+ *                       example: ["3", "4", "5", "6"]
  *                     correctAnswer:
  *                       type: string
+ *                       example: "4"
  *     responses:
  *       201:
  *         description: Quiz creado exitosamente
@@ -167,12 +213,27 @@ export async function GET(req: NextRequest) {
  *             schema:
  *               type: object
  *               properties:
- *                 quiz:
- *                   $ref: '#/components/schemas/Quiz'
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     title:
+ *                       type: string
+ *                     courseId:
+ *                       type: string
+ *                       format: uuid
+ *                     difficulty:
+ *                       type: string
+ *                       enum: [easy, medium, hard]
  *       400:
- *         description: Datos inválidos
+ *         description: Datos inválidos (courseId faltante o formato incorrecto)
  *       401:
- *         description: No autorizado
+ *         description: No autorizado o usuario no es profesor
  *       500:
  *         description: Error interno del servidor
  */

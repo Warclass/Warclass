@@ -90,11 +90,7 @@ export async function GET(req: NextRequest) {
           character_id: characterId,
         },
         include: {
-          quiz: {
-            include: {
-              group: true,
-            },
-          },
+          quiz: true,
           character: true,
         },
         orderBy: {
@@ -107,17 +103,11 @@ export async function GET(req: NextRequest) {
       history = await prisma.quizzes_history.findMany({
         where: {
           quiz: {
-            group: {
-              course_id: courseId,
-            },
+            course_id: courseId,
           },
         },
         include: {
-          quiz: {
-            include: {
-              group: true,
-            },
-          },
+          quiz: true,
           character: true,
         },
         orderBy: {

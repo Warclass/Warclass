@@ -8,7 +8,10 @@ const prisma = new PrismaClient();
  * /api/courses/quizzes:
  *   get:
  *     summary: Obtener quizzes de un curso
- *     description: Retorna todos los quizzes de un curso organizados por grupo, con historial de respuestas
+ *     description: |
+ *       Retorna todos los quizzes de un curso con su historial de respuestas.
+ *       Los quizzes ahora están asignados a nivel de curso, no por grupo,
+ *       por lo que todos los estudiantes del curso ven los mismos quizzes.
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
@@ -18,10 +21,11 @@ const prisma = new PrismaClient();
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
  *         description: ID del curso
  *     responses:
  *       200:
- *         description: Lista de quizzes del curso organizados por grupo
+ *         description: Lista de quizzes del curso con estadísticas
  *         content:
  *           application/json:
  *             schema:
@@ -29,19 +33,37 @@ const prisma = new PrismaClient();
  *               properties:
  *                 success:
  *                   type: boolean
- *                 groups:
+ *                   example: true
+ *                 quizzes:
  *                   type: array
  *                   items:
  *                     type: object
  *                     properties:
  *                       id:
  *                         type: string
- *                       name:
+ *                         format: uuid
+ *                       question:
  *                         type: string
- *                       quizzes:
+ *                       difficulty:
+ *                         type: string
+ *                         enum: [easy, medium, hard]
+ *                       points:
+ *                         type: integer
+ *                       courseId:
+ *                         type: string
+ *                         format: uuid
+ *                       history:
  *                         type: array
+ *                         description: Historial de respuestas de todos los estudiantes
  *                         items:
- *                           $ref: '#/components/schemas/Quiz'
+ *                           type: object
+ *                           properties:
+ *                             characterId:
+ *                               type: string
+ *                             isCorrect:
+ *                               type: boolean
+ *                             timeTaken:
+ *                               type: integer
  *       400:
  *         description: courseId no proporcionado
  *       401:
