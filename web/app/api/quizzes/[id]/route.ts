@@ -144,19 +144,26 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
 
     const body = await req.json();
+    console.log('📝 PUT /api/quizzes/[id] - Received body:', body);
+    console.log('🆔 Quiz ID:', params.id);
 
     // Validar datos
     const validation = UpdateQuizSchema.safeParse(body);
     if (!validation.success) {
+      console.log('❌ Validation failed:', validation.error.issues);
       return NextResponse.json(
         { error: 'Datos inválidos', details: validation.error.issues },
         { status: 400 }
       );
     }
 
+    console.log('✅ Validation passed:', validation.data);
+
     // TODO: Verificar que el usuario es profesor del curso/grupo
 
     const quiz = await QuizService.updateQuiz(params.id, validation.data);
+
+    console.log('✅ Quiz updated:', quiz.id);
 
     return NextResponse.json({ quiz }, { status: 200 });
   } catch (error: any) {

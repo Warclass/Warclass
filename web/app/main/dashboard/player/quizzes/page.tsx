@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/auth/useAuth'
+import { useCourseData } from '@/hooks/useCourseData'
 import Link from 'next/link'
 import PlayerLayout from '@/app/layouts/PlayerLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,6 +36,9 @@ export default function QuizzesPage() {
   const [memberId, setMemberId] = useState<string | null>(null)
   
   const courseId = searchParams.get('courseId')
+  
+  // Obtener datos del curso para el nombre
+  const { courseData } = useCourseData(courseId)
 
   // Obtener memberId del usuario
   useEffect(() => {
@@ -95,7 +99,7 @@ export default function QuizzesPage() {
 
   if (isLoading) {
     return (
-      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
         <div className="flex h-full justify-center items-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
@@ -108,7 +112,7 @@ export default function QuizzesPage() {
 
   if (error) {
     return (
-      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
         <div className="flex h-full justify-center items-center">
           <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
             <CardHeader>
@@ -124,7 +128,7 @@ export default function QuizzesPage() {
   }
 
   return (
-    <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+    <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>

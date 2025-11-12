@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Button } from '@/components/ui/button';
@@ -29,36 +29,11 @@ export default function MasterLayout({
 }: MasterLayoutProps) {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [courseData, setCourseData] = useState<any>(null);
 
   // Helper para construir URLs con courseId
   const buildUrl = (path: string) => {
     return `${path}?courseId=${courseId}`;
   };
-
-  // Cargar datos del curso
-  useEffect(() => {
-    const fetchCourseData = async () => {
-      if (!courseId || !user?.id) return;
-
-      try {
-        const response = await fetch(`/api/courses/${courseId}`, {
-          headers: {
-            'x-user-id': user.id
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setCourseData(data.course);
-        }
-      } catch (error) {
-        console.error('Error al cargar datos del curso:', error);
-      }
-    };
-
-    fetchCourseData();
-  }, [courseId, user?.id]);
 
   return (
     <div className="bg-[#0a0a0a] flex flex-col h-screen w-screen overflow-hidden">
@@ -80,7 +55,7 @@ export default function MasterLayout({
               <BookOpen className="h-5 w-5 text-[#D89216]" />
               <div>
                 <h2 className="text-sm font-bold text-neutral-100">
-                  {courseData?.name || courseName || 'Cargando...'}
+                  {courseName || 'Cargando...'}
                 </h2>
                 <p className="text-xs text-neutral-500">Vista de Profesor</p>
               </div>

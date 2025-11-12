@@ -210,6 +210,8 @@ export class QuizService {
    */
   static async updateQuiz(quizId: string, data: UpdateQuizDTO): Promise<QuizResponse> {
     try {
+      console.log('🔄 Updating quiz:', quizId, 'with data:', data);
+
       const updateData: any = {};
 
       if (data.question) updateData.question = data.question;
@@ -220,6 +222,8 @@ export class QuizService {
       if (data.points !== undefined) updateData.points = data.points;
       if (data.timeLimit !== undefined) updateData.time_limit = data.timeLimit;
 
+      console.log('📦 Update data prepared:', updateData);
+
       const quiz = await prisma.quizzes.update({
         where: { id: quizId },
         data: updateData,
@@ -228,9 +232,11 @@ export class QuizService {
         },
       });
 
+      console.log('✅ Quiz updated successfully:', quiz.id);
+
       return this.formatQuizResponse(quiz);
     } catch (error) {
-      console.error('Error updating quiz:', error);
+      console.error('❌ Error updating quiz:', error);
       throw error;
     }
   }

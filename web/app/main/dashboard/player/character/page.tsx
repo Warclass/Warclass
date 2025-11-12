@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/auth/useAuth'
+import { useCourseData } from '@/hooks/useCourseData'
 import PlayerLayout from '@/app/layouts/PlayerLayout'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +27,9 @@ export default function CharacterPage() {
     const [error, setError] = useState<string | null>(null)
     
     const courseId = searchParams.get('courseId')
+    
+    // Obtener datos del curso para el nombre
+    const { courseData } = useCourseData(courseId)
 
     useEffect(() => {
         const fetchCharacterData = async () => {
@@ -72,7 +76,7 @@ export default function CharacterPage() {
 
     if (isLoading) {
         return (
-            <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+            <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
                 <div className="flex h-full justify-center items-center">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
@@ -85,7 +89,7 @@ export default function CharacterPage() {
 
     if (error || !characterData) {
         return (
-            <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+            <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
                 <div className="flex h-full justify-center items-center">
                     <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
                         <CardHeader>
@@ -115,7 +119,7 @@ export default function CharacterPage() {
     // Validar que tengamos la información necesaria
     if (!charClass || !course) {
         return (
-            <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+            <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
                 <div className="flex h-full justify-center items-center">
                     <Card className="bg-[#1a1a1a] border-red-800 max-w-md">
                         <CardHeader>
@@ -212,7 +216,7 @@ export default function CharacterPage() {
     })
 
     return (
-        <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
+        <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
                 {/* Panel Izquierdo: Visualización 3D */}
                 <div className="flex flex-col gap-4">

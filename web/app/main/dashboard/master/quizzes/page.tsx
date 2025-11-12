@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useCourseData } from '@/hooks/useCourseData';
 import MasterCourseLayout from '@/app/layouts/MasterCourseLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,9 @@ export default function QuizzesPage() {
   const { user, token } = useAuth();
   const { toast } = useToast();
   const courseId = searchParams.get('courseId');
+  
+  // Obtener datos del curso para el nombre
+  const { courseData } = useCourseData(courseId);
 
   const [loading, setLoading] = useState(true);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -394,7 +398,7 @@ export default function QuizzesPage() {
 
   if (loading) {
     return (
-      <MasterCourseLayout courseId={courseId}>
+      <MasterCourseLayout courseId={courseId} courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
@@ -406,7 +410,7 @@ export default function QuizzesPage() {
   }
 
   return (
-    <MasterCourseLayout courseId={courseId}>
+    <MasterCourseLayout courseId={courseId} courseName={courseData?.name}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">

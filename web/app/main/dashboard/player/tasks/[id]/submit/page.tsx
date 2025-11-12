@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useCourseData } from "@/hooks/useCourseData";
 import PlayerLayout from "@/app/layouts/PlayerLayout";
 import {
   Card,
@@ -49,6 +50,9 @@ export default function SubmitTaskPage() {
   const courseId = searchParams.get("courseId");
   const memberId = searchParams.get("memberId");
   const taskId = params.id as string;
+  
+  // Obtener datos del curso para el nombre
+  const { courseData } = useCourseData(courseId);
 
   useEffect(() => {
     if (!courseId || !memberId || !taskId || !user?.id) {
@@ -143,7 +147,7 @@ export default function SubmitTaskPage() {
 
   if (isLoading) {
     return (
-      <PlayerLayout name={user?.name} token="" courseId={courseId || undefined}>
+      <PlayerLayout name={user?.name} token="" courseId={courseId || undefined} courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
@@ -156,7 +160,7 @@ export default function SubmitTaskPage() {
 
   if (!task) {
     return (
-      <PlayerLayout name={user?.name} token="" courseId={courseId || undefined}>
+      <PlayerLayout name={user?.name} token="" courseId={courseId || undefined} courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <p className="text-neutral-400">Tarea no encontrada</p>
@@ -167,7 +171,7 @@ export default function SubmitTaskPage() {
   }
 
   return (
-    <PlayerLayout name={user?.name} token="" courseId={courseId || undefined}>
+    <PlayerLayout name={user?.name} token="" courseId={courseId || undefined} courseName={courseData?.name}>
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Botón Volver */}
         <Link href={`/main/dashboard/player/tasks?courseId=${courseId}`}>

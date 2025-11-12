@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { useCourseData } from "@/hooks/useCourseData";
 import PlayerLayout from "@/app/layouts/PlayerLayout";
 import {
   Card,
@@ -44,6 +45,9 @@ export default function TasksPage() {
   const [groupId, setGroupId] = useState<string | null>(null);
 
   const courseId = searchParams.get("courseId");
+  
+  // Obtener datos del curso para el nombre
+  const { courseData } = useCourseData(courseId);
 
   useEffect(() => {
     if (!courseId || !user?.id) {
@@ -110,7 +114,7 @@ export default function TasksPage() {
 
   if (isLoading) {
     return (
-      <PlayerLayout name={user?.name} token="" courseId={courseId || undefined}>
+      <PlayerLayout name={user?.name} token="" courseId={courseId || undefined} courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
@@ -123,7 +127,7 @@ export default function TasksPage() {
 
   if (!courseId) {
     return (
-      <PlayerLayout name={user?.name} token="">
+      <PlayerLayout name={user?.name} token="" courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <p className="text-neutral-400">No se especificó un curso</p>
@@ -134,7 +138,7 @@ export default function TasksPage() {
   }
 
   return (
-    <PlayerLayout name={user?.name} token="" courseId={courseId || undefined}>
+    <PlayerLayout name={user?.name} token="" courseId={courseId || undefined} courseName={courseData?.name}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

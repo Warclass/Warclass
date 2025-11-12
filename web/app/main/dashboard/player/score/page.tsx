@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/auth/useAuth'
+import { useCourseData } from '@/hooks/useCourseData'
 import PlayerLayout from '@/app/layouts/PlayerLayout'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -43,6 +44,9 @@ export default function ScorePage() {
   const [error, setError] = useState<string | null>(null)
   
   const courseId = searchParams.get('courseId')
+  
+  // Obtener datos del curso para el nombre
+  const { courseData } = useCourseData(courseId)
 
   // If the user just finished a quiz, build a history entry so PlayerLayout can show it
   const recentResult = resultParam ? Number(resultParam) : null
@@ -110,7 +114,7 @@ export default function ScorePage() {
 
   if (isLoading) {
     return (
-      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} history={historyItems}>
+      <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name} history={historyItems}>
         <div className="flex h-full justify-center items-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
