@@ -711,29 +711,35 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex gap-3 pb-4 border-b border-neutral-800 last:border-0 last:pb-0"
-                  >
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={activity.avatar} />
-                      <AvatarFallback className="bg-[#D89216] text-black text-xs">
-                        {activity.course.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm text-neutral-300">
-                        {activity.description}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-neutral-500">
-                        <span>{activity.course}</span>
-                        <span>•</span>
-                        <span>{activity.time}</span>
+                {recentActivity.length === 0 ? (
+                  <div className="text-center text-neutral-500 py-8">
+                    No hay actividad reciente
+                  </div>
+                ) : (
+                  recentActivity.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex gap-3 pb-4 border-b border-neutral-800 last:border-0 last:pb-0"
+                    >
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={activity.avatar} />
+                        <AvatarFallback className="bg-[#D89216] text-black text-xs">
+                          {activity.course.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm text-neutral-300">
+                          {activity.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-neutral-500">
+                          <span>{activity.course}</span>
+                          <span>•</span>
+                          <span>{activity.time}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
 

@@ -48,18 +48,18 @@ export class DashboardService {
         include: {
           course: {
             include: {
-              teacher: {
+              // Cursos ahora se relacionan con profesores a través de teachers_courses
+              teachers_courses: {
                 include: {
-                  user: true,
+                  teacher: {
+                    include: { user: true },
+                  },
                 },
               },
+              // Los grupos contienen personajes (characters), no miembros legacy
               groups: {
                 include: {
-                  members: {
-                    include: {
-                      characters: true,
-                    },
-                  },
+                  characters: true,
                 },
               },
             },
@@ -69,16 +69,19 @@ export class DashboardService {
 
       const enrolledCourses: DashboardEnrolledCourse[] = inscriptions.map((inscription) => {
         const course = inscription.course;
-        
-        // Calcular progreso basado en miembros del grupo
-        const totalMembers = course.groups.reduce((sum, group) => sum + group.members.length, 0);
-        const progress = totalMembers > 0 ? Math.min(Math.round((totalMembers / 50) * 100), 100) : 0;
 
-        // Obtener nivel promedio de los personajes
-        const characters = course.groups.flatMap((g) => g.members.map((m) => m.characters)).filter(Boolean);
+        // Calcular progreso basado en cantidad de personajes creados en el curso (proxy simple)
+        const totalCharacters = course.groups.reduce((sum, group) => sum + group.characters.length, 0);
+        const progress = totalCharacters > 0 ? Math.min(Math.round((totalCharacters / 50) * 100), 100) : 0;
+
+        // Obtener nivel promedio de los personajes (aprox: exp/100)
+        const characters = course.groups.flatMap((g) => g.characters);
         const avgLevel = characters.length > 0
-          ? Math.round(characters.reduce((sum, char) => sum + (char?.experience || 0), 0) / characters.length / 100)
+          ? Math.max(1, Math.round(characters.reduce((sum, char) => sum + (char.experience || 0), 0) / characters.length / 100))
           : 1;
+
+        // Nombre del profesor desde teachers_courses (primero asignado)
+        const instructor = course.teachers_courses[0]?.teacher?.user?.name || 'Profesor asignado';
 
         // Color basado en el nombre del curso
         const colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500'];
@@ -87,7 +90,7 @@ export class DashboardService {
         return {
           id: course.id,
           name: course.name,
-          instructor: course.teacher.user.name, // FIXED: Acceder a través de user
+          instructor,
           progress,
           color,
           level: avgLevel,
@@ -106,55 +109,49 @@ export class DashboardService {
    */
   static async getTeachingCourses(userId: string): Promise<DashboardCourse[]> {
     try {
-      // Primero, encontrar los cursos donde el usuario es docente
-      // Asumiendo que el usuario tiene inscripciones a cursos que enseña
-      const teacherCourses = await prisma.courses.findMany({
+      // 1) Obtener el registro de teacher para el usuario
+      const teacher = await prisma.teachers.findUnique({
+        where: { user_id: userId },
+        select: { id: true },
+      });
+
+      if (!teacher) {
+        return [];
+      }
+
+      // 2) Obtener los cursos asociados vía teachers_courses
+      const teacherCourseLinks = await prisma.teachers_courses.findMany({
+        where: { teacher_id: teacher.id },
         include: {
-          teacher: true,
-          groups: {
+          course: {
             include: {
-              members: true,
+              groups: { include: { characters: true } },
+              inscriptions: true,
             },
           },
-          inscriptions: true,
         },
       });
 
-      // Filtrar cursos donde el usuario está inscrito y es profesor
-      // Por ahora, usaremos una lógica simple: buscar por inscriptions
-      const userInscriptions = await prisma.inscriptions.findMany({
-        where: { user_id: userId },
-        select: { course_id: true },
-      });
+      const teachingCourses: DashboardCourse[] = teacherCourseLinks.map((link) => {
+        const course = link.course;
+        const totalStudents = course.inscriptions.length; // estudiantes inscritos
 
-      const userCourseIds = userInscriptions.map((i) => i.course_id);
+        // Contar "quests" como número de grupos (placeholder hasta tener misiones reales)
+        const quests = course.groups.length * 3;
 
-      const filteredCourses = teacherCourses.filter((course) => 
-        userCourseIds.includes(course.id) && 
-        course.groups.some((g) => g.members.length > 0)
-      );
-
-      const teachingCourses: DashboardCourse[] = filteredCourses.map((course) => {
-        const totalStudents = course.groups.reduce((sum, group) => sum + group.members.length, 0);
-        
-        // Contar "quests" como número de grupos
-        const quests = course.groups.length * 3; // Simulación: 3 quests por grupo
-
-        // Calcular nivel del curso basado en estudiantes
-        const allMembers = course.groups.flatMap((g) => g.members);
-        const avgExp = allMembers.length > 0
-          ? allMembers.reduce((sum, m) => sum + m.experience, 0) / allMembers.length
-          : 100;
+        // Calcular nivel del curso basado en experiencia promedio de personajes
+        const allCharacters = course.groups.flatMap((g) => g.characters);
+        const avgExp = allCharacters.length > 0
+          ? allCharacters.reduce((sum, c) => sum + (c.experience || 0), 0) / allCharacters.length
+          : 0;
         const level = Math.max(1, Math.round(avgExp / 500));
 
-        // Generar código del curso
         const code = course.name
           .split(' ')
           .map((word) => word.charAt(0).toUpperCase())
           .join('')
           .substring(0, 3) + '-' + Math.floor(Math.random() * 900 + 100);
 
-        // Color basado en el nombre
         const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-teal-500'];
         const color = colors[Math.abs(course.name.charCodeAt(0) % colors.length)];
 
@@ -182,53 +179,23 @@ export class DashboardService {
    */
   static async getRecentActivity(userId: string): Promise<DashboardActivity[]> {
     try {
-      // Obtener los cursos del usuario
+      // Actividad reciente simple basada en inscripciones a cursos del usuario
       const userCourses = await prisma.inscriptions.findMany({
         where: { user_id: userId },
-        include: {
-          course: {
-            include: {
-              groups: {
-                include: {
-                  members: true,
-                },
-              },
-            },
-          },
-        },
+        include: { course: true },
         take: 5,
         orderBy: { created_at: 'desc' },
       });
 
-      const activities: DashboardActivity[] = userCourses.map((inscription, index) => {
+      const activities: DashboardActivity[] = userCourses.map((inscription) => {
         const course = inscription.course;
-        const randomMember = course.groups[0]?.members[0];
-
-        const activityTypes = [
-          {
-            type: 'quest_completed',
-            description: `${randomMember?.name || 'Un estudiante'} completó una misión`,
-          },
-          {
-            type: 'new_submission',
-            description: `${course.groups[0]?.members.length || 0} nuevas entregas`,
-          },
-          {
-            type: 'level_up',
-            description: '¡Subiste de nivel!',
-          },
-        ];
-
-        const activity = activityTypes[index % activityTypes.length];
-        const hoursAgo = index + 1;
-
         return {
           id: inscription.id,
-          type: activity.type,
+          type: 'enrollment',
           course: course.name,
-          description: activity.description,
-          time: `Hace ${hoursAgo} hora${hoursAgo > 1 ? 's' : ''}`,
-          avatar: '/img/user0' + ((index % 6) + 1) + '.jpg',
+          description: `Te uniste al curso ${course.name}`,
+          time: 'Reciente',
+          avatar: undefined,
         };
       });
 
