@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import * as THREE from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { Gamepad2, Globe2, Trophy, CheckCircle2, Users } from "lucide-react";
@@ -119,9 +120,17 @@ export default function HomePage() {
           </div>
         </nav>
 
-        {/* Simulated image block + headline overlay to match reference */}
+        {/* Image block + headline overlay to match reference */}
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-8 items-end px-6 pb-8">
-          <div className="lg:col-span-8 min-h-[320px] lg:min-h-[480px] rounded-md bg-gradient-to-br from-neutral-600 via-neutral-700 to-neutral-900 shadow-inner" />
+          <div className="lg:col-span-8 min-h-[320px] lg:min-h-[480px] rounded-md overflow-hidden shadow-2xl relative">
+            <Image
+              src="/warclass_bg.png"
+              alt="World of Warclass - Aventura educativa"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
           <div className="lg:col-span-4" />
         </div>
 
