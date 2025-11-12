@@ -69,11 +69,12 @@ model courses {
 }
 
 model teachers_courses {
-  id         String   @id @default(uuid())
-  teacher_id String
-  course_id  String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  teacher_id           String
+  course_id            String
+  discord_webhook_url  String?  // ⭐ NUEVO: URL del webhook de Discord para notificaciones
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
   teacher teachers                 @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   course  courses                  @relation(fields: [course_id], references: [id], onDelete: Cascade)

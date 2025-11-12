@@ -7,6 +7,7 @@ import {
   TaskWithAssignments,
   TaskProgress,
 } from '@/backend/types/task.types';
+import { notifyTaskCompleted } from '@/backend/services/discord/discord-webhook.service';
 
 export class TaskService {
   static async createTask(data: CreateTaskDTO): Promise<TaskWithAssignments> {
@@ -115,6 +116,9 @@ export class TaskService {
 
       const character = await prisma.characters.findUnique({
         where: { id: data.characterId },
+        include: {
+          course: true,
+        },
       });
 
       if (!character) {
@@ -150,6 +154,34 @@ export class TaskService {
           },
         }),
       ]);
+
+      // 🔔 Enviar notificación a Discord si el curso tiene webhook configurado
+      if (character.course_id) {
+        try {
+          const teacherCourse = await prisma.teachers_courses.findFirst({
+            where: {
+              course_id: character.course_id,
+              discord_webhook_url: { not: null },
+            },
+          });
+
+          if (teacherCourse?.discord_webhook_url) {
+            await notifyTaskCompleted(teacherCourse.discord_webhook_url, {
+              characterName: character.name,
+              taskName: task.name,
+              taskDescription: task.description || '',
+              rewards: {
+                experience: task.experience,
+                gold: task.gold,
+              },
+              courseName: character.course?.name || 'Curso desconocido',
+            });
+          }
+        } catch (webhookError) {
+          console.error('❌ Error al enviar notificación de tarea a Discord:', webhookError);
+          // No lanzamos error para no interrumpir el flujo principal
+        }
+      }
     } catch (error) {
       console.error('Error completing task:', error);
       throw error;

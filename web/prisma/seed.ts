@@ -236,7 +236,12 @@ async function main() {
   // 6. Crear relación teachers_courses (individualmente para obtener IDs)
   console.log("🔗 Creating teacher-course relationships...");
   const tc1 = await prisma.teachers_courses.create({
-    data: { teacher_id: teacherTecsup.id, course_id: course1.id },
+    data: { 
+      teacher_id: teacherTecsup.id, 
+      course_id: course1.id,
+      // 🔔 WEBHOOK DE DISCORD para notificaciones del curso
+      discord_webhook_url: "https://discord.com/api/webhooks/1438121803062186064/IjwdZ89Sh2FSlWxEPnM_iST8wVFIq-b3uuJU6s0P7C-qWjx6qwu6gsc1_z2Th8vocS03",
+    },
   });
 
   const tc2 = await prisma.teachers_courses.create({

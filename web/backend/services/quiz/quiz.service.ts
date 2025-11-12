@@ -10,6 +10,7 @@ import {
   QuizWithHistory,
   QuizAnswer,
 } from '@/backend/types/quiz.types';
+import { notifyQuizCompleted } from '@/backend/services/discord/discord-webhook.service';
 
 export class QuizService {
   /**
@@ -250,9 +251,12 @@ export class QuizService {
    */
   static async submitAnswer(data: SubmitQuizAnswerDTO): Promise<QuizResultResponse> {
     try {
-      // Obtener el quiz
+      // Obtener el quiz con curso incluido
       const quiz = await prisma.quizzes.findUnique({
         where: { id: data.quizId },
+        include: {
+          course: true,
+        },
       });
 
       if (!quiz) {
@@ -315,6 +319,32 @@ export class QuizService {
             gold: { increment: Math.round(pointsEarned / 10) },
           },
         });
+      }
+
+      // 🔔 Enviar notificación a Discord si el curso tiene webhook configurado
+      if (quiz.course_id) {
+        try {
+          const teacherCourse = await prisma.teachers_courses.findFirst({
+            where: {
+              course_id: quiz.course_id,
+              discord_webhook_url: { not: null },
+            },
+          });
+
+          if (teacherCourse?.discord_webhook_url) {
+            await notifyQuizCompleted(teacherCourse.discord_webhook_url, {
+              characterName: character.name,
+              quizQuestion: quiz.question,
+              isCorrect,
+              pointsEarned,
+              timeTaken: data.timeTaken,
+              courseName: quiz.course?.name || 'Curso desconocido',
+            });
+          }
+        } catch (webhookError) {
+          console.error('❌ Error al enviar notificación de quiz a Discord:', webhookError);
+          // No lanzamos error para no interrumpir el flujo principal
+        }
       }
 
       return {

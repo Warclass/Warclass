@@ -8,6 +8,7 @@ import {
   EventImpact,
   EventHistory,
 } from '@/backend/types/event.types';
+import { notifyEventApplied } from '@/backend/services/discord/discord-webhook.service';
 
 export class EventService {
   static async createEvent(data: CreateEventDTO, teacherId?: string): Promise<RandomEvent> {
@@ -254,6 +255,14 @@ export class EventService {
     try {
       const event = await prisma.events.findUnique({
         where: { id: data.eventId },
+        include: {
+          course: true,
+          teacher: {
+            include: {
+              user: true,
+            },
+          },
+        },
       });
 
       if (!event) {
@@ -293,6 +302,39 @@ export class EventService {
 
       const results = await Promise.all(updates);
       const affectedCount = results.filter((r) => r !== null).length;
+
+      // 🔔 Enviar notificación a Discord si el evento está asociado a un curso
+      if (event.course_id && affectedCount > 0) {
+        try {
+          // Buscar el teacher_course con webhook configurado
+          const teacherCourse = await prisma.teachers_courses.findFirst({
+            where: {
+              course_id: event.course_id,
+              discord_webhook_url: { not: null },
+            },
+          });
+
+          if (teacherCourse?.discord_webhook_url) {
+            await notifyEventApplied(teacherCourse.discord_webhook_url, {
+              eventName: event.name,
+              eventDescription: event.description || '',
+              eventType: event.type as 'disaster' | 'fortune' | 'neutral',
+              eventRank: event.rank as 'S' | 'A' | 'B' | 'C' | 'D',
+              courseName: event.course?.name || 'Curso desconocido',
+              affectedCharacters: affectedCount,
+              changes: {
+                health: event.health,
+                energy: event.energy,
+                gold: event.gold,
+                experience: event.experience,
+              },
+            });
+          }
+        } catch (webhookError) {
+          console.error('❌ Error al enviar notificación a Discord:', webhookError);
+          // No lanzamos error para no interrumpir el flujo principal
+        }
+      }
 
       return {
         event: this.formatEventResponse(event),
