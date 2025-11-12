@@ -21,7 +21,7 @@ export default function GuestLayout({ children }: GuestLayoutProps) {
       <div className="fixed top-4 left-4 z-20">
         <Link href="/" aria-label="Volver al inicio">
           <Image
-            src="/logo-wow.svg"
+            src="assets/logo-wow.svg"
             alt="Warclass logo"
             width={48}
             height={48}

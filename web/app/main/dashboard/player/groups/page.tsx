@@ -17,34 +17,41 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Users, Coins, Zap, Star } from 'lucide-react'
 
+interface GroupApiCharacter {
+  id: string
+  name: string
+  experience: number
+  gold: number
+  energy: number
+  health?: number
+  class: {
+    id: string
+    name: string
+    speed: number
+  }
+  user: {
+    id: string
+    name: string
+    email: string
+  }
+  level: number
+}
+
 interface Group {
   id: string
   name: string
-  memberCount: number
-  members: Array<{
-    id: string
-    name: string
-    experience: number
-    gold: number
-    energy: number
-    character: {
-      id: string
-      name: string
-      experience: number
-      gold: number
-      energy: number
-      class: {
-        id: string
-        name: string
-        speed: number
-      }
-    } | null
-  }>
+  characterCount: number
+  statistics?: {
+    totalExperience: number
+    totalGold: number
+    averageEnergy: number
+  }
+  characters: GroupApiCharacter[]
 }
 
 export default function GroupsPage() {
   const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [groups, setGroups] = useState<Group[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -59,7 +66,8 @@ export default function GroupsPage() {
         setIsLoading(true)
         const response = await fetch(`/api/courses/groups?courseId=${courseId}`, {
           headers: {
-            'x-user-id': user.id
+            'x-user-id': user.id,
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           }
         })
 
@@ -127,26 +135,26 @@ export default function GroupsPage() {
           </div>
           <Badge className="bg-purple-600 text-white text-lg px-4 py-2">
             <Users className="h-5 w-5 mr-2" />
-            {groups.reduce((acc, g) => acc + g.memberCount, 0)} miembros
+            {groups.reduce((acc, g) => acc + (g.characterCount || 0), 0)} miembros
           </Badge>
         </div>
 
         <div className="space-y-6">
           {groups.map((group) => (
             <Card key={group.id} className="bg-[#1a1a1a] border-neutral-800">
-              <CardHeader className="border-b border-neutral-800">
+              <CardHeader className="border-b border-neutral-800 pb-4">
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-2xl font-bold text-[#D89216]">
                     {group.name}
                   </CardTitle>
                   <Badge variant="secondary" className="text-lg px-3 py-1">
                     <Users className="h-4 w-4 mr-1" />
-                    {group.memberCount} miembros
+                    {group.characterCount} miembros
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-6">
-                <ScrollArea className="h-[500px]">
+              <CardContent className="px-6 pt-6 pb-3">
+                <ScrollArea className="max-h-[420px]">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-neutral-800 hover:bg-neutral-800">
@@ -158,38 +166,28 @@ export default function GroupsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {group.members.length > 0 ? (
-                        group.members.map((member) => {
-                          const character = member.character;
-                          const level = character 
-                            ? Math.floor(character.experience / 100) + 1 
-                            : 0;
-                          const expInLevel = character 
-                            ? character.experience % 100 
-                            : 0;
-                          const energyPercent = character 
-                            ? character.energy 
-                            : 0;
+                      {group.characters.length > 0 ? (
+                        group.characters.map((character) => {
+                          const level = Math.floor(character.experience / 100) + 1;
+                          const energyPercent = character.energy;
 
                           return (
                             <TableRow
-                              key={member.id}
-                              className="border-neutral-800 hover:bg-neutral-900 transition-colors"
+                              key={character.id}
+                              className="border-neutral-800 hover:bg-neutral-900 transition-colors last:border-b-0"
                             >
                               <TableCell>
                                 <span className="font-medium text-neutral-100">
-                                  {member.name}
+                                  {character.user?.name || 'Alumno'}
                                 </span>
                               </TableCell>
                               <TableCell className="text-neutral-300">
-                                {character?.name || (
-                                  <span className="text-neutral-500 italic">Sin personaje</span>
-                                )}
+                                {character.name}
                               </TableCell>
                               <TableCell>
-                                {character?.class ? (
+                                {character.class ? (
                                   <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
-                                    {character.class.name}
+                                    {character.class?.name}
                                   </Badge>
                                 ) : (
                                   <span className="text-neutral-500">-</span>

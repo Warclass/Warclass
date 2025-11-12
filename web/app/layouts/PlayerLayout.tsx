@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Menu, BookOpen, Mail, User, Users, Trophy, Home, Layers, LogOut, ScrollText, Heart, FileText } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,7 @@ export default function PlayerLayout({
   history = []
 }: PlayerLayoutProps) {
   const { user, token: authToken } = useAuth();
+  const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [invitationsCount, setInvitationsCount] = useState(0);
   const [quizHistory, setQuizHistory] = useState<Array<{
@@ -46,10 +48,13 @@ export default function PlayerLayout({
   }>>([]);
   const [memberId, setMemberId] = useState<string | null>(null);
 
+  // Determinar courseId efectivo: prop o query param
+  const effectiveCourseId = courseId || searchParams.get('courseId') || undefined;
+
   // Helper para construir URLs con courseId
   const buildUrl = (path: string) => {
-    if (courseId) {
-      return `${path}?courseId=${courseId}`;
+    if (effectiveCourseId) {
+      return `${path}?courseId=${effectiveCourseId}`;
     }
     return path;
   };
@@ -57,16 +62,17 @@ export default function PlayerLayout({
   // Obtener memberId del usuario
   useEffect(() => {
     const fetchMemberId = async () => {
-      if (!courseId || !user?.id) return;
+      if (!effectiveCourseId || !user?.id) return;
 
       try {
         const response = await fetch(
-          `/api/characters/member?userId=${user.id}&courseId=${courseId}`
+          `/api/characters/member?userId=${user.id}&courseId=${effectiveCourseId}`
         );
         
         if (response.ok) {
-          const data = await response.json();
-          setMemberId(data.memberId);
+          const result = await response.json();
+          const characterId = result?.data?.id;
+          if (characterId) setMemberId(characterId);
         } else {
           console.error('Error al obtener memberId:', response.status);
         }
@@ -76,7 +82,7 @@ export default function PlayerLayout({
     };
 
     fetchMemberId();
-  }, [courseId, user?.id]);
+  }, [effectiveCourseId, user?.id]);
 
   // Cargar historial de quizzes
   useEffect(() => {
@@ -85,10 +91,11 @@ export default function PlayerLayout({
 
       try {
         const response = await fetch(
-          `/api/quizzes/history?memberId=${memberId}`,
+          `/api/quizzes/history?characterId=${memberId}`,
           {
             headers: {
-              'x-user-id': user.id
+              'x-user-id': user.id,
+              ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
             }
           }
         );

@@ -10,6 +10,7 @@ export interface CharacterData {
   energy: number;
   health?: number;
   appearance?: any;
+  groupId?: string | null;
   className: string;
   classSpeed: number;
   class?: {
@@ -124,6 +125,7 @@ export async function getUserCharacterForCourse(userId: string, courseId: string
       energy: character.energy,
       health: character.health,
       appearance: character.appearance,
+      groupId: character.group_id ?? null,
       className: character.class.name,
       classSpeed: character.class.speed,
       class: {

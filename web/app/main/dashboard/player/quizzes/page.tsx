@@ -48,8 +48,10 @@ export default function QuizzesPage() {
       try {
         const response = await fetch(`/api/characters/member?userId=${user.id}&courseId=${courseId}`)
         if (response.ok) {
-          const data = await response.json()
-          setMemberId(data.memberId)
+          const result = await response.json()
+          // La API retorna { success: true, data: { id, ...character } }
+          const characterId = result?.data?.id
+          if (characterId) setMemberId(characterId)
         }
       } catch (error) {
         console.error('Error al obtener memberId:', error)
@@ -59,21 +61,22 @@ export default function QuizzesPage() {
     fetchMemberId()
   }, [user?.id, courseId])
 
-  // Cargar quizzes con estado de completado
+  // Cargar quizzes (con estado de completado si tenemos characterId)
   useEffect(() => {
     const fetchQuizzes = async () => {
-      if (!user?.id || !courseId || !memberId) return
+      if (!user?.id || !courseId) return
 
       try {
         setIsLoading(true)
-        const response = await fetch(
-          `/api/quizzes?courseId=${courseId}&memberId=${memberId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
+        // Construir query: incluir characterId si está disponible
+        const params = new URLSearchParams({ courseId: String(courseId) })
+        if (memberId) params.set('characterId', memberId)
+
+        const response = await fetch(`/api/quizzes?${params.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
-        )
+        })
 
         if (response.ok) {
           const data = await response.json()
@@ -182,7 +185,8 @@ export default function QuizzesPage() {
                   ? new Date(quiz.createdAt).toLocaleDateString('es-ES', {
                       year: 'numeric',
                       month: 'long',
-                      day: 'numeric'
+                      day: 'numeric',
+                      timeZone: 'UTC' // Evita desajustes de hidración por zona horaria/locale
                     })
                   : 'Sin fecha'
 

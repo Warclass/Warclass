@@ -38,7 +38,7 @@ interface Task {
 export default function TasksPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [memberId, setMemberId] = useState<string | null>(null);
@@ -63,9 +63,11 @@ export default function TasksPage() {
         );
 
         if (response.ok) {
-          const data = await response.json();
-          setMemberId(data.memberId);
-          setGroupId(data.groupId);
+          const result = await response.json();
+          const characterId = result?.data?.id;
+          const grpId = result?.data?.groupId ?? null;
+          if (characterId) setMemberId(characterId);
+          if (grpId) setGroupId(grpId);
         } else {
           console.error('Error al obtener member:', response.status);
         }
@@ -78,27 +80,60 @@ export default function TasksPage() {
   }, [courseId, user?.id]);
 
   useEffect(() => {
-    if (!groupId || !memberId) {
-      return;
-    }
+    // Fallback:
+    // - Si hay groupId y characterId: obtener tareas con estado de completitud
+    // - Si NO hay groupId pero sí courseId/characterId: obtener tareas del curso sin estado
+    const load = async () => {
+      if (!user?.id || !memberId || !courseId) {
+        setIsLoading(false);
+        return;
+      }
 
-    // Cargar tasks del grupo con estado de completitud
-    const fetchTasks = async () => {
       try {
-        const response = await fetch(
-          `/api/tasks?groupId=${groupId}&memberId=${memberId}`,
+        setIsLoading(true);
+        if (groupId) {
+          const response = await fetch(
+            `/api/tasks?groupId=${groupId}&characterId=${memberId}`,
+            {
+              headers: {
+                'x-user-id': user.id,
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+              }
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setTasks(data.tasks || []);
+            return;
+          }
+        }
+
+        // Sin groupId: traer tareas del curso como fallback
+        const resCourse = await fetch(
+          `/api/tasks/course/${courseId}`,
           {
             headers: {
-              'x-user-id': user!.id
+              'x-user-id': user.id,
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             }
           }
         );
-
-        if (response.ok) {
-          const data = await response.json();
-          setTasks(data.tasks || []);
+        if (resCourse.ok) {
+          const data = await resCourse.json();
+          // Mapear a la interfaz local y setear completed=false (sin estado por personaje)
+          const mapped: Task[] = (data.tasks || data.data || []).map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            description: t.description ?? null,
+            experience: t.experience ?? 0,
+            gold: t.gold ?? 0,
+            health: t.health ?? 0,
+            energy: t.energy ?? 0,
+            completed: false,
+          }));
+          setTasks(mapped);
         } else {
-          console.error('Error al cargar tasks:', response.status);
+          console.error('Error al cargar tasks del curso:', resCourse.status);
         }
       } catch (error) {
         console.error('Error al cargar tasks:', error);
@@ -107,8 +142,8 @@ export default function TasksPage() {
       }
     };
 
-    fetchTasks();
-  }, [groupId, memberId, user]);
+    load();
+  }, [groupId, memberId, user?.id, token, courseId]);
 
   const completedCount = tasks.filter(t => t.completed).length;
 
@@ -264,7 +299,7 @@ export default function TasksPage() {
                               className="bg-[#D89216] hover:bg-[#B87A12] text-black"
                               onClick={() =>
                                 router.push(
-                                  `/main/dashboard/player/tasks/${task.id}/submit?courseId=${courseId}&memberId=${memberId}`
+                                  `/main/dashboard/player/tasks/${task.id}/submit?courseId=${courseId}&characterId=${memberId}`
                                 )
                               }
                             >

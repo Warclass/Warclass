@@ -738,7 +738,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Quick Actions */}
-            <Card className="bg-[#1a1a1a] border-neutral-800">
+            {/* <Card className="bg-[#1a1a1a] border-neutral-800">
               <CardHeader>
                 <CardTitle className="text-neutral-100 text-lg">
                   Accesos Rápidos
@@ -773,7 +773,7 @@ export default function DashboardPage() {
                   </Button>
                 </Link>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </main>

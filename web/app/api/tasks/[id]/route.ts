@@ -55,7 +55,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const task = await TaskService.getTaskById(params.id);
+  const { searchParams } = new URL(req.url);
+  const characterId = searchParams.get('characterId') || undefined;
+
+  const task = await TaskService.getTaskByIdForCharacter(params.id, characterId);
 
     return NextResponse.json({ task }, { status: 200 });
   } catch (error: any) {

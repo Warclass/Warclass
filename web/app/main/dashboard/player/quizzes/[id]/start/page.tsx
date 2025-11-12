@@ -30,7 +30,7 @@ export default function QuizStartPage() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   
   const quizId = params.id as string
   const courseId = searchParams.get('courseId')
@@ -57,8 +57,9 @@ export default function QuizStartPage() {
       try {
         const response = await fetch(`/api/characters/member?userId=${user.id}&courseId=${courseId}`)
         if (response.ok) {
-          const data = await response.json()
-          setMemberId(data.memberId)
+          const result = await response.json()
+          const characterId = result?.data?.id
+          if (characterId) setMemberId(characterId)
         }
       } catch (error) {
         console.error('Error al obtener memberId:', error)
@@ -71,18 +72,18 @@ export default function QuizStartPage() {
   // Cargar quiz
   useEffect(() => {
     const fetchQuiz = async () => {
-      if (!user?.id || !memberId) return
+      if (!user?.id) return
 
       try {
         setIsLoading(true)
-        const response = await fetch(
-          `/api/quizzes/${quizId}?memberId=${memberId}`,
-          {
-            headers: {
-              'x-user-id': user.id
-            }
+        const params = new URLSearchParams()
+        if (memberId) params.set('characterId', memberId)
+        const response = await fetch(`/api/quizzes/${quizId}?${params.toString()}`, {
+          headers: {
+            'x-user-id': user.id,
+            'Authorization': `Bearer ${token}`
           }
-        )
+        })
 
         if (response.ok) {
           const data = await response.json()
@@ -138,7 +139,7 @@ export default function QuizStartPage() {
         },
         body: JSON.stringify({
           quizId: quiz.id,
-          memberId: memberId,
+          characterId: memberId,
           selectedAnswer: selectedAnswer,
           timeTaken: timeTaken
         })

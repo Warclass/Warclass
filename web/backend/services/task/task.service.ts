@@ -46,7 +46,33 @@ export class TaskService {
    * @deprecated Esta función usa teachers_courses_tasks que es legacy. Usar getTasksByGroupForCharacter en su lugar
    */
   static async getTaskById(taskId: string): Promise<TaskWithAssignments> {
-    throw new Error('getTaskById está deprecado. Usar getTasksByGroupForCharacter en su lugar');
+    try {
+      const task = await prisma.tasks.findUnique({
+        where: { id: taskId },
+      });
+
+      if (!task) {
+        throw new Error('Tarea no encontrada');
+      }
+
+      return {
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        experience: task.experience,
+        gold: task.gold,
+        health: task.health,
+        energy: task.energy,
+        createdAt: task.created_at,
+        updatedAt: task.updated_at,
+        assignedGroups: [],
+        completedCount: 0,
+        totalAssigned: 0,
+      };
+    } catch (error) {
+      console.error('Error getting task by id:', error);
+      throw error;
+    }
   }
 
   /**
@@ -141,7 +167,51 @@ export class TaskService {
    * @deprecated Usar getTasksByGroupForCharacter en su lugar
    */
   static async getTasksByGroup(groupId: string): Promise<TaskWithAssignments[]> {
-    throw new Error('getTasksByGroup está deprecado. Usar getTasksByGroupForCharacter');
+    try {
+      const group = await prisma.groups.findUnique({
+        where: { id: groupId },
+        include: { characters: true },
+      });
+
+      if (!group) {
+        throw new Error('Grupo no encontrado');
+      }
+
+      const tasks = await prisma.tasks.findMany();
+
+      return tasks.map((task) => ({
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        experience: task.experience,
+        gold: task.gold,
+        health: task.health,
+        energy: task.energy,
+        createdAt: task.created_at,
+        updatedAt: task.updated_at,
+        assignedGroups: [{ id: group.id, name: group.name, memberCount: group.characters.length }],
+        completedCount: 0,
+        totalAssigned: group.characters.length,
+      }));
+    } catch (error) {
+      console.error('Error getting tasks by group:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener una tarea y si está completada por un character concreto
+   */
+  static async getTaskByIdForCharacter(taskId: string, characterId?: string): Promise<TaskWithAssignments & { completed?: boolean } > {
+    const taskData = await this.getTaskById(taskId);
+    if (!characterId) return taskData;
+
+    const completed = await prisma.characters_tasks.findUnique({
+      where: { character_id_task_id: { character_id: characterId, task_id: taskId } },
+      select: { task_id: true },
+    });
+
+    return { ...taskData, completed: !!completed };
   }
 
   /**

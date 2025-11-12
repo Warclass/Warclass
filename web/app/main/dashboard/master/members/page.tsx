@@ -92,7 +92,8 @@ export default function MembersPage() {
         `/api/characters?action=listByCourse&courseId=${courseId}`, 
         {
           headers: { 
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            ...(user?.id ? { 'x-user-id': user.id } : {})
           }
         }
       );
@@ -136,6 +137,14 @@ export default function MembersPage() {
 
   const handleAssignStats = async () => {
     if (!selectedMember) return;
+    if (!selectedMember.character?.id) {
+      toast({
+        title: 'Sin personaje',
+        description: 'Este estudiante no tiene personaje aún',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     if (statsForm.experience === 0 && statsForm.gold === 0) {
       toast({
@@ -154,10 +163,11 @@ export default function MembersPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          ...(user?.id ? { 'x-user-id': user.id } : {})
         },
         body: JSON.stringify({
-          member_id: selectedMember.id,
+          character_id: selectedMember.character?.id,
           experience_delta,
           gold_delta,
           reason: statsForm.reason
@@ -434,6 +444,36 @@ export default function MembersPage() {
               </div>
               <div>
                 <Label htmlFor="reason" className="text-neutral-300">Razón (opcional)</Label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-8 border-neutral-700 text-neutral-200 hover:bg-neutral-800"
+                    onClick={() => {
+                      const quick = 'Respondió pregunta correctamente';
+                      setStatsForm((s) => ({
+                        ...s,
+                        reason: s.reason ? `${s.reason} | ${quick}` : quick
+                      }));
+                    }}
+                  >
+                    Respondió pregunta correctamente
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-8 border-neutral-700 text-neutral-200 hover:bg-neutral-800"
+                    onClick={() => {
+                      const quick = 'Participó en clase';
+                      setStatsForm((s) => ({
+                        ...s,
+                        reason: s.reason ? `${s.reason} | ${quick}` : quick
+                      }));
+                    }}
+                  >
+                    Participó en clase
+                  </Button>
+                </div>
                 <Textarea
                   id="reason"
                   value={statsForm.reason}

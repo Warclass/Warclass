@@ -225,7 +225,8 @@ export default function CreateCharacterPage() {
         const data = await response.json();
         console.log('Personaje creado:', data);
         
-        router.push('/main/dashboard/player');
+        // Redirigir a la vista de personaje con el courseId actual
+        router.push(`/main/dashboard/player/character?courseId=${courseId}`);
       } else {
         const errorData = await response.json()
         alert(errorData.error || 'Error al crear personaje')

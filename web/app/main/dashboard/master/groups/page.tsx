@@ -275,9 +275,10 @@ export default function GroupsPage() {
     setAssignModalOpen(true);
   };
 
-  const filteredMembers = allMembers.filter(member =>
-    member.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Mostrar solo alumnos SIN grupo para evitar duplicados en la asignación
+  const filteredMembers = allMembers
+    .filter(member => !member.group)
+    .filter(member => member.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   if (!courseId) {
     return null;
@@ -400,6 +401,54 @@ export default function GroupsPage() {
                       <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
                         {group.members?.length || 0}
                       </Badge>
+                    </div>
+                    {/* Lista mejorada de integrantes con acciones */}
+                    <div className="mt-2 space-y-2">
+                      {group.members && group.members.length > 0 ? (
+                        group.members.map((m) => (
+                          <div key={m.id} className="flex items-center justify-between rounded-md border border-neutral-800 bg-[#0a0a0a] px-3 py-2">
+                            <div className="flex items-center gap-3">
+                              <div className="text-xs text-neutral-400">
+                                <span className="mr-2">⭐ {m.experience}</span>
+                                <span className="mr-2">💰 {m.gold}</span>
+                                <span>⚡ {m.energy}</span>
+                              </div>
+                              <span className="text-sm text-neutral-200 font-medium">{m.name}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch('/api/groups/remove', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({ characterIds: [m.id] })
+                                  });
+                                  if (res.ok) {
+                                    toast({ title: 'Integrante removido', description: `${m.name} fue quitado del grupo` });
+                                    fetchData();
+                                  } else {
+                                    const err = await res.json();
+                                    toast({ title: 'Error', description: err.error || 'No se pudo quitar el integrante', variant: 'destructive' });
+                                  }
+                                } catch (e) {
+                                  console.error(e);
+                                  toast({ title: 'Error', description: 'No se pudo quitar el integrante', variant: 'destructive' });
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-neutral-500">Sin integrantes</p>
+                      )}
                     </div>
                     <Button
                       onClick={() => openAssignModal(group)}

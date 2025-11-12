@@ -322,109 +322,10 @@ export default function MasterCourseDashboard() {
         </div>
 
         {/* Personajes del Curso */}
-        <Card className="bg-[#1a1a1a] border-neutral-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-[#D89216]" />
-              Personajes del Curso
-              <Badge variant="secondary" className="ml-2">
-                {characters.length}
-              </Badge>
-            </CardTitle>
-            <CardDescription>
-              Estudiantes que han creado sus personajes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {characters.length === 0 ? (
-              <div className="text-center py-8 text-neutral-500">
-                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Aún no hay personajes creados en este curso</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {characters.map((character: any) => (
-                  <Card 
-                    key={character.id} 
-                    className="bg-[#0f0f0f] border-neutral-700 hover:border-[#D89216] transition-colors"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg text-neutral-100">
-                            {character.name}
-                          </CardTitle>
-                          <p className="text-sm text-neutral-400 mt-1">
-                            {character.user.name}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {character.user.email}
-                          </p>
-                        </div>
-                        <Badge 
-                          variant={character.hasGroup ? "default" : "secondary"}
-                          className={character.hasGroup ? "bg-green-600" : "bg-neutral-600"}
-                        >
-                          {character.hasGroup ? "Con Grupo" : "Sin Grupo"}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {/* Clase */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-neutral-400">Clase:</span>
-                        <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
-                          {character.class.name}
-                        </Badge>
-                      </div>
-
-                      {/* Grupo */}
-                      {character.group && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-neutral-400">Grupo:</span>
-                          <span className="text-sm text-neutral-100">
-                            {character.group.name}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Stats Grid */}
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-700">
-                        <div>
-                          <p className="text-xs text-neutral-500">Experiencia</p>
-                          <p className="text-sm font-semibold text-neutral-100">
-                            {character.experience} XP
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-neutral-500">Oro</p>
-                          <p className="text-sm font-semibold text-[#D89216]">
-                            {character.gold}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-neutral-500">Energía</p>
-                          <p className="text-sm font-semibold text-blue-400">
-                            {character.energy}%
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-neutral-500">Salud</p>
-                          <p className="text-sm font-semibold text-green-400">
-                            {character.health}%
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        
 
         {/* Recent Activity */}
-        <Card className="bg-[#1a1a1a] border-neutral-800">
+        {/* <Card className="bg-[#1a1a1a] border-neutral-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-[#D89216]" />
@@ -437,7 +338,7 @@ export default function MasterCourseDashboard() {
               <p>No hay actividad reciente</p>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </MasterCourseLayout>
   );

@@ -114,9 +114,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verificar que el usuario sea profesor del curso
+    // Verificar permisos: debe ser profesor y estar asignado al curso (via teachers_courses)
     const isTeacher = await TeacherService.isTeacher(userId);
-    
     if (!isTeacher) {
       return NextResponse.json(
         { error: 'No tienes permisos para realizar esta acción' },
@@ -124,19 +123,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verificar que el usuario esté inscrito en el curso
-    const inscription = await prisma.inscriptions.findUnique({
+    const teacherForCourse = await prisma.teachers.findFirst({
       where: {
-        user_id_course_id: {
-          user_id: userId,
-          course_id: character.course_id // Ahora usamos course_id directamente del personaje
+        user_id: userId,
+        teachers_courses: {
+          some: { course_id: character.course_id }
         }
       }
     });
 
-    if (!inscription) {
+    if (!teacherForCourse) {
       return NextResponse.json(
-        { error: 'No estás inscrito en este curso' },
+        { error: 'No estás asignado como profesor de este curso' },
         { status: 403 }
       );
     }
@@ -228,7 +226,7 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Verificar permisos (todos deben ser del mismo curso)
+  // Verificar permisos (todos deben ser del mismo curso)
     const courseIds = [...new Set(characters.map(c => c.course_id))]; // Ahora usamos course_id directamente
     
     if (courseIds.length > 1) {
@@ -240,29 +238,23 @@ export async function PUT(req: NextRequest) {
 
     const courseId = courseIds[0] as string;
 
-    // Verificar que el usuario sea profesor
-    const isTeacher = await TeacherService.isTeacher(userId);
-    
-    if (!isTeacher) {
+    // Verificar permisos del profesor
+    const isTeacher2 = await TeacherService.isTeacher(userId);
+    if (!isTeacher2) {
       return NextResponse.json(
         { error: 'No tienes permisos para realizar esta acción' },
         { status: 403 }
       );
     }
-
-    // Verificar que el usuario esté inscrito en el curso
-    const inscription = await prisma.inscriptions.findUnique({
+    const teacherForCourse2 = await prisma.teachers.findFirst({
       where: {
-        user_id_course_id: {
-          user_id: userId,
-          course_id: courseId
-        }
+        user_id: userId,
+        teachers_courses: { some: { course_id: courseId } }
       }
     });
-
-    if (!inscription) {
+    if (!teacherForCourse2) {
       return NextResponse.json(
-        { error: 'No estás inscrito en este curso' },
+        { error: 'No estás asignado como profesor de este curso' },
         { status: 403 }
       );
     }

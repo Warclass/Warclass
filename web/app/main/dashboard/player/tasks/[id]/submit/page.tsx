@@ -38,7 +38,7 @@ export default function SubmitTaskPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const params = useParams();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -48,14 +48,14 @@ export default function SubmitTaskPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const courseId = searchParams.get("courseId");
-  const memberId = searchParams.get("memberId");
+  const characterId = searchParams.get("characterId");
   const taskId = params.id as string;
   
   // Obtener datos del curso para el nombre
   const { courseData } = useCourseData(courseId);
 
   useEffect(() => {
-    if (!courseId || !memberId || !taskId || !user?.id) {
+    if (!courseId || !taskId || !user?.id) {
       setIsLoading(false);
       return;
     }
@@ -63,9 +63,12 @@ export default function SubmitTaskPage() {
     // Cargar información de la tarea
     const fetchTask = async () => {
       try {
-        const response = await fetch(`/api/tasks/${taskId}`, {
+        const params = new URLSearchParams();
+        if (characterId) params.set('characterId', String(characterId));
+        const response = await fetch(`/api/tasks/${taskId}?${params.toString()}`, {
           headers: {
-            'x-user-id': user.id
+            'x-user-id': user.id,
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           }
         });
 
@@ -84,7 +87,7 @@ export default function SubmitTaskPage() {
     };
 
     fetchTask();
-  }, [courseId, memberId, taskId, user, router]);
+  }, [courseId, characterId, taskId, user, router, token]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -101,7 +104,7 @@ export default function SubmitTaskPage() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedFile || !courseId || !taskId || !memberId || !user) {
+    if (!selectedFile || !courseId || !taskId || !characterId || !user) {
       return;
     }
 
@@ -120,7 +123,7 @@ export default function SubmitTaskPage() {
         },
         body: JSON.stringify({
           taskId,
-          memberId
+          characterId
         })
       });
 

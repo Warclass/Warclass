@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Sword, Shield, Zap, Heart, Coins, Star, BookOpen } from 'lucide-react'
+import { Sword, Shield, Zap, Heart, Coins, Star, BookOpen, Flame } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
 import { CustomizableCharacter } from '@/lib/character'
@@ -218,30 +218,8 @@ export default function CharacterPage() {
     return (
         <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                {/* Panel Izquierdo: Visualización 3D */}
+                {/* Panel Izquierdo: solo el Personaje (3D) */}
                 <div className="flex flex-col gap-4">
-                    {/* Header con info del curso */}
-                    <Card className="bg-gradient-to-r from-purple-600 to-blue-600 border-none text-white">
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-2xl font-bold mb-1">
-                                        {characterData.name}
-                                    </CardTitle>
-                                    <CardDescription className="text-white/90">
-                                        {charClass.name} • Nivel {level}
-                                    </CardDescription>
-                                    <CardDescription className="text-white/80 text-sm">
-                                        {course.name} • {course.teacher}
-                                    </CardDescription>
-                                </div>
-                                <Badge className="bg-white/20 text-white px-3 py-1">
-                                    ⚡ {charClass.speed}
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                    </Card>
-
                     {/* Visualización 3D del personaje */}
                     <Card className="bg-[#1a1a1a] border-neutral-800 flex-1 min-h-[400px]">
                         <CardContent className="p-0 h-full">
@@ -307,65 +285,68 @@ export default function CharacterPage() {
                     </Card>
                 </div>
 
-                {/* Panel Derecho: Stats y Detalles */}
+                {/* Panel Derecho: Header, Stats y Detalles */}
                 <div className="flex flex-col gap-4 overflow-y-auto">
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-4">
-                    <Card className="bg-[#1a1a1a] border-neutral-800">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm text-neutral-400">Experiencia</CardTitle>
-                                <Star className="h-5 w-5 text-yellow-500" />
+                    {/* Header con info del curso (movido a la derecha) */}
+                    <Card className="bg-gradient-to-r from-indigo-600 via-sky-600 to-cyan-600 border-none text-white">
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-2xl font-bold mb-1">
+                                        {characterData.name}
+                                    </CardTitle>
+                                    <CardDescription className="text-white/90">
+                                        {charClass.name} • Nivel {level}
+                                    </CardDescription>
+                                    <CardDescription className="text-white/80 text-sm">
+                                        {course.name} • {course.teacher}
+                                    </CardDescription>
+                                </div>
+                                <Badge className="bg-white/20 text-white px-3 py-1">
+                                    ⚡ {charClass.speed}
+                                </Badge>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xl font-bold text-neutral-100">
-                                        {characterData.experience}
-                                    </span>
-                                    <span className="text-xs text-neutral-500">/ 1000</span>
-                                </div>
-                                <Progress value={experiencePercent} className="h-2" />
-                            </div>
-                        </CardContent>
                     </Card>
 
-                    <Card className="bg-[#1a1a1a] border-neutral-800">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm text-neutral-400">Oro</CardTitle>
-                                <Coins className="h-5 w-5 text-[#D89216]" />
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-xl font-bold text-neutral-100">
-                                {characterData.gold}
-                            </div>
-                            <p className="text-xs text-neutral-500 mt-1">Monedas</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-[#1a1a1a] border-neutral-800">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm text-neutral-400">Energía</CardTitle>
-                                <Zap className="h-5 w-5 text-green-500" />
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xl font-bold text-neutral-100">
-                                        {characterData.energy}
-                                    </span>
-                                    <span className="text-xs text-neutral-500">/ 100</span>
+                    {/* Stats compact chips */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <Card className="bg-[#121212] border-neutral-800">
+                            <CardContent className="py-3 px-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-yellow-500">
+                                        <Star className="h-4 w-4" aria-hidden="true" />
+                                        <span className="text-xs text-neutral-400">XP</span>
+                                    </div>
+                                    <span className="text-sm font-semibold text-neutral-100">{characterData.experience}</span>
                                 </div>
-                                <Progress value={characterData.energy} className="h-2" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                                <Progress value={experiencePercent} className="h-1 mt-2" />
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-[#121212] border-neutral-800">
+                            <CardContent className="py-3 px-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-[#D89216]">
+                                        <Coins className="h-4 w-4" aria-hidden="true" />
+                                        <span className="text-xs text-neutral-400">Oro</span>
+                                    </div>
+                                    <span className="text-sm font-semibold text-neutral-100">{characterData.gold}</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-[#121212] border-neutral-800">
+                            <CardContent className="py-3 px-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-green-500">
+                                        <Zap className="h-4 w-4" aria-hidden="true" />
+                                        <span className="text-xs text-neutral-400">Energía</span>
+                                    </div>
+                                    <span className="text-sm font-semibold text-neutral-100">{characterData.energy}</span>
+                                </div>
+                                <Progress value={characterData.energy} className="h-1 mt-2" />
+                            </CardContent>
+                        </Card>
+                    </div>
 
                     {/* Character Details */}
                     {/* Abilities */}
@@ -376,36 +357,94 @@ export default function CharacterPage() {
                                 Habilidades
                             </CardTitle>
                             <CardDescription>
-                                Habilidades de tu personaje
+                                Vista previa de habilidades según tu clase
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {characterData.abilities.length > 0 ? (
-                                <div className="space-y-3">
-                                    {characterData.abilities.map((ability: any) => (
-                                        <Card key={ability.id} className="bg-[#0a0a0a] border-neutral-700">
-                                            <CardContent className="pt-4">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <h4 className="font-medium text-neutral-100">{ability.name}</h4>
-                                                        <p className="text-sm text-neutral-400 mt-1">
-                                                            {ability.description || 'Sin descripción'}
-                                                        </p>
-                                                    </div>
-                                                    <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
-                                                        {ability.gold} oro
-                                                    </Badge>
+                            {/* Visual de dos habilidades fijas por clase */}
+                            <div className="grid grid-cols-2 gap-3">
+                                {(['Mago','Mage'].includes(className)) && (
+                                    <>
+                                        <Card className="bg-[#0a0a0a] border-neutral-700">
+                                            <CardContent className="py-4 px-3 flex items-center gap-3">
+                                                <div className="h-9 w-9 rounded-md bg-red-900/40 flex items-center justify-center">
+                                                    <Flame className="h-5 w-5 text-red-400" aria-hidden="true" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-neutral-100">Bola de Fuego</p>
+                                                    <p className="text-xs text-neutral-400">Daño mágico</p>
                                                 </div>
                                             </CardContent>
                                         </Card>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8 text-neutral-500">
-                                    <Sword className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                    <p>No tienes habilidades aún</p>
-                                </div>
-                            )}
+                                        <Card className="bg-[#0a0a0a] border-neutral-700">
+                                            <CardContent className="py-4 px-3 flex items-center gap-3">
+                                                <div className="h-9 w-9 rounded-md bg-emerald-900/30 flex items-center justify-center">
+                                                    <Heart className="h-5 w-5 text-emerald-400" aria-hidden="true" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-neutral-100">Curación</p>
+                                                    <p className="text-xs text-neutral-400">Restaurar vida</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </>
+                                )}
+
+                                {(['Guerrero','Warrior'].includes(className)) && (
+                                    <>
+                                        <Card className="bg-[#0a0a0a] border-neutral-700">
+                                            <CardContent className="py-4 px-3 flex items-center gap-3">
+                                                <div className="h-9 w-9 rounded-md bg-blue-900/40 flex items-center justify-center">
+                                                    <Shield className="h-5 w-5 text-blue-400" aria-hidden="true" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-neutral-100">Escudo</p>
+                                                    <p className="text-xs text-neutral-400">Defensa aumentada</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-[#0a0a0a] border-neutral-700">
+                                            <CardContent className="py-4 px-3 flex items-center gap-3">
+                                                <div className="h-9 w-9 rounded-md bg-amber-900/40 flex items-center justify-center">
+                                                    <Sword className="h-5 w-5 text-amber-400" aria-hidden="true" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-neutral-100">Ataque Crítico</p>
+                                                    <p className="text-xs text-neutral-400">Golpe poderoso</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </>
+                                )}
+
+                                {/* Fallback simple para otras clases */}
+                                {!(['Mago','Mage','Guerrero','Warrior'].includes(className)) && (
+                                    <>
+                                        <Card className="bg-[#0a0a0a] border-neutral-700">
+                                            <CardContent className="py-4 px-3 flex items-center gap-3">
+                                                <div className="h-9 w-9 rounded-md bg-neutral-800 flex items-center justify-center">
+                                                    <Star className="h-5 w-5 text-neutral-400" aria-hidden="true" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-neutral-100">Habilidad 1</p>
+                                                    <p className="text-xs text-neutral-400">Próximamente</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-[#0a0a0a] border-neutral-700">
+                                            <CardContent className="py-4 px-3 flex items-center gap-3">
+                                                <div className="h-9 w-9 rounded-md bg-neutral-800 flex items-center justify-center">
+                                                    <Star className="h-5 w-5 text-neutral-400" aria-hidden="true" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-neutral-100">Habilidad 2</p>
+                                                    <p className="text-xs text-neutral-400">Próximamente</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -436,31 +475,7 @@ export default function CharacterPage() {
                         </Card>
                     </div>
 
-                    {/* Actions */}
-                    <Card className="bg-[#1a1a1a] border-neutral-800">
-                        <CardContent className="pt-6">
-                            <div className="flex gap-4">
-                                <Button 
-                                    onClick={() => router.push(`/main/dashboard/player/tasks?courseId=${courseId}`)}
-                                    className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black"
-                                >
-                                    Ver Tareas
-                                </Button>
-                                <Button 
-                                    onClick={() => router.push(`/main/dashboard/player/quizzes?courseId=${courseId}`)}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                >
-                                    Ver Exámenes
-                                </Button>
-                                <Button 
-                                    onClick={() => router.push(`/main/dashboard/player/members?courseId=${courseId}`)}
-                                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
-                                >
-                                    Ver Gremio
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Botones de navegación removidos según requerimiento */}
                 </div>
             </div>
         </PlayerLayout>
