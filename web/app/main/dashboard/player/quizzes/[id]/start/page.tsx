@@ -9,21 +9,32 @@ import { Button } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Clock, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
+import { Clock, AlertCircle, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 
-interface Quiz {
-  id: string
+interface QuizQuestion {
   question: string
   answers: { text: string }[]
-  correctAnswerIndex: number
-  difficulty: string
+  correctAnswerIndex?: number
   points: number
   timeLimit: number
-  groupId: string
-  completed?: boolean
+  answered?: boolean
   userAnswer?: number
   isCorrect?: boolean
   pointsEarned?: number
+}
+
+interface Quiz {
+  id: string
+  title: string
+  questions: QuizQuestion[]
+  difficulty: string
+  points: number
+  timeLimit: number
+  totalQuestions: number
+  questionsCompleted: number
+  courseId: string
+  completed: boolean
 }
 
 export default function QuizStartPage() {
@@ -31,23 +42,19 @@ export default function QuizStartPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, token } = useAuth()
-  
+
   const quizId = params.id as string
   const courseId = searchParams.get('courseId')
-  
+
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [memberId, setMemberId] = useState<string | null>(null)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [timeLeft, setTimeLeft] = useState<number>(0)
-  const [showResult, setShowResult] = useState(false)
-  const [result, setResult] = useState<{
-    isCorrect: boolean
-    pointsEarned: number
-    correctAnswer: number
-  } | null>(null)
+  const [showResults, setShowResults] = useState(false)
 
   // Obtener memberId
   useEffect(() => {
@@ -72,12 +79,12 @@ export default function QuizStartPage() {
   // Cargar quiz
   useEffect(() => {
     const fetchQuiz = async () => {
-      if (!user?.id) return
+      if (!user?.id || !memberId) return
 
       try {
         setIsLoading(true)
         const params = new URLSearchParams()
-        if (memberId) params.set('characterId', memberId)
+        params.set('characterId', memberId)
         const response = await fetch(`/api/quizzes/${quizId}?${params.toString()}`, {
           headers: {
             'x-user-id': user.id,
@@ -88,18 +95,19 @@ export default function QuizStartPage() {
         if (response.ok) {
           const data = await response.json()
           setQuiz(data.quiz)
-          
-          // Si ya completó el quiz, mostrar resultado
+
+          // Si ya completó todo el quiz, mostrar resultados
           if (data.quiz.completed) {
-            setShowResult(true)
-            setSelectedAnswer(data.quiz.userAnswer)
-            setResult({
-              isCorrect: data.quiz.isCorrect,
-              pointsEarned: data.quiz.pointsEarned,
-              correctAnswer: data.quiz.correctAnswerIndex
-            })
+            setShowResults(true)
           } else {
-            setTimeLeft(data.quiz.timeLimit)
+            // Encontrar la primera pregunta no respondida
+            const firstUnanswered = data.quiz.questions.findIndex((q: QuizQuestion) => !q.answered)
+            if (firstUnanswered !== -1) {
+              setCurrentQuestionIndex(firstUnanswered)
+            }
+            // Timer por pregunta individual
+            const currentQ = data.quiz.questions[firstUnanswered !== -1 ? firstUnanswered : 0]
+            setTimeLeft(currentQ.timeLimit)
           }
         } else {
           const errorData = await response.json()
@@ -114,32 +122,78 @@ export default function QuizStartPage() {
     }
 
     fetchQuiz()
-  }, [user?.id, quizId, memberId])
+  }, [user?.id, quizId, memberId, token])
+
+  // Timer
+  useEffect(() => {
+    if (!quiz || showResults || timeLeft <= 0) return
+
+    const currentQuestion = quiz.questions[currentQuestionIndex]
+    if (currentQuestion?.answered) return
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          // Auto submit cuando se acaba el tiempo
+          if (selectedAnswer !== null) {
+            handleSubmitAnswer()
+          }
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [quiz, currentQuestionIndex, timeLeft, showResults])
+
+  // Cambiar de pregunta
+  const navigateToQuestion = (index: number) => {
+    if (!quiz) return
+
+    setCurrentQuestionIndex(index)
+    setSelectedAnswer(quiz.questions[index].userAnswer ?? null)
+
+    // Resetear timer para la nueva pregunta
+    if (!quiz.questions[index].answered) {
+      setTimeLeft(quiz.questions[index].timeLimit)
+    }
+  }
 
   // Manejar envío de respuesta
-  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-    
+  const handleSubmitAnswer = useCallback(async () => {
+    if (!quiz || !memberId) return
+
+    const currentQuestion = quiz.questions[currentQuestionIndex]
+    if (currentQuestion.answered) {
+      // Ya respondió esta pregunta, ir a la siguiente
+      if (currentQuestionIndex < quiz.totalQuestions - 1) {
+        navigateToQuestion(currentQuestionIndex + 1)
+      }
+      return
+    }
+
     if (selectedAnswer === null) {
       setError('Debes seleccionar una respuesta')
       return
     }
 
-    if (!memberId || !quiz) return
-
     try {
       setIsSubmitting(true)
-      const timeTaken = quiz.timeLimit - timeLeft
+      setError(null)
+      const timeTaken = currentQuestion.timeLimit - timeLeft
 
       const response = await fetch('/api/quizzes/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user!.id
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           quizId: quiz.id,
           characterId: memberId,
+          questionIndex: currentQuestionIndex,
           selectedAnswer: selectedAnswer,
           timeTaken: timeTaken
         })
@@ -147,12 +201,38 @@ export default function QuizStartPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setResult({
+
+        // Actualizar el quiz con la respuesta
+        const updatedQuestions = [...quiz.questions]
+        updatedQuestions[currentQuestionIndex] = {
+          ...updatedQuestions[currentQuestionIndex],
+          answered: true,
+          userAnswer: selectedAnswer,
           isCorrect: data.result.isCorrect,
           pointsEarned: data.result.pointsEarned,
-          correctAnswer: quiz.correctAnswerIndex
+          correctAnswerIndex: data.result.correctAnswer
+        }
+
+        const newQuestionsCompleted = updatedQuestions.filter(q => q.answered).length
+        const newCompleted = newQuestionsCompleted === quiz.totalQuestions
+
+        setQuiz({
+          ...quiz,
+          questions: updatedQuestions,
+          questionsCompleted: newQuestionsCompleted,
+          completed: newCompleted
         })
-        setShowResult(true)
+
+        // Si completó todas las preguntas, mostrar resultados
+        if (newCompleted) {
+          setShowResults(true)
+        } else {
+          // Ir a la siguiente pregunta no respondida
+          const nextUnanswered = updatedQuestions.findIndex((q, idx) => idx > currentQuestionIndex && !q.answered)
+          if (nextUnanswered !== -1) {
+            setTimeout(() => navigateToQuestion(nextUnanswered), 1000)
+          }
+        }
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Error al enviar respuesta')
@@ -163,25 +243,7 @@ export default function QuizStartPage() {
     } finally {
       setIsSubmitting(false)
     }
-  }, [selectedAnswer, memberId, quiz, timeLeft, user])
-
-  // Timer
-  useEffect(() => {
-    if (!quiz || quiz.completed || timeLeft <= 0) return
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          handleSubmit() // Auto submit cuando se acaba el tiempo
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [quiz, timeLeft, handleSubmit])
+  }, [quiz, memberId, currentQuestionIndex, selectedAnswer, timeLeft, token])
 
   if (isLoading) {
     return (
@@ -209,7 +271,7 @@ export default function QuizStartPage() {
             </CardHeader>
             <CardContent>
               <p className="text-neutral-400">{error || 'Quiz no encontrado'}</p>
-              <Button 
+              <Button
                 onClick={() => router.push(`/main/dashboard/player/quizzes?courseId=${courseId}`)}
                 className="mt-4 bg-[#D89216] hover:bg-[#b6770f] text-black"
               >
@@ -222,75 +284,92 @@ export default function QuizStartPage() {
     )
   }
 
-  // Mostrar resultado
-  if (showResult && result) {
+  // Mostrar resultados finales
+  if (showResults) {
+    const totalPointsEarned = quiz.questions.reduce((sum, q) => sum + (q.pointsEarned || 0), 0)
+    const correctCount = quiz.questions.filter(q => q.isCorrect).length
+
     return (
       <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
           <Card className="bg-[#1a1a1a] border-neutral-800">
-            <CardHeader className={`${result.isCorrect ? 'bg-green-900/20' : 'bg-red-900/20'}`}>
+            <CardHeader className="bg-green-900/20">
               <CardTitle className="text-2xl text-neutral-100 flex items-center gap-3">
-                {result.isCorrect ? (
-                  <>
-                    <CheckCircle className="h-8 w-8 text-green-500" />
-                    ¡Correcto!
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-8 w-8 text-red-500" />
-                    Incorrecto
-                  </>
-                )}
+                <CheckCircle className="h-8 w-8 text-green-500" />
+                ¡Quiz Completado!
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-neutral-100">Pregunta:</h3>
-                <p className="text-lg text-neutral-300">{quiz.question}</p>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-neutral-900 p-4 rounded-lg text-center">
+                  <p className="text-neutral-400 text-sm">Respuestas Correctas</p>
+                  <p className="text-3xl font-bold text-green-400">{correctCount}/{quiz.totalQuestions}</p>
+                </div>
+                <div className="bg-neutral-900 p-4 rounded-lg text-center">
+                  <p className="text-neutral-400 text-sm">Puntos Obtenidos</p>
+                  <p className="text-3xl font-bold text-[#D89216]">{totalPointsEarned}</p>
+                </div>
+                <div className="bg-neutral-900 p-4 rounded-lg text-center">
+                  <p className="text-neutral-400 text-sm">Precisión</p>
+                  <p className="text-3xl font-bold text-blue-400">{Math.round((correctCount / quiz.totalQuestions) * 100)}%</p>
+                </div>
               </div>
 
               <Separator className="bg-neutral-700" />
 
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-neutral-100">Respuestas:</h3>
-                {quiz.answers.map((answer, index) => (
-                  <div
-                    key={index}
-                    className={`p-3 rounded-lg border-2 ${
-                      index === result.correctAnswer
-                        ? 'border-green-500 bg-green-900/20'
-                        : index === selectedAnswer
-                        ? 'border-red-500 bg-red-900/20'
-                        : 'border-neutral-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {index === result.correctAnswer && (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      )}
-                      {index === selectedAnswer && index !== result.correctAnswer && (
-                        <XCircle className="h-5 w-5 text-red-500" />
-                      )}
-                      <span className="text-neutral-200">{answer.text}</span>
-                    </div>
-                  </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-neutral-100">Revisión de Respuestas</h3>
+                {quiz.questions.map((question, index) => (
+                  <Card key={index} className="bg-[#0a0a0a] border-neutral-800">
+                    <CardContent className="pt-4">
+                      <div className="flex items-start gap-3 mb-3">
+                        {question.isCorrect ? (
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-1" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-500 mt-1" />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm text-neutral-500 mb-1">Pregunta {index + 1}</p>
+                          <p className="text-neutral-200 font-medium">{question.question}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-neutral-500">Puntos</p>
+                          <p className={`text-sm font-bold ${question.isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                            {question.pointsEarned || 0}/{question.points}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 ml-8">
+                        {question.answers.map((answer, ansIdx) => {
+                          const isUserAnswer = question.userAnswer === ansIdx
+                          const isCorrectAnswer = question.correctAnswerIndex === ansIdx
+
+                          return (
+                            <div
+                              key={ansIdx}
+                              className={`p-2 rounded border-2 ${isCorrectAnswer
+                                  ? 'border-green-500 bg-green-900/20'
+                                  : isUserAnswer
+                                    ? 'border-red-500 bg-red-900/20'
+                                    : 'border-neutral-700'
+                                }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {isCorrectAnswer && <CheckCircle className="h-4 w-4 text-green-500" />}
+                                {isUserAnswer && !isCorrectAnswer && <XCircle className="h-4 w-4 text-red-500" />}
+                                <span className="text-neutral-200 text-sm">{answer.text}</span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
 
-              <Separator className="bg-neutral-700" />
-
-              <div className="flex justify-between items-center bg-neutral-900 p-4 rounded-lg">
-                <div>
-                  <p className="text-neutral-400 text-sm">Puntos obtenidos</p>
-                  <p className="text-2xl font-bold text-[#D89216]">{result.pointsEarned} pts</p>
-                </div>
-                <div>
-                  <p className="text-neutral-400 text-sm">Puntos posibles</p>
-                  <p className="text-2xl font-bold text-neutral-300">{quiz.points} pts</p>
-                </div>
-              </div>
-
-              <Button 
+              <Button
                 onClick={() => router.push(`/main/dashboard/player/quizzes?courseId=${courseId}`)}
                 className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
               >
@@ -303,14 +382,35 @@ export default function QuizStartPage() {
     )
   }
 
-  // Formulario del quiz
+  // Formulario de pregunta actual
+  const currentQuestion = quiz.questions[currentQuestionIndex]
+  const progressPercentage = (quiz.questionsCompleted / quiz.totalQuestions) * 100
+
   return (
     <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
       <div className="max-w-3xl mx-auto space-y-6">
+        {/* Progreso */}
+        <Card className="bg-[#1a1a1a] border-neutral-800">
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-neutral-400">
+                  Pregunta {currentQuestionIndex + 1} de {quiz.totalQuestions}
+                </span>
+                <span className="text-neutral-400">
+                  {quiz.questionsCompleted} respondidas
+                </span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pregunta */}
         <Card className="bg-[#1a1a1a] border-neutral-800">
           <CardHeader className="bg-[#D89216] text-black">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-2xl font-bold">Quiz</CardTitle>
+              <CardTitle className="text-2xl font-bold">{quiz.title}</CardTitle>
               <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-lg">
                 <Clock className="h-5 w-5" />
                 <span className="text-xl font-mono font-bold">
@@ -321,20 +421,65 @@ export default function QuizStartPage() {
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-neutral-100">Pregunta:</h3>
-              <p className="text-lg text-neutral-300">{quiz.question}</p>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-neutral-100">Pregunta {currentQuestionIndex + 1}</h3>
+                {currentQuestion.answered && (
+                  <div className="flex items-center gap-2">
+                    {currentQuestion.isCorrect ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="text-green-400 font-medium">Correcta</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-500" />
+                        <span className="text-red-400 font-medium">Incorrecta</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+              <p className="text-lg text-neutral-300">{currentQuestion.question}</p>
             </div>
 
             <Separator className="bg-neutral-700" />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {currentQuestion.answered ? (
+              // Mostrar respuesta con feedback
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-neutral-100">Respuestas:</h3>
+                {currentQuestion.answers.map((answer, index) => {
+                  const isUserAnswer = currentQuestion.userAnswer === index
+                  const isCorrectAnswer = currentQuestion.correctAnswerIndex === index
+
+                  return (
+                    <div
+                      key={index}
+                      className={`p-3 rounded-lg border-2 ${isCorrectAnswer
+                          ? 'border-green-500 bg-green-900/20'
+                          : isUserAnswer
+                            ? 'border-red-500 bg-red-900/20'
+                            : 'border-neutral-700'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {isCorrectAnswer && <CheckCircle className="h-5 w-5 text-green-500" />}
+                        {isUserAnswer && !isCorrectAnswer && <XCircle className="h-5 w-5 text-red-500" />}
+                        <span className="text-neutral-200">{answer.text}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              // Formulario de respuesta
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold text-neutral-100">Selecciona tu respuesta:</h3>
                 <RadioGroup
                   value={selectedAnswer?.toString()}
                   onValueChange={(value) => setSelectedAnswer(Number(value))}
                 >
-                  {quiz.answers.map((answer, index) => (
+                  {currentQuestion.answers.map((answer, index) => (
                     <div
                       key={index}
                       className="flex items-center space-x-3 border border-neutral-700 rounded-lg p-4 hover:border-[#D89216] transition-colors"
@@ -350,31 +495,49 @@ export default function QuizStartPage() {
                   ))}
                 </RadioGroup>
               </div>
+            )}
 
-              {error && (
-                <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
-                  <p className="text-red-400">{error}</p>
-                </div>
-              )}
+            {error && (
+              <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
+                <p className="text-red-400">{error}</p>
+              </div>
+            )}
 
-              <div className="flex gap-4">
+            {/* Navegación */}
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={() => navigateToQuestion(Math.max(0, currentQuestionIndex - 1))}
+                disabled={currentQuestionIndex === 0}
+                className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+              </Button>
+
+              {currentQuestion.answered ? (
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push(`/main/dashboard/player/quizzes?courseId=${courseId}`)}
-                  className="flex-1 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+                  onClick={() => {
+                    if (currentQuestionIndex < quiz.totalQuestions - 1) {
+                      navigateToQuestion(currentQuestionIndex + 1)
+                    } else {
+                      setShowResults(true)
+                    }
+                  }}
+                  className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
                 >
-                  Cancelar
+                  {currentQuestionIndex === quiz.totalQuestions - 1 ? 'Ver Resultados' : 'Siguiente'}
+                  <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
+              ) : (
                 <Button
-                  type="submit"
+                  onClick={handleSubmitAnswer}
                   disabled={isSubmitting || selectedAnswer === null}
                   className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold disabled:opacity-50"
                 >
                   {isSubmitting ? 'Enviando...' : 'Enviar Respuesta'}
                 </Button>
-              </div>
-            </form>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

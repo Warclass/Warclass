@@ -1,6 +1,16 @@
 import { PrismaClient } from "../lib/generated/prisma";
 import * as bcrypt from "bcrypt";
 
+// Cargar variables de entorno explícitamente para asegurar que DATABASE_URL esté disponible
+try {
+  process.loadEnvFile();
+} catch (e) {
+  console.log("No .env file found or error loading it, assuming env vars are set.");
+}
+
+console.log("DEBUG: DATABASE_URL is set:", !!process.env.DATABASE_URL);
+console.log("DEBUG: Current directory:", process.cwd());
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -1080,14 +1090,21 @@ async function main() {
   // Quizzes para Desarrollo Web (course1) - creados por teacherTecsup
   const quiz1 = await prisma.quizzes.create({
     data: {
-      question: "¿Qué significa HTML?",
-      answers: JSON.stringify([
-        { text: "HyperText Markup Language", isCorrect: true },
-        { text: "Home Tool Markup Language", isCorrect: false },
-        { text: "Hyperlinks Text Mark Language", isCorrect: false },
-        { text: "High Tech Modern Language", isCorrect: false },
+      title: "Conceptos Básicos de HTML",
+      questions: JSON.stringify([
+        {
+          question: "¿Qué significa HTML?",
+          answers: [
+            { text: "HyperText Markup Language", isCorrect: true },
+            { text: "Home Tool Markup Language", isCorrect: false },
+            { text: "Hyperlinks Text Mark Language", isCorrect: false },
+            { text: "High Tech Modern Language", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 100,
+          timeLimit: 30,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "easy",
       points: 100,
       time_limit: 30,
@@ -1098,15 +1115,22 @@ async function main() {
 
   const quiz2 = await prisma.quizzes.create({
     data: {
-      question:
-        "¿Cuál es la forma correcta de crear una función en JavaScript?",
-      answers: JSON.stringify([
-        { text: "function myFunc() {}", isCorrect: true },
-        { text: "def myFunc():", isCorrect: false },
-        { text: "func myFunc() {}", isCorrect: false },
-        { text: "function: myFunc() {}", isCorrect: false },
+      title: "Funciones en JavaScript",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Cuál es la forma correcta de crear una función en JavaScript?",
+          answers: [
+            { text: "function myFunc() {}", isCorrect: true },
+            { text: "def myFunc():", isCorrect: false },
+            { text: "func myFunc() {}", isCorrect: false },
+            { text: "function: myFunc() {}", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 150,
+          timeLimit: 45,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "medium",
       points: 150,
       time_limit: 45,
@@ -1117,15 +1141,22 @@ async function main() {
 
   const quiz3 = await prisma.quizzes.create({
     data: {
-      question:
-        "¿Qué método se usa para agregar un elemento al final de un array en JavaScript?",
-      answers: JSON.stringify([
-        { text: "push()", isCorrect: true },
-        { text: "append()", isCorrect: false },
-        { text: "add()", isCorrect: false },
-        { text: "insert()", isCorrect: false },
+      title: "Arrays en JavaScript",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Qué método se usa para agregar un elemento al final de un array en JavaScript?",
+          answers: [
+            { text: "push()", isCorrect: true },
+            { text: "append()", isCorrect: false },
+            { text: "add()", isCorrect: false },
+            { text: "insert()", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 100,
+          timeLimit: 30,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "easy",
       points: 100,
       time_limit: 30,
@@ -1137,17 +1168,27 @@ async function main() {
   // Quizzes para Bases de Datos (course2) - creados por teacher3
   const quiz4 = await prisma.quizzes.create({
     data: {
-      question: "¿Qué es una clave primaria (Primary Key)?",
-      answers: JSON.stringify([
+      title: "Conceptos de Bases de Datos",
+      questions: JSON.stringify([
         {
-          text: "Un identificador único para cada registro en una tabla",
-          isCorrect: true,
+          question: "¿Qué es una clave primaria (Primary Key)?",
+          answers: [
+            {
+              text: "Un identificador único para cada registro en una tabla",
+              isCorrect: true,
+            },
+            {
+              text: "Una clave que se usa para encriptar datos",
+              isCorrect: false,
+            },
+            { text: "Un índice secundario opcional", isCorrect: false },
+            { text: "Una referencia a otra tabla", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 100,
+          timeLimit: 30,
         },
-        { text: "Una clave que se usa para encriptar datos", isCorrect: false },
-        { text: "Un índice secundario opcional", isCorrect: false },
-        { text: "Una referencia a otra tabla", isCorrect: false },
       ]),
-      correct_answer_index: 0,
       difficulty: "easy",
       points: 100,
       time_limit: 30,
@@ -1158,14 +1199,22 @@ async function main() {
 
   const quiz5 = await prisma.quizzes.create({
     data: {
-      question: "¿Qué comando SQL se usa para recuperar datos de una tabla?",
-      answers: JSON.stringify([
-        { text: "SELECT", isCorrect: true },
-        { text: "GET", isCorrect: false },
-        { text: "FETCH", isCorrect: false },
-        { text: "RETRIEVE", isCorrect: false },
+      title: "Consultas SQL Básicas",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Qué comando SQL se usa para recuperar datos de una tabla?",
+          answers: [
+            { text: "SELECT", isCorrect: true },
+            { text: "GET", isCorrect: false },
+            { text: "FETCH", isCorrect: false },
+            { text: "RETRIEVE", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 100,
+          timeLimit: 25,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "easy",
       points: 100,
       time_limit: 25,
@@ -1176,15 +1225,22 @@ async function main() {
 
   const quiz6 = await prisma.quizzes.create({
     data: {
-      question:
-        "¿Qué tipo de JOIN devuelve todos los registros cuando hay coincidencia en alguna tabla?",
-      answers: JSON.stringify([
-        { text: "FULL OUTER JOIN", isCorrect: true },
-        { text: "INNER JOIN", isCorrect: false },
-        { text: "LEFT JOIN", isCorrect: false },
-        { text: "RIGHT JOIN", isCorrect: false },
+      title: "Joins en SQL",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Qué tipo de JOIN devuelve todos los registros cuando hay coincidencia en alguna tabla?",
+          answers: [
+            { text: "FULL OUTER JOIN", isCorrect: true },
+            { text: "INNER JOIN", isCorrect: false },
+            { text: "LEFT JOIN", isCorrect: false },
+            { text: "RIGHT JOIN", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 200,
+          timeLimit: 60,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "hard",
       points: 200,
       time_limit: 60,
@@ -1196,15 +1252,22 @@ async function main() {
   // Quizzes para Algoritmos (course3) - creados por teacher3
   const quiz7 = await prisma.quizzes.create({
     data: {
-      question:
-        "¿Cuál es la complejidad temporal del algoritmo de búsqueda binaria?",
-      answers: JSON.stringify([
-        { text: "O(log n)", isCorrect: true },
-        { text: "O(n)", isCorrect: false },
-        { text: "O(n²)", isCorrect: false },
-        { text: "O(1)", isCorrect: false },
+      title: "Complejidad Algorítmica",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Cuál es la complejidad temporal del algoritmo de búsqueda binaria?",
+          answers: [
+            { text: "O(log n)", isCorrect: true },
+            { text: "O(n)", isCorrect: false },
+            { text: "O(n²)", isCorrect: false },
+            { text: "O(1)", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 150,
+          timeLimit: 45,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "medium",
       points: 150,
       time_limit: 45,
@@ -1215,15 +1278,22 @@ async function main() {
 
   const quiz8 = await prisma.quizzes.create({
     data: {
-      question:
-        "¿Qué estructura de datos usa el principio LIFO (Last In, First Out)?",
-      answers: JSON.stringify([
-        { text: "Stack (Pila)", isCorrect: true },
-        { text: "Queue (Cola)", isCorrect: false },
-        { text: "List (Lista)", isCorrect: false },
-        { text: "Tree (Árbol)", isCorrect: false },
+      title: "Estructuras de Datos",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Qué estructura de datos usa el principio LIFO (Last In, First Out)?",
+          answers: [
+            { text: "Stack (Pila)", isCorrect: true },
+            { text: "Queue (Cola)", isCorrect: false },
+            { text: "List (Lista)", isCorrect: false },
+            { text: "Tree (Árbol)", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 100,
+          timeLimit: 30,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "easy",
       points: 100,
       time_limit: 30,
@@ -1235,14 +1305,22 @@ async function main() {
   // Quizzes para IA (course4) - creados por teacher1
   const quiz9 = await prisma.quizzes.create({
     data: {
-      question: "¿Qué tipo de aprendizaje automático usa datos etiquetados?",
-      answers: JSON.stringify([
-        { text: "Aprendizaje Supervisado", isCorrect: true },
-        { text: "Aprendizaje No Supervisado", isCorrect: false },
-        { text: "Aprendizaje por Refuerzo", isCorrect: false },
-        { text: "Aprendizaje Profundo", isCorrect: false },
+      title: "Tipos de Aprendizaje Automático",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Qué tipo de aprendizaje automático usa datos etiquetados?",
+          answers: [
+            { text: "Aprendizaje Supervisado", isCorrect: true },
+            { text: "Aprendizaje No Supervisado", isCorrect: false },
+            { text: "Aprendizaje por Refuerzo", isCorrect: false },
+            { text: "Aprendizaje Profundo", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 150,
+          timeLimit: 40,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "medium",
       points: 150,
       time_limit: 40,
@@ -1253,15 +1331,22 @@ async function main() {
 
   const quiz10 = await prisma.quizzes.create({
     data: {
-      question:
-        "¿Qué función de activación se usa comúnmente en redes neuronales para clasificación binaria?",
-      answers: JSON.stringify([
-        { text: "Sigmoid", isCorrect: true },
-        { text: "ReLU", isCorrect: false },
-        { text: "Tanh", isCorrect: false },
-        { text: "Softmax", isCorrect: false },
+      title: "Redes Neuronales",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Qué función de activación se usa comúnmente en redes neuronales para clasificación binaria?",
+          answers: [
+            { text: "Sigmoid", isCorrect: true },
+            { text: "ReLU", isCorrect: false },
+            { text: "Tanh", isCorrect: false },
+            { text: "Softmax", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 200,
+          timeLimit: 60,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "hard",
       points: 200,
       time_limit: 60,
@@ -1273,14 +1358,21 @@ async function main() {
   // Quizzes para Matemáticas (course5) - creados por teacher2
   const quiz11 = await prisma.quizzes.create({
     data: {
-      question: "¿Cuál es el valor de π (pi) aproximadamente?",
-      answers: JSON.stringify([
-        { text: "3.14159", isCorrect: true },
-        { text: "2.71828", isCorrect: false },
-        { text: "1.61803", isCorrect: false },
-        { text: "4.66920", isCorrect: false },
+      title: "Constantes Matemáticas",
+      questions: JSON.stringify([
+        {
+          question: "¿Cuál es el valor de π (pi) aproximadamente?",
+          answers: [
+            { text: "3.14159", isCorrect: true },
+            { text: "2.71828", isCorrect: false },
+            { text: "1.61803", isCorrect: false },
+            { text: "4.66920", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 100,
+          timeLimit: 20,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "easy",
       points: 100,
       time_limit: 20,
@@ -1291,15 +1383,22 @@ async function main() {
 
   const quiz12 = await prisma.quizzes.create({
     data: {
-      question:
-        "¿Qué teorema establece la relación entre los lados de un triángulo rectángulo?",
-      answers: JSON.stringify([
-        { text: "Teorema de Pitágoras", isCorrect: true },
-        { text: "Teorema de Tales", isCorrect: false },
-        { text: "Teorema de Fermat", isCorrect: false },
-        { text: "Teorema del Seno", isCorrect: false },
+      title: "Teoremas Matemáticos",
+      questions: JSON.stringify([
+        {
+          question:
+            "¿Qué teorema establece la relación entre los lados de un triángulo rectángulo?",
+          answers: [
+            { text: "Teorema de Pitágoras", isCorrect: true },
+            { text: "Teorema de Tales", isCorrect: false },
+            { text: "Teorema de Fermat", isCorrect: false },
+            { text: "Teorema del Seno", isCorrect: false },
+          ],
+          correctAnswerIndex: 0,
+          points: 100,
+          timeLimit: 30,
+        },
       ]),
-      correct_answer_index: 0,
       difficulty: "easy",
       points: 100,
       time_limit: 30,
@@ -1321,6 +1420,7 @@ async function main() {
         points_earned: 120,
         time_taken: 15,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz2.id,
@@ -1330,6 +1430,7 @@ async function main() {
         points_earned: 180,
         time_taken: 30,
         is_on_quest: true,
+        question_index: 0,
       },
       // char2 responde quiz1
       {
@@ -1340,6 +1441,7 @@ async function main() {
         points_earned: 0,
         time_taken: 28,
         is_on_quest: false,
+        question_index: 0,
       },
       // char4 responde quizzes del grupo 2
       {
@@ -1350,6 +1452,7 @@ async function main() {
         points_earned: 110,
         time_taken: 20,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz5.id,
@@ -1359,6 +1462,7 @@ async function main() {
         points_earned: 125,
         time_taken: 18,
         is_on_quest: false,
+        question_index: 0,
       },
       // char7 responde quizzes del grupo 4 (IA)
       {
@@ -1369,6 +1473,7 @@ async function main() {
         points_earned: 175,
         time_taken: 25,
         is_on_quest: true,
+        question_index: 0,
       },
 
       // 🎓 Historial del salón completo (Programación Web)
@@ -1381,6 +1486,7 @@ async function main() {
         points_earned: 120,
         time_taken: 12,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz2.id,
@@ -1390,6 +1496,7 @@ async function main() {
         points_earned: 180,
         time_taken: 25,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz3.id,
@@ -1399,6 +1506,7 @@ async function main() {
         points_earned: 115,
         time_taken: 18,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Luis - Buen desempeño
@@ -1410,6 +1518,7 @@ async function main() {
         points_earned: 105,
         time_taken: 20,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz2.id,
@@ -1419,6 +1528,7 @@ async function main() {
         points_earned: 0,
         time_taken: 40,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Ana - Desempeño mixto
@@ -1430,6 +1540,7 @@ async function main() {
         points_earned: 110,
         time_taken: 18,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz3.id,
@@ -1439,6 +1550,7 @@ async function main() {
         points_earned: 108,
         time_taken: 22,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Carlos - Muy rápido
@@ -1450,6 +1562,7 @@ async function main() {
         points_earned: 125,
         time_taken: 10,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz2.id,
@@ -1459,6 +1572,7 @@ async function main() {
         points_earned: 175,
         time_taken: 28,
         is_on_quest: true,
+        question_index: 0,
       },
 
       // María - Constante
@@ -1470,6 +1584,7 @@ async function main() {
         points_earned: 112,
         time_taken: 17,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Diego - Necesita mejorar
@@ -1481,6 +1596,7 @@ async function main() {
         points_earned: 0,
         time_taken: 30,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz3.id,
@@ -1490,6 +1606,7 @@ async function main() {
         points_earned: 95,
         time_taken: 28,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Sofía - Excelente
@@ -1501,6 +1618,7 @@ async function main() {
         points_earned: 118,
         time_taken: 14,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz2.id,
@@ -1510,6 +1628,7 @@ async function main() {
         points_earned: 170,
         time_taken: 32,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Jorge - Bueno
@@ -1521,6 +1640,7 @@ async function main() {
         points_earned: 107,
         time_taken: 19,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Patricia - Muy buena
@@ -1532,6 +1652,7 @@ async function main() {
         points_earned: 116,
         time_taken: 16,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz3.id,
@@ -1541,6 +1662,7 @@ async function main() {
         points_earned: 113,
         time_taken: 20,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Ricardo - Sólido
@@ -1552,6 +1674,7 @@ async function main() {
         points_earned: 109,
         time_taken: 21,
         is_on_quest: false,
+        question_index: 0,
       },
 
       // Valeria - Destacada
@@ -1563,6 +1686,7 @@ async function main() {
         points_earned: 122,
         time_taken: 13,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz2.id,
@@ -1572,6 +1696,7 @@ async function main() {
         points_earned: 178,
         time_taken: 27,
         is_on_quest: true,
+        question_index: 0,
       },
 
       // Miguel - Buen desempeño
@@ -1583,6 +1708,7 @@ async function main() {
         points_earned: 114,
         time_taken: 17,
         is_on_quest: false,
+        question_index: 0,
       },
       {
         quiz_id: quiz3.id,
@@ -1592,6 +1718,7 @@ async function main() {
         points_earned: 111,
         time_taken: 19,
         is_on_quest: false,
+        question_index: 0,
       },
     ],
   });

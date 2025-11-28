@@ -182,12 +182,11 @@ model characters_abilities {
 
 model quizzes {
   id                   String   @id @default(uuid())
-  question             String
-  answers              String
-  correct_answer_index Int
+  title                String   // ⭐ NUEVO: Título del quiz
+  questions            String   // ⭐ MODIFICADO: JSON array de preguntas (antes era "question" String individual)
   difficulty           String   @default("medium")
-  points               Int      @default(100)
-  time_limit           Int      @default(30)
+  points               Int      @default(100) // Puntos totales del quiz (suma de todas las preguntas)
+  time_limit           Int      @default(30)  // Tiempo total del quiz (suma de todas las preguntas)
   course_id            String   // Para saber a qué curso pertenece
   teacher_id           String?  // Profesor que lo creó (opcional)
   created_at           DateTime @default(now())
@@ -202,6 +201,7 @@ model quizzes_history {
   id              String   @id @default(uuid())
   quiz_id         String
   character_id    String
+  question_index  Int      // ⭐ NUEVO: Índice de la pregunta respondida (0-N)
   is_on_quest     Boolean  @default(false)
   selected_answer Int
   is_correct      Boolean
@@ -212,7 +212,7 @@ model quizzes_history {
   character characters @relation(fields: [character_id], references: [id], onDelete: Cascade)
   quiz      quizzes    @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
 
-  @@unique([quiz_id, character_id])
+  @@unique([quiz_id, character_id, question_index]) // ⭐ MODIFICADO: Permite múltiples respuestas por quiz
 }
 
 model tasks {

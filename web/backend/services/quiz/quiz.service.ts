@@ -8,13 +8,13 @@ import {
   QuizStatistics,
   LeaderboardEntry,
   QuizWithHistory,
-  QuizAnswer,
+  QuizQuestion,
 } from '@/backend/types/quiz.types';
 import { notifyQuizCompleted } from '@/backend/services/discord/discord-webhook.service';
 
 export class QuizService {
   /**
-   * Crear un nuevo quiz
+   * Crear un nuevo quiz con múltiples preguntas
    */
   static async createQuiz(data: CreateQuizDTO, teacherId?: string): Promise<QuizResponse> {
     try {
@@ -37,19 +37,22 @@ export class QuizService {
         });
 
         if (!isTeacher) {
-          throw new Error('No tienes permiso para crear quizzes en este curso');
+          throw new Error('No  tienes permiso para crear quizzes en este curso');
         }
       }
 
-      // Crear el quiz con course_id y teacher_id
+      // Calcular puntos y tiempo totales
+      const totalPoints = data.questions.reduce((sum, q) => sum + q.points, 0);
+      const totalTimeLimit = data.questions.reduce((sum, q) => sum + q.timeLimit, 0);
+
+      // Crear el quiz
       const quiz = await prisma.quizzes.create({
         data: {
-          question: data.question,
-          answers: JSON.stringify(data.answers),
-          correct_answer_index: data.correctAnswerIndex,
+          title: data.title,
+          questions: JSON.stringify(data.questions),
           difficulty: data.difficulty || 'medium',
-          points: data.points || 100,
-          time_limit: data.timeLimit || 30,
+          points: totalPoints,
+          time_limit: totalTimeLimit,
           course_id: data.courseId,
           teacher_id: teacherId || null,
         },
@@ -76,7 +79,7 @@ export class QuizService {
   }
 
   /**
-   * Obtener un quiz por ID (sin revelar la respuesta correcta)
+   * Obtener un quiz por ID con progreso del personaje
    */
   static async getQuizById(quizId: string, characterId?: string): Promise<QuizWithHistory> {
     try {
@@ -86,9 +89,8 @@ export class QuizService {
           course: true,
           quizzes_history: characterId
             ? {
-                where: { character_id: characterId },
-                take: 1,
-              }
+              where: { character_id: characterId },
+            }
             : false,
         },
       });
@@ -97,36 +99,42 @@ export class QuizService {
         throw new Error('Quiz no encontrado');
       }
 
-      const parsedAnswers = JSON.parse(quiz.answers);
-      // Manejar tanto string[] como QuizAnswer[] del seed
-      const answers = Array.isArray(parsedAnswers) 
-        ? parsedAnswers.map((answer: any) => {
-            // Si es un objeto con text, extraer solo el text
-            if (typeof answer === 'object' && answer.text) {
-              return { text: answer.text };
-            }
-            // Si es un string, convertirlo a objeto
-            return { text: answer };
-          })
-        : [];
-      
-      const history = Array.isArray(quiz.quizzes_history) && quiz.quizzes_history[0];
+      const questions: QuizQuestion[] = JSON.parse(quiz.questions);
+      const history = Array.isArray(quiz.quizzes_history) ? quiz.quizzes_history : [];
+
+      // Mapear preguntas con su historial
+      const questionsWithHistory = questions.map((q, index) => {
+        const questionHistory = history.find(h => h.question_index === index);
+
+        return {
+          question: q.question,
+          answers: q.answers.map(a => ({ text: a.text })), // Sin isCorrect
+          correctAnswerIndex: questionHistory ? q.correctAnswerIndex : undefined, // Solo revelar si ya respondió
+          points: q.points,
+          timeLimit: q.timeLimit,
+          answered: !!questionHistory,
+          userAnswer: questionHistory?.selected_answer,
+          isCorrect: questionHistory?.is_correct,
+          pointsEarned: questionHistory?.points_earned,
+        };
+      });
+
+      const questionsCompleted = history.length;
+      const completed = questionsCompleted === questions.length;
 
       return {
         id: quiz.id,
-        question: quiz.question,
-        answers: answers,
-        correctAnswerIndex: quiz.correct_answer_index,
+        title: quiz.title,
+        questions: questionsWithHistory,
         difficulty: quiz.difficulty as 'easy' | 'medium' | 'hard',
         points: quiz.points,
         timeLimit: quiz.time_limit,
+        totalQuestions: questions.length,
+        questionsCompleted,
         courseId: quiz.course_id,
         createdAt: quiz.created_at,
         updatedAt: quiz.updated_at,
-        completed: !!history,
-        userAnswer: history ? history.selected_answer : undefined,
-        isCorrect: history ? history.is_correct : undefined,
-        pointsEarned: history ? history.points_earned : undefined,
+        completed,
       };
     } catch (error) {
       console.error('Error getting quiz:', error);
@@ -135,15 +143,12 @@ export class QuizService {
   }
 
   /**
-   * Obtener todos los quizzes de un curso
-   * @deprecated Use getQuizzesByCourse instead
+   * Obtener todos los quizzes de un grupo (deprecated)
    */
   static async getQuizzesByGroup(
     groupId: string,
     characterId?: string
   ): Promise<QuizResponse[]> {
-    // Mantener por compatibilidad, pero redirigir a getQuizzesByCourse
-    // Necesitamos obtener el courseId del grupo
     const group = await prisma.groups.findUnique({
       where: { id: groupId },
       select: { course_id: true },
@@ -182,14 +187,14 @@ export class QuizService {
           },
           quizzes_history: characterId
             ? {
-                where: { character_id: characterId },
-              }
+              where: { character_id: characterId },
+            }
             : false,
         },
         orderBy: { created_at: 'desc' },
       });
 
-      return quizzes.map((quiz) => this.formatQuizResponse(quiz));
+      return quizzes.map((quiz) => this.formatQuizResponse(quiz, characterId));
     } catch (error) {
       console.error('Error getting quizzes by course:', error);
       throw error;
@@ -205,13 +210,16 @@ export class QuizService {
 
       const updateData: any = {};
 
-      if (data.question) updateData.question = data.question;
-      if (data.answers) updateData.answers = JSON.stringify(data.answers);
-      if (data.correctAnswerIndex !== undefined)
-        updateData.correct_answer_index = data.correctAnswerIndex;
+      if (data.title) updateData.title = data.title;
+      if (data.questions) {
+        updateData.questions = JSON.stringify(data.questions);
+        // Recalcular puntos y tiempo totales
+        const totalPoints = data.questions.reduce((sum, q) => sum + q.points, 0);
+        const totalTimeLimit = data.questions.reduce((sum, q) => sum + q.timeLimit, 0);
+        updateData.points = totalPoints;
+        updateData.time_limit = totalTimeLimit;
+      }
       if (data.difficulty) updateData.difficulty = data.difficulty;
-      if (data.points !== undefined) updateData.points = data.points;
-      if (data.timeLimit !== undefined) updateData.time_limit = data.timeLimit;
 
       console.log('📦 Update data prepared:', updateData);
 
@@ -247,7 +255,7 @@ export class QuizService {
   }
 
   /**
-   * Enviar respuesta a un quiz
+   * Enviar respuesta a una pregunta específica de un quiz
    */
   static async submitAnswer(data: SubmitQuizAnswerDTO): Promise<QuizResultResponse> {
     try {
@@ -263,6 +271,15 @@ export class QuizService {
         throw new Error('Quiz no encontrado');
       }
 
+      const questions: QuizQuestion[] = JSON.parse(quiz.questions);
+
+      // Validar questionIndex
+      if (data.questionIndex < 0 || data.questionIndex >= questions.length) {
+        throw new Error(`Índice de pregunta inválido. Debe estar entre 0 y ${questions.length - 1}`);
+      }
+
+      const currentQuestion = questions[data.questionIndex];
+
       // Verificar que el personaje existe
       const character = await prisma.characters.findUnique({
         where: { id: data.characterId },
@@ -272,29 +289,30 @@ export class QuizService {
         throw new Error('Personaje no encontrado');
       }
 
-      // Verificar si ya respondió este quiz
+      // Verificar si ya respondió esta pregunta
       const existingHistory = await prisma.quizzes_history.findUnique({
         where: {
-          quiz_id_character_id: {
+          quiz_id_character_id_question_index: {
             quiz_id: data.quizId,
             character_id: data.characterId,
+            question_index: data.questionIndex,
           },
         },
       });
 
       if (existingHistory) {
-        throw new Error('Ya has respondido este quiz');
+        throw new Error('Ya has respondido esta pregunta');
       }
 
       // Verificar si la respuesta es correcta
-      const isCorrect = data.selectedAnswer === quiz.correct_answer_index;
+      const isCorrect = data.selectedAnswer === currentQuestion.correctAnswerIndex;
 
       // Calcular puntos ganados
       let pointsEarned = 0;
       if (isCorrect) {
-        // Bonus por velocidad: más rápido = más puntos
-        const timeBonus = Math.max(0, 1 - data.timeTaken / quiz.time_limit);
-        pointsEarned = Math.round(quiz.points * (1 + timeBonus * 0.5));
+        // Bonus por velocidad
+        const timeBonus = Math.max(0, 1 - data.timeTaken / currentQuestion.timeLimit);
+        pointsEarned = Math.round(currentQuestion.points * (1 + timeBonus * 0.5));
       }
 
       // Guardar en el historial
@@ -302,6 +320,7 @@ export class QuizService {
         data: {
           quiz_id: data.quizId,
           character_id: data.characterId,
+          question_index: data.questionIndex,
           selected_answer: data.selectedAnswer,
           is_correct: isCorrect,
           points_earned: pointsEarned,
@@ -310,8 +329,30 @@ export class QuizService {
         },
       });
 
-      // Actualizar experiencia y oro del personaje si es correcto
-      if (isCorrect) {
+      // Verificar si completó todas las preguntas del quiz
+      const allHistory = await prisma.quizzes_history.findMany({
+        where: {
+          quiz_id: data.quizId,
+          character_id: data.characterId,
+        },
+      });
+
+      const completedQuiz = allHistory.length === questions.length;
+
+      // Si completó el quiz, actualizar experiencia y oro
+      if (completedQuiz) {
+        const totalPointsEarned = allHistory.reduce((sum, h) => sum + h.points_earned, 0);
+        const bonusMultiplier = 1.2; // 20% bonus por completar todo el quiz
+
+        await prisma.characters.update({
+          where: { id: data.characterId },
+          data: {
+            experience: { increment: Math.round(totalPointsEarned * bonusMultiplier) },
+            gold: { increment: Math.round((totalPointsEarned * bonusMultiplier) / 10) },
+          },
+        });
+      } else if (isCorrect) {
+        // Si no completó el quiz pero respondió correctamente, dar experiencia/oro parcial
         await prisma.characters.update({
           where: { id: data.characterId },
           data: {
@@ -350,10 +391,11 @@ export class QuizService {
       return {
         id: history.id,
         quizId: data.quizId,
+        questionIndex: data.questionIndex,
         isCorrect,
         pointsEarned,
         timeTaken: data.timeTaken,
-        correctAnswer: quiz.correct_answer_index,
+        correctAnswer: currentQuestion.correctAnswerIndex,
         selectedAnswer: data.selectedAnswer,
       };
     } catch (error) {
@@ -363,12 +405,15 @@ export class QuizService {
   }
 
   /**
-   * Obtener estadísticas de un miembro en quizzes
+   * Obtener estadísticas de un personaje en quizzes
    */
   static async getCharacterStatistics(characterId: string): Promise<QuizStatistics> {
     try {
       const history = await prisma.quizzes_history.findMany({
         where: { character_id: characterId },
+        include: {
+          quiz: true,
+        },
       });
 
       const character = await prisma.characters.findUnique({
@@ -378,26 +423,49 @@ export class QuizService {
         },
       });
 
-      // Obtener total de quizzes del curso
-      const totalQuizzes = character?.course_id 
-        ? await prisma.quizzes.count({
-            where: { course_id: character.course_id }
-          })
-        : 0;
-      
-      const completedQuizzes = history.length;
+      // Obtener todos los quizzes del curso
+      const allQuizzes = character?.course_id
+        ? await prisma.quizzes.findMany({
+          where: { course_id: character.course_id }
+        })
+        : [];
+
+      const totalQuizzes = allQuizzes.length;
+      const totalQuestions = allQuizzes.reduce((sum, quiz) => {
+        const questions = JSON.parse(quiz.questions);
+        return sum + questions.length;
+      }, 0);
+
+      // Agrupar historial por quiz para contar completados
+      const quizCompletionMap = new Map<string, number>();
+      history.forEach(h => {
+        quizCompletionMap.set(h.quiz_id, (quizCompletionMap.get(h.quiz_id) || 0) + 1);
+      });
+
+      let completedQuizzes = 0;
+      allQuizzes.forEach(quiz => {
+        const questions = JSON.parse(quiz.questions);
+        const answered = quizCompletionMap.get(quiz.id) || 0;
+        if (answered === questions.length) {
+          completedQuizzes++;
+        }
+      });
+
+      const answeredQuestions = history.length;
       const correctAnswers = history.filter((h) => h.is_correct).length;
-      const incorrectAnswers = completedQuizzes - correctAnswers;
+      const incorrectAnswers = answeredQuestions - correctAnswers;
       const totalPoints = history.reduce((sum, h) => sum + h.points_earned, 0);
       const averageTimeTaken =
-        completedQuizzes > 0
-          ? history.reduce((sum, h) => sum + h.time_taken, 0) / completedQuizzes
+        answeredQuestions > 0
+          ? history.reduce((sum, h) => sum + h.time_taken, 0) / answeredQuestions
           : 0;
-      const accuracy = completedQuizzes > 0 ? (correctAnswers / completedQuizzes) * 100 : 0;
+      const accuracy = answeredQuestions > 0 ? (correctAnswers / answeredQuestions) * 100 : 0;
 
       return {
         totalQuizzes,
+        totalQuestions,
         completedQuizzes,
+        answeredQuestions,
         correctAnswers,
         incorrectAnswers,
         totalPoints,
@@ -405,7 +473,7 @@ export class QuizService {
         accuracy,
       };
     } catch (error) {
-      console.error('Error getting member statistics:', error);
+      console.error('Error getting character statistics:', error);
       throw error;
     }
   }
@@ -434,7 +502,7 @@ export class QuizService {
         const accuracy = totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0;
 
         return {
-          position: 0, // Se calcula después
+          position: 0,
           characterId: character.id,
           characterName: character.name,
           className: character.class?.name,
@@ -446,7 +514,6 @@ export class QuizService {
         };
       });
 
-      // Ordenar por puntos totales (descendente) y luego por tiempo promedio (ascendente)
       leaderboard.sort((a, b) => {
         if (b.totalPoints !== a.totalPoints) {
           return b.totalPoints - a.totalPoints;
@@ -454,7 +521,6 @@ export class QuizService {
         return a.averageTimeTaken - b.averageTimeTaken;
       });
 
-      // Asignar posiciones
       leaderboard.forEach((entry, index) => {
         entry.position = index + 1;
       });
@@ -525,38 +591,36 @@ export class QuizService {
   }
 
   /**
-   * Formatear respuesta de quiz (sin revelar respuesta correcta)
+   * Formatear respuesta de quiz
    */
-  private static formatQuizResponse(quiz: any): QuizResponse {
-    const parsedAnswers = JSON.parse(quiz.answers);
-    // Manejar tanto string[] como QuizAnswer[] del seed
-    const answers = Array.isArray(parsedAnswers) 
-      ? parsedAnswers.map((answer: any) => {
-          // Si es un objeto con text, extraer solo el text
-          if (typeof answer === 'object' && answer.text) {
-            return { text: answer.text };
-          }
-          // Si es un string, convertirlo a objeto
-          return { text: answer };
-        })
-      : [];
-    
-    const history = Array.isArray(quiz.quizzes_history) && quiz.quizzes_history[0];
+  private static formatQuizResponse(quiz: any, characterId?: string): QuizResponse {
+    const questions: QuizQuestion[] = JSON.parse(quiz.questions);
+    const history = Array.isArray(quiz.quizzes_history) ? quiz.quizzes_history : [];
+
+    const questionsForResponse = questions.map((q, index) => ({
+      question: q.question,
+      answers: q.answers.map((a: any) => ({ text: a.text })),
+      points: q.points,
+      timeLimit: q.timeLimit,
+    }));
+
+    const questionsCompleted = characterId ? history.length : undefined;
+    const completed = characterId ? (history.length === questions.length) : undefined;
 
     return {
       id: quiz.id,
-      question: quiz.question,
-      answers: answers, // Solo el texto, sin isCorrect
+      title: quiz.title,
+      questions: questionsForResponse,
       difficulty: quiz.difficulty,
       points: quiz.points,
       timeLimit: quiz.time_limit,
+      totalQuestions: questions.length,
       courseId: quiz.course_id,
       courseName: quiz.course?.name,
       teacherId: quiz.teacher_id,
       teacherName: quiz.teacher?.user?.name,
-      completed: !!history,
-      score: history ? (history.is_correct ? 100 : 0) : undefined,
-      timeTaken: history?.time_taken,
+      questionsCompleted,
+      completed,
       createdAt: quiz.created_at,
     };
   }
