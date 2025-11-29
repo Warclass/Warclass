@@ -49,10 +49,11 @@ export default function QuizStartPage() {
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [memberId, setMemberId] = useState<string | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  const [userAnswers, setUserAnswers] = useState<(number | null)[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [totalTime, setTotalTime] = useState<number>(0)
   const [timeLeft, setTimeLeft] = useState<number>(0)
   const [showResults, setShowResults] = useState(false)
 
@@ -100,14 +101,13 @@ export default function QuizStartPage() {
           if (data.quiz.completed) {
             setShowResults(true)
           } else {
-            // Encontrar la primera pregunta no respondida
-            const firstUnanswered = data.quiz.questions.findIndex((q: QuizQuestion) => !q.answered)
-            if (firstUnanswered !== -1) {
-              setCurrentQuestionIndex(firstUnanswered)
-            }
-            // Timer por pregunta individual
-            const currentQ = data.quiz.questions[firstUnanswered !== -1 ? firstUnanswered : 0]
-            setTimeLeft(currentQ.timeLimit)
+            // Inicializar array de respuestas
+            setUserAnswers(new Array(data.quiz.totalQuestions).fill(null))
+
+            // Timer acumulado: suma de todos los tiempos
+            const total = data.quiz.questions.reduce((sum: number, q: QuizQuestion) => sum + q.timeLimit, 0)
+            setTotalTime(total)
+            setTimeLeft(total)
           }
         } else {
           const errorData = await response.json()
@@ -124,21 +124,16 @@ export default function QuizStartPage() {
     fetchQuiz()
   }, [user?.id, quizId, memberId, token])
 
-  // Timer
+  // Timer acumulado
   useEffect(() => {
     if (!quiz || showResults || timeLeft <= 0) return
-
-    const currentQuestion = quiz.questions[currentQuestionIndex]
-    if (currentQuestion?.answered) return
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          // Auto submit cuando se acaba el tiempo
-          if (selectedAnswer !== null) {
-            handleSubmitAnswer()
-          }
+          // Auto enviar todo el quiz cuando se acaba el tiempo
+          handleSubmitQuiz()
           return 0
         }
         return prev - 1
@@ -146,104 +141,88 @@ export default function QuizStartPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [quiz, currentQuestionIndex, timeLeft, showResults])
+  }, [quiz, timeLeft, showResults])
 
-  // Cambiar de pregunta
+  // Cambiar de pregunta (sin resetear timer)
   const navigateToQuestion = (index: number) => {
-    if (!quiz) return
-
+    if (!quiz || index < 0 || index >= quiz.totalQuestions) return
     setCurrentQuestionIndex(index)
-    setSelectedAnswer(quiz.questions[index].userAnswer ?? null)
-
-    // Resetear timer para la nueva pregunta
-    if (!quiz.questions[index].answered) {
-      setTimeLeft(quiz.questions[index].timeLimit)
-    }
+    setError(null)
   }
 
-  // Manejar envío de respuesta
-  const handleSubmitAnswer = useCallback(async () => {
+  // Guardar respuesta localmente
+  const saveAnswer = (answer: number) => {
+    const newAnswers = [...userAnswers]
+    newAnswers[currentQuestionIndex] = answer
+    setUserAnswers(newAnswers)
+    setError(null)
+  }
+
+  // Enviar todo el quiz completo
+  const handleSubmitQuiz = useCallback(async () => {
     if (!quiz || !memberId) return
 
-    const currentQuestion = quiz.questions[currentQuestionIndex]
-    if (currentQuestion.answered) {
-      // Ya respondió esta pregunta, ir a la siguiente
-      if (currentQuestionIndex < quiz.totalQuestions - 1) {
-        navigateToQuestion(currentQuestionIndex + 1)
-      }
-      return
-    }
-
-    if (selectedAnswer === null) {
-      setError('Debes seleccionar una respuesta')
+    // Verificar que todas las preguntas tengan respuesta
+    const unanswered = userAnswers.findIndex((ans, idx) => ans === null && idx < quiz.totalQuestions)
+    if (unanswered !== -1) {
+      setError(`Debes responder todas las preguntas. Falta la pregunta ${unanswered + 1}`)
+      setCurrentQuestionIndex(unanswered)
       return
     }
 
     try {
       setIsSubmitting(true)
       setError(null)
-      const timeTaken = currentQuestion.timeLimit - timeLeft
 
-      const response = await fetch('/api/quizzes/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          quizId: quiz.id,
-          characterId: memberId,
-          questionIndex: currentQuestionIndex,
-          selectedAnswer: selectedAnswer,
-          timeTaken: timeTaken
+      // Enviar todas las respuestas
+      const responses = await Promise.all(
+        userAnswers.map(async (answer, index) => {
+          if (answer === null) return null
+
+          const response = await fetch('/api/quizzes/submit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              quizId: quiz.id,
+              characterId: memberId,
+              questionIndex: index,
+              selectedAnswer: answer,
+              timeTaken: Math.floor(quiz.questions[index].timeLimit)
+            })
+          })
+
+          return response.ok ? await response.json() : null
         })
+      )
+
+      // Actualizar quiz con todas las respuestas
+      const updatedQuestions = quiz.questions.map((q, idx) => ({
+        ...q,
+        answered: true,
+        userAnswer: userAnswers[idx] ?? 0,
+        isCorrect: responses[idx]?.result?.isCorrect ?? false,
+        pointsEarned: responses[idx]?.result?.pointsEarned ?? 0,
+        correctAnswerIndex: responses[idx]?.result?.correctAnswer ?? 0
+      }))
+
+      setQuiz({
+        ...quiz,
+        questions: updatedQuestions,
+        questionsCompleted: quiz.totalQuestions,
+        completed: true
       })
 
-      if (response.ok) {
-        const data = await response.json()
-
-        // Actualizar el quiz con la respuesta
-        const updatedQuestions = [...quiz.questions]
-        updatedQuestions[currentQuestionIndex] = {
-          ...updatedQuestions[currentQuestionIndex],
-          answered: true,
-          userAnswer: selectedAnswer,
-          isCorrect: data.result.isCorrect,
-          pointsEarned: data.result.pointsEarned,
-          correctAnswerIndex: data.result.correctAnswer
-        }
-
-        const newQuestionsCompleted = updatedQuestions.filter(q => q.answered).length
-        const newCompleted = newQuestionsCompleted === quiz.totalQuestions
-
-        setQuiz({
-          ...quiz,
-          questions: updatedQuestions,
-          questionsCompleted: newQuestionsCompleted,
-          completed: newCompleted
-        })
-
-        // Si completó todas las preguntas, mostrar resultados
-        if (newCompleted) {
-          setShowResults(true)
-        } else {
-          // Ir a la siguiente pregunta no respondida
-          const nextUnanswered = updatedQuestions.findIndex((q, idx) => idx > currentQuestionIndex && !q.answered)
-          if (nextUnanswered !== -1) {
-            setTimeout(() => navigateToQuestion(nextUnanswered), 1000)
-          }
-        }
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || 'Error al enviar respuesta')
-      }
+      setShowResults(true)
     } catch (error) {
-      console.error('Error al enviar respuesta:', error)
-      setError('Error al enviar respuesta')
+      console.error('Error al enviar quiz:', error)
+      setError('Error al enviar el quiz')
     } finally {
       setIsSubmitting(false)
     }
-  }, [quiz, memberId, currentQuestionIndex, selectedAnswer, timeLeft, token])
+  }, [quiz, memberId, userAnswers, totalTime, timeLeft, token])
 
   if (isLoading) {
     return (
@@ -349,10 +328,10 @@ export default function QuizStartPage() {
                             <div
                               key={ansIdx}
                               className={`p-2 rounded border-2 ${isCorrectAnswer
-                                  ? 'border-green-500 bg-green-900/20'
-                                  : isUserAnswer
-                                    ? 'border-red-500 bg-red-900/20'
-                                    : 'border-neutral-700'
+                                ? 'border-green-500 bg-green-900/20'
+                                : isUserAnswer
+                                  ? 'border-red-500 bg-red-900/20'
+                                  : 'border-neutral-700'
                                 }`}
                             >
                               <div className="flex items-center gap-2">
@@ -456,10 +435,10 @@ export default function QuizStartPage() {
                     <div
                       key={index}
                       className={`p-3 rounded-lg border-2 ${isCorrectAnswer
-                          ? 'border-green-500 bg-green-900/20'
-                          : isUserAnswer
-                            ? 'border-red-500 bg-red-900/20'
-                            : 'border-neutral-700'
+                        ? 'border-green-500 bg-green-900/20'
+                        : isUserAnswer
+                          ? 'border-red-500 bg-red-900/20'
+                          : 'border-neutral-700'
                         }`}
                     >
                       <div className="flex items-center gap-3">
@@ -476,8 +455,8 @@ export default function QuizStartPage() {
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold text-neutral-100">Selecciona tu respuesta:</h3>
                 <RadioGroup
-                  value={selectedAnswer?.toString()}
-                  onValueChange={(value) => setSelectedAnswer(Number(value))}
+                  value={userAnswers[currentQuestionIndex]?.toString() ?? ''}
+                  onValueChange={(value) => saveAnswer(Number(value))}
                 >
                   {currentQuestion.answers.map((answer, index) => (
                     <div
@@ -504,38 +483,44 @@ export default function QuizStartPage() {
             )}
 
             {/* Navegación */}
-            <div className="flex gap-4">
-              <Button
-                variant="outline"
-                onClick={() => navigateToQuestion(Math.max(0, currentQuestionIndex - 1))}
-                disabled={currentQuestionIndex === 0}
-                className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-              </Button>
+            <div className="space-y-3">
+              <div className="flex gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => navigateToQuestion(currentQuestionIndex - 1)}
+                  disabled={currentQuestionIndex === 0}
+                  className="border-neutral-700 text-neutral-300 hover:bg-neutral-800"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+                </Button>
 
-              {currentQuestion.answered ? (
-                <Button
-                  onClick={() => {
-                    if (currentQuestionIndex < quiz.totalQuestions - 1) {
-                      navigateToQuestion(currentQuestionIndex + 1)
-                    } else {
-                      setShowResults(true)
-                    }
-                  }}
-                  className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
-                >
-                  {currentQuestionIndex === quiz.totalQuestions - 1 ? 'Ver Resultados' : 'Siguiente'}
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmitAnswer}
-                  disabled={isSubmitting || selectedAnswer === null}
-                  className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Enviando...' : 'Enviar Respuesta'}
-                </Button>
+                {currentQuestionIndex < quiz.totalQuestions - 1 ? (
+                  <Button
+                    onClick={() => navigateToQuestion(currentQuestionIndex + 1)}
+                    className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
+                  >
+                    Siguiente
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleSubmitQuiz}
+                    disabled={isSubmitting || userAnswers.some((ans, idx) => ans === null && idx < quiz.totalQuestions)}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Enviando...' : '✓ Enviar Quiz Completo'}
+                  </Button>
+                )}
+              </div>
+
+              {/* Mensaje informativo si faltan respuestas */}
+              {currentQuestionIndex === quiz.totalQuestions - 1 && userAnswers.some((ans, idx) => ans === null && idx < quiz.totalQuestions) && (
+                <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-3">
+                  <p className="text-yellow-400 text-sm">
+                    ⚠️ Debes responder todas las preguntas antes de enviar el quiz.
+                    Faltan {userAnswers.filter((ans, idx) => ans === null && idx < quiz.totalQuestions).length} pregunta(s).
+                  </p>
+                </div>
               )}
             </div>
           </CardContent>

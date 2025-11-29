@@ -14,8 +14,8 @@ import { Clock, FileQuestion, Calendar, CheckCircle, XCircle, Award } from 'luci
 
 interface Quiz {
   id: string
-  question: string
-  answers: { text: string }[]
+  title: string
+  totalQuestions: number
   difficulty: string
   points: number
   timeLimit: number
@@ -34,9 +34,9 @@ export default function QuizzesPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [error, setError] = useState<string | null>(null)
   const [memberId, setMemberId] = useState<string | null>(null)
-  
+
   const courseId = searchParams.get('courseId')
-  
+
   // Obtener datos del curso para el nombre
   const { courseData } = useCourseData(courseId)
 
@@ -181,13 +181,13 @@ export default function QuizzesPage() {
             {quizzes.length > 0 ? (
               quizzes.map((quiz) => {
                 const isCompleted = quiz.completed ?? false
-                const createdDate = quiz.createdAt 
+                const createdDate = quiz.createdAt
                   ? new Date(quiz.createdAt).toLocaleDateString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      timeZone: 'UTC' // Evita desajustes de hidración por zona horaria/locale
-                    })
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    timeZone: 'UTC' // Evita desajustes de hidración por zona horaria/locale
+                  })
                   : 'Sin fecha'
 
                 return (
@@ -198,7 +198,7 @@ export default function QuizzesPage() {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2">
                         <h3 className="text-xl font-semibold text-neutral-100">
-                          {quiz.groupName || 'Quiz'}
+                          {quiz.title}
                         </h3>
                         {isCompleted && (
                           <Badge className="bg-green-600 text-white">
@@ -208,12 +208,12 @@ export default function QuizzesPage() {
                         )}
                       </div>
                       <p className="text-sm text-neutral-400 line-clamp-2">
-                        {quiz.question}
+                        {quiz.totalQuestions} {quiz.totalQuestions === 1 ? 'pregunta' : 'preguntas'} • Dificultad: {quiz.difficulty === 'easy' ? 'Fácil' : quiz.difficulty === 'medium' ? 'Media' : 'Difícil'}
                       </p>
                       <div className="flex flex-wrap gap-3 text-xs text-neutral-500">
                         <span className="flex items-center gap-1">
                           <FileQuestion className="h-3 w-3" />
-                          {quiz.answers?.length || 0} respuestas
+                          {quiz.totalQuestions} {quiz.totalQuestions === 1 ? 'pregunta' : 'preguntas'}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
@@ -241,9 +241,9 @@ export default function QuizzesPage() {
                         </Button>
                       </Link>
                     ) : (
-                      <Button 
-                        disabled 
-                        variant="outline" 
+                      <Button
+                        disabled
+                        variant="outline"
                         className="border-neutral-700 text-neutral-500"
                       >
                         Ya completado

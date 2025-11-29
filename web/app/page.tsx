@@ -20,80 +20,96 @@ export default function HomePage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-    camera.position.set(0, 0, 10);
-
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 2.7;
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    canvas.setAttribute("tabindex", "0");
-    canvas.style.outline = "none";
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-
-    let mixer: THREE.AnimationMixer | null = null;
-    const loader = new FBXLoader();
-    loader.load(
-      "/models/welcome_scene/Dragon_WoWc.fbx",
-      (object) => {
-        object.scale.set(0.02, 0.02, 0.02);
-        object.position.set(0, -4, 0);
-        mixer = new THREE.AnimationMixer(object);
-        if (object.animations && object.animations.length > 0) {
-          const action = mixer.clipAction(object.animations[0]);
-          action.setLoop(THREE.LoopPingPong, Infinity);
-          action.play();
-        }
-        scene.add(object);
-      },
-      undefined,
-      (error) => {
-        console.error("Error loading dragon:", error);
+    try {
+      // Check if WebGL is available before initializing
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        console.warn('WebGL not supported. Hiding 3D canvas.');
+        canvas.style.display = 'none';
+        return;
       }
-    );
 
-    let mouseX = 0;
-    let mouseY = 0;
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX = (e.clientX - window.innerWidth / 2) / 100;
-      mouseY = (e.clientY - window.innerHeight / 2) / 100;
-    };
-    document.addEventListener("mousemove", handleMouseMove);
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+      camera.position.set(0, 0, 10);
 
-    const clock = new THREE.Clock();
-    function animate() {
-      requestAnimationFrame(animate);
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 2.7;
+      renderer.setPixelRatio(window.devicePixelRatio);
 
-      if (mixer) mixer.update(clock.getDelta());
+      canvas.setAttribute("tabindex", "0");
+      canvas.style.outline = "none";
 
-      camera.position.x += (-mouseX - camera.position.x) * 0.06;
-      camera.position.y += (mouseY - camera.position.y) * 0.06;
-      camera.lookAt(scene.position);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-      renderer.render(scene, camera);
+      let mixer: THREE.AnimationMixer | null = null;
+      const loader = new FBXLoader();
+      loader.load(
+        "/models/welcome_scene/Dragon_WoWc.fbx",
+        (object) => {
+          object.scale.set(0.02, 0.02, 0.02);
+          object.position.set(0, -4, 0);
+          mixer = new THREE.AnimationMixer(object);
+          if (object.animations && object.animations.length > 0) {
+            const action = mixer.clipAction(object.animations[0]);
+            action.setLoop(THREE.LoopPingPong, Infinity);
+            action.play();
+          }
+          scene.add(object);
+        },
+        undefined,
+        (error) => {
+          console.error("Error loading dragon:", error);
+        }
+      );
+
+      let mouseX = 0;
+      let mouseY = 0;
+      const handleMouseMove = (e: MouseEvent) => {
+        mouseX = (e.clientX - window.innerWidth / 2) / 100;
+        mouseY = (e.clientY - window.innerHeight / 2) / 100;
+      };
+      document.addEventListener("mousemove", handleMouseMove);
+
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+
+        if (mixer) mixer.update(clock.getDelta());
+
+        camera.position.x += (-mouseX - camera.position.x) * 0.06;
+        camera.position.y += (mouseY - camera.position.y) * 0.06;
+        camera.lookAt(scene.position);
+
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      function resizeRenderer() {
+        // Reduce canvas size to lower the overall section height
+        const size = Math.min(window.innerWidth * 0.36, 420);
+        renderer.setSize(size, size);
+        camera.aspect = 1;
+        camera.updateProjectionMatrix();
+      }
+      window.addEventListener("resize", resizeRenderer);
+      resizeRenderer();
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("resize", resizeRenderer);
+        renderer.dispose();
+        scene.clear();
+      };
+    } catch (error) {
+      console.error('Error initializing 3D scene:', error);
+      // Hide canvas on error to prevent showing broken content
+      if (canvas) {
+        canvas.style.display = 'none';
+      }
     }
-    animate();
-
-    function resizeRenderer() {
-      // Reduce canvas size to lower the overall section height
-      const size = Math.min(window.innerWidth * 0.36, 420);
-      renderer.setSize(size, size);
-      camera.aspect = 1;
-      camera.updateProjectionMatrix();
-    }
-    window.addEventListener("resize", resizeRenderer);
-    resizeRenderer();
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("resize", resizeRenderer);
-      renderer.dispose();
-      scene.clear();
-    };
   }, []);
 
   return (
@@ -152,28 +168,28 @@ export default function HomePage() {
           <div className="lg:col-span-6 self-center space-y-6">
             <div className="flex items-center gap-3">
               <span className="inline-block h-1.5 w-10 rounded bg-[#D89216]" />
-                <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight text-neutral-100">¿Qué es "World of Warclass"?</h2>
+              <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight text-neutral-100">¿Qué es "World of Warclass"?</h2>
             </div>
             <p className="max-w-2xl text-lg leading-relaxed text-neutral-300">
               Plataforma educativa innovadora que transforma tareas en misiones dentro de un mundo virtual 3D.
             </p>
             <div className="grid sm:grid-cols-2 gap-5 pt-1">
-                <div className="border-l-4 border-[#D89216] pl-4">
-                  <h3 className="text-base font-semibold text-neutral-100 mb-2">Nuestros Objetivos</h3>
-                  <ul className="space-y-2 text-sm text-neutral-300">
-                    <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Incentivar el aprendizaje con misiones y recompensas.</li>
-                    <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Conectar contenidos con experiencias interactivas.</li>
-                    <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Fomentar el trabajo en equipo y la creatividad.</li>
-                  </ul>
-                </div>
-                <div className="border-l-4 border-[#D89216] pl-4">
-                  <h3 className="text-base font-semibold text-neutral-100 mb-2">Para Docentes</h3>
-                  <ul className="space-y-2 text-sm text-neutral-300">
-                    <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Diseña tareas como misiones.</li>
-                    <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Seguimiento del progreso y feedback claro.</li>
-                    <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Aulas más activas y comprometidas.</li>
-                  </ul>
-                </div>
+              <div className="border-l-4 border-[#D89216] pl-4">
+                <h3 className="text-base font-semibold text-neutral-100 mb-2">Nuestros Objetivos</h3>
+                <ul className="space-y-2 text-sm text-neutral-300">
+                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Incentivar el aprendizaje con misiones y recompensas.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Conectar contenidos con experiencias interactivas.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Fomentar el trabajo en equipo y la creatividad.</li>
+                </ul>
+              </div>
+              <div className="border-l-4 border-[#D89216] pl-4">
+                <h3 className="text-base font-semibold text-neutral-100 mb-2">Para Docentes</h3>
+                <ul className="space-y-2 text-sm text-neutral-300">
+                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Diseña tareas como misiones.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Seguimiento del progreso y feedback claro.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Aulas más activas y comprometidas.</li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -257,4 +273,4 @@ export default function HomePage() {
     </GuestLayout>
   );
 }
-        
+
