@@ -197,7 +197,7 @@ export default function TasksPage() {
         <Card className="bg-[#1a1a1a] border-neutral-800">
           <CardHeader>
             <CardTitle className="text-neutral-100 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-[#D89216]" />
+              <FileText className="h-5 w-5 text-amber-500" />
               Tareas Disponibles
             </CardTitle>
             <CardDescription className="text-neutral-400">
@@ -238,7 +238,7 @@ export default function TasksPage() {
                       >
                         <TableCell className="font-medium text-neutral-100">
                           <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-[#D89216]" />
+                            <FileText className="h-4 w-4 text-amber-500" />
                             {task.name}
                           </div>
                         </TableCell>
@@ -296,7 +296,7 @@ export default function TasksPage() {
                           ) : (
                             <Button
                               size="sm"
-                              className="bg-[#D89216] hover:bg-[#B87A12] text-black"
+                              className="bg-amber-500 hover:bg-[#B87A12] text-black"
                               onClick={() =>
                                 router.push(
                                   `/main/dashboard/player/tasks/${task.id}/submit?courseId=${courseId}&characterId=${memberId}`

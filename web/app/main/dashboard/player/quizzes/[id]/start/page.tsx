@@ -229,7 +229,7 @@ export default function QuizStartPage() {
       <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
         <div className="flex h-full justify-center items-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto" />
             <p className="mt-4 text-neutral-400">Cargando quiz...</p>
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function QuizStartPage() {
               <p className="text-neutral-400">{error || 'Quiz no encontrado'}</p>
               <Button
                 onClick={() => router.push(`/main/dashboard/player/quizzes?courseId=${courseId}`)}
-                className="mt-4 bg-[#D89216] hover:bg-[#b6770f] text-black"
+                className="mt-4 bg-amber-500 hover:bg-[#b6770f] text-black"
               >
                 Volver a Quizzes
               </Button>
@@ -286,7 +286,7 @@ export default function QuizStartPage() {
                 </div>
                 <div className="bg-neutral-900 p-4 rounded-lg text-center">
                   <p className="text-neutral-400 text-sm">Puntos Obtenidos</p>
-                  <p className="text-3xl font-bold text-[#D89216]">{totalPointsEarned}</p>
+                  <p className="text-3xl font-bold text-amber-500">{totalPointsEarned}</p>
                 </div>
                 <div className="bg-neutral-900 p-4 rounded-lg text-center">
                   <p className="text-neutral-400 text-sm">Precisión</p>
@@ -350,7 +350,7 @@ export default function QuizStartPage() {
 
               <Button
                 onClick={() => router.push(`/main/dashboard/player/quizzes?courseId=${courseId}`)}
-                className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
+                className="w-full bg-amber-500 hover:bg-[#b6770f] text-black font-semibold"
               >
                 Volver a Quizzes
               </Button>
@@ -387,7 +387,7 @@ export default function QuizStartPage() {
 
         {/* Pregunta */}
         <Card className="bg-[#1a1a1a] border-neutral-800">
-          <CardHeader className="bg-[#D89216] text-black">
+          <CardHeader className="bg-amber-500 text-black">
             <div className="flex justify-between items-center">
               <CardTitle className="text-2xl font-bold">{quiz.title}</CardTitle>
               <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-lg">
@@ -461,7 +461,7 @@ export default function QuizStartPage() {
                   {currentQuestion.answers.map((answer, index) => (
                     <div
                       key={index}
-                      className="flex items-center space-x-3 border border-neutral-700 rounded-lg p-4 hover:border-[#D89216] transition-colors"
+                      className="flex items-center space-x-3 border border-neutral-700 rounded-lg p-4 hover:border-amber-500 transition-colors"
                     >
                       <RadioGroupItem value={index.toString()} id={`answer-${index}`} />
                       <Label
@@ -497,7 +497,7 @@ export default function QuizStartPage() {
                 {currentQuestionIndex < quiz.totalQuestions - 1 ? (
                   <Button
                     onClick={() => navigateToQuestion(currentQuestionIndex + 1)}
-                    className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
+                    className="flex-1 bg-amber-500 hover:bg-[#b6770f] text-black font-semibold"
                   >
                     Siguiente
                     <ChevronRight className="h-4 w-4 ml-1" />

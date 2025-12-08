@@ -242,7 +242,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
           <p className="mt-4 text-neutral-400 text-lg">Cargando dashboard...</p>
         </div>
       </div>
@@ -261,7 +261,7 @@ export default function DashboardPage() {
             <p className="text-neutral-400 mb-4">{error}</p>
             <Button 
               onClick={() => window.location.reload()} 
-              className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black"
+              className="w-full bg-amber-500 hover:bg-[#b6770f] text-black"
             >
               Reintentar
             </Button>
@@ -278,7 +278,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="size-8 rounded-sm bg-[#D89216]" />
+            <div className="size-8 rounded-sm bg-amber-500" />
             <span className="hidden sm:inline text-sm font-bold tracking-widest text-neutral-100">
               WARCLASS
             </span>
@@ -326,9 +326,9 @@ export default function DashboardPage() {
 
             {/* User Avatar */}
             <div className="flex items-center gap-2">
-              <Avatar className="h-9 w-9 border-2 border-[#D89216]">
+              <Avatar className="h-9 w-9 border-2 border-amber-500">
                 <AvatarImage src="/img/default-avatar.jpg" alt={user?.name} />
-                <AvatarFallback className="bg-[#D89216] text-black text-xs font-bold">
+                <AvatarFallback className="bg-amber-500 text-black text-xs font-bold">
                   {user?.name ? getInitials(user.name) : "U"}
                 </AvatarFallback>
               </Avatar>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium text-neutral-400">
                 Cursos Activos
               </CardTitle>
-              <BookOpen className="h-4 w-4 text-[#D89216]" />
+              <BookOpen className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
@@ -411,7 +411,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium text-neutral-400">
                 Enseñando
               </CardTitle>
-              <GraduationCap className="h-4 w-4 text-[#D89216]" />
+              <GraduationCap className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
@@ -425,7 +425,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium text-neutral-400">
                 Estudiantes
               </CardTitle>
-              <Users className="h-4 w-4 text-[#D89216]" />
+              <Users className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
@@ -439,7 +439,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium text-neutral-400">
                 Nivel Promedio
               </CardTitle>
-              <Trophy className="h-4 w-4 text-[#D89216]" />
+              <Trophy className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
@@ -457,7 +457,7 @@ export default function DashboardPage() {
             <div className="flex justify-end">
               <Button
                 onClick={() => setCreateCourseModalOpen(true)}
-                className="bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
+                className="bg-amber-500 hover:bg-[#b6770f] text-black font-semibold"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Crear Curso
@@ -468,14 +468,14 @@ export default function DashboardPage() {
               <TabsList className={`grid w-full ${isTeacher ? 'grid-cols-2' : 'grid-cols-1'} bg-[#1a1a1a] border border-neutral-800`}>
                 <TabsTrigger 
                   value="enrolled"
-                  className="data-[state=active]:bg-[#D89216] data-[state=active]:text-black"
+                  className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
                 >
                   Mis Cursos
                 </TabsTrigger>
                 {isTeacher && (
                   <TabsTrigger 
                     value="teaching"
-                    className="data-[state=active]:bg-[#D89216] data-[state=active]:text-black"
+                    className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
                   >
                     Enseñando
                   </TabsTrigger>
@@ -528,7 +528,7 @@ export default function DashboardPage() {
                   myInscriptions.map((course) => (
                   <Card
                     key={course.id}
-                    className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
+                    className="bg-[#1a1a1a] border-neutral-800 hover:border-amber-500 transition-colors cursor-pointer"
                     onClick={() => handleCourseClick(course)}
                   >
                     <CardHeader>
@@ -550,7 +550,7 @@ export default function DashboardPage() {
                         </div>
                         <Badge
                           variant="outline"
-                          className="border-[#D89216] text-[#D89216]"
+                          className="border-amber-500 text-amber-500"
                         >
                           {course.membersCount} miembros
                         </Badge>
@@ -564,12 +564,12 @@ export default function DashboardPage() {
 
                         {course.hasCharacter && course.character && (
                           <div className="flex items-center gap-2 text-sm text-neutral-300 pt-2">
-                            <Target className="h-4 w-4 text-[#D89216]" />
+                            <Target className="h-4 w-4 text-amber-500" />
                             <span>Personaje: {course.character.name} ({course.character.className})</span>
                           </div>
                         )}
 
-                        <Button className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold">
+                        <Button className="w-full bg-amber-500 hover:bg-[#b6770f] text-black font-semibold">
                           Entrar al curso
                         </Button>
                       </div>
@@ -585,7 +585,7 @@ export default function DashboardPage() {
                   {loadingTeacher ? (
                     <Card className="bg-[#1a1a1a] border-neutral-800">
                       <CardContent className="flex flex-col items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D89216] mb-4"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mb-4"></div>
                         <p className="text-neutral-400">Cargando cursos...</p>
                       </CardContent>
                     </Card>
@@ -600,7 +600,7 @@ export default function DashboardPage() {
                           Crea tu primer curso para comenzar a enseñar
                         </p>
                         <Button 
-                          className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                          className="bg-amber-500 hover:bg-[#b6770f] text-black"
                           onClick={() => setCreateCourseModalOpen(true)}
                         >
                           <Plus className="h-4 w-4 mr-2" />
@@ -620,7 +620,7 @@ export default function DashboardPage() {
                         </Button>
                       </div>
                       <Card 
-                        className="bg-[#1a1a1a] border-neutral-800 border-dashed hover:border-[#D89216] transition-colors cursor-pointer"
+                        className="bg-[#1a1a1a] border-neutral-800 border-dashed hover:border-amber-500 transition-colors cursor-pointer"
                         onClick={() => setCreateCourseModalOpen(true)}
                       >
                         <CardContent className="flex flex-col items-center justify-center py-8">
@@ -632,7 +632,7 @@ export default function DashboardPage() {
                       {teacherCourses.map((course) => (
                         <Card
                           key={course.id}
-                          className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors"
+                          className="bg-[#1a1a1a] border-neutral-800 hover:border-amber-500 transition-colors"
                         >
                           <CardHeader>
                             <div className="flex items-start justify-between">
@@ -682,7 +682,7 @@ export default function DashboardPage() {
                                 Gestionar Curso
                               </Button>
                               <Button
-                                className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                                className="bg-amber-500 hover:bg-[#b6770f] text-black"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleOpenInvitationModal(course.id, course.name);
@@ -723,7 +723,7 @@ export default function DashboardPage() {
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={activity.avatar} />
-                        <AvatarFallback className="bg-[#D89216] text-black text-xs">
+                        <AvatarFallback className="bg-amber-500 text-black text-xs">
                           {activity.course.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>

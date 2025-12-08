@@ -545,7 +545,7 @@ export default function QuizzesPage() {
       <MasterCourseLayout courseId={courseId} courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
             <p className="mt-4 text-neutral-400">Cargando quizzes...</p>
           </div>
         </div>
@@ -577,7 +577,7 @@ export default function QuizzesPage() {
 
           <Button
             onClick={openCreateModal}
-            className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+            className="bg-amber-500 hover:bg-[#b6770f] text-black"
           >
             <Plus className="h-4 w-4 mr-2" />
             Crear Quiz
@@ -662,7 +662,7 @@ export default function QuizzesPage() {
             ) : (
               <div className="space-y-4">
                 {filteredQuizzes.map((quiz) => (
-                  <Card key={quiz.id} className="bg-[#0a0a0a] border-neutral-800 hover:border-[#D89216] transition-colors">
+                  <Card key={quiz.id} className="bg-[#0a0a0a] border-neutral-800 hover:border-amber-500 transition-colors">
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex-1">
@@ -676,7 +676,7 @@ export default function QuizzesPage() {
                             <Badge variant="outline" className="border-blue-500 text-blue-400">
                               {quiz.totalQuestions} pregunta{quiz.totalQuestions !== 1 ? 's' : ''}
                             </Badge>
-                            <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
+                            <Badge variant="outline" className="border-amber-500 text-amber-500">
                               <Award className="h-3 w-3 mr-1" />
                               {quiz.points} pts
                             </Badge>
@@ -753,7 +753,7 @@ export default function QuizzesPage() {
                 <Button
                   variant="outline"
                   onClick={() => setAiModalOpen(true)}
-                  className="border-[#D89216] text-[#D89216] hover:bg-[#D89216]/10"
+                  className="border-amber-500 text-amber-500 hover:bg-amber-500/10"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   Generar con IA
@@ -888,7 +888,7 @@ export default function QuizzesPage() {
                   </div>
                   <div>
                     <span className="text-neutral-500">Puntos totales:</span>
-                    <span className="ml-2 text-[#D89216]">{totalPoints}</span>
+                    <span className="ml-2 text-amber-500">{totalPoints}</span>
                   </div>
                   <div>
                     <span className="text-neutral-500">Tiempo total:</span>
@@ -908,7 +908,7 @@ export default function QuizzesPage() {
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black"
+                  className="flex-1 bg-amber-500 hover:bg-[#b6770f] text-black"
                 >
                   {createModalOpen ? 'Crear Quiz' : 'Guardar Cambios'}
                 </Button>
@@ -922,7 +922,7 @@ export default function QuizzesPage() {
           <DialogContent className="bg-[#1a1a1a] border-neutral-800">
             <DialogHeader>
               <DialogTitle className="text-neutral-100 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[#D89216]" />
+                <Sparkles className="h-5 w-5 text-amber-500" />
                 Generar Quiz con IA
               </DialogTitle>
             </DialogHeader>
@@ -971,7 +971,7 @@ export default function QuizzesPage() {
               <Button
                 onClick={handleGenerateQuiz}
                 disabled={isGenerating}
-                className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black mt-4"
+                className="w-full bg-amber-500 hover:bg-[#b6770f] text-black mt-4"
               >
                 {isGenerating ? (
                   <>

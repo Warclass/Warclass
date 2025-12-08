@@ -98,7 +98,7 @@ export default function GroupsPage() {
       <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
         <div className="flex h-full justify-center items-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto" />
             <p className="mt-4 text-neutral-400">Cargando grupos...</p>
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function GroupsPage() {
             <Card key={group.id} className="bg-[#1a1a1a] border-neutral-800">
               <CardHeader className="border-b border-neutral-800 pb-4">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-2xl font-bold text-[#D89216]">
+                  <CardTitle className="text-2xl font-bold text-amber-500">
                     {group.name}
                   </CardTitle>
                   <Badge variant="secondary" className="text-lg px-3 py-1">
@@ -158,11 +158,11 @@ export default function GroupsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-neutral-800 hover:bg-neutral-800">
-                        <TableHead className="text-[#D89216] font-semibold">Alumno</TableHead>
-                        <TableHead className="text-[#D89216] font-semibold">Personaje</TableHead>
-                        <TableHead className="text-[#D89216] font-semibold">Clase</TableHead>
-                        <TableHead className="text-[#D89216] font-semibold text-center">Nivel</TableHead>
-                        <TableHead className="text-[#D89216] font-semibold text-center">Estadísticas</TableHead>
+                        <TableHead className="text-amber-500 font-semibold">Alumno</TableHead>
+                        <TableHead className="text-amber-500 font-semibold">Personaje</TableHead>
+                        <TableHead className="text-amber-500 font-semibold">Clase</TableHead>
+                        <TableHead className="text-amber-500 font-semibold text-center">Nivel</TableHead>
+                        <TableHead className="text-amber-500 font-semibold text-center">Estadísticas</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -186,7 +186,7 @@ export default function GroupsPage() {
                               </TableCell>
                               <TableCell>
                                 {character.class ? (
-                                  <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
+                                  <Badge variant="outline" className="border-amber-500 text-amber-500">
                                     {character.class?.name}
                                   </Badge>
                                 ) : (
@@ -212,7 +212,7 @@ export default function GroupsPage() {
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
-                                      <Coins className="h-4 w-4 text-[#D89216]" />
+                                      <Coins className="h-4 w-4 text-amber-500" />
                                       <span className="text-sm font-medium text-neutral-100">
                                         {character.gold}
                                       </span>

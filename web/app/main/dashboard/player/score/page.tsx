@@ -117,7 +117,7 @@ export default function ScorePage() {
       <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name} history={historyItems}>
         <div className="flex h-full justify-center items-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto" />
             <p className="mt-4 text-neutral-400">Cargando ranking...</p>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function ScorePage() {
                 <p className="text-neutral-300">{recentQuizTitle || 'Examen reciente'}</p>
               </div>
               <div className="text-center">
-                <span className="text-4xl font-extrabold text-[#D89216]">{recentResult}%</span>
+                <span className="text-4xl font-extrabold text-amber-500">{recentResult}%</span>
                 <p className="text-sm text-neutral-400">Puntuación</p>
               </div>
             </CardContent>
@@ -162,14 +162,14 @@ export default function ScorePage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-neutral-100 flex items-center gap-3">
-              <Trophy className="h-10 w-10 text-[#D89216]" />
+              <Trophy className="h-10 w-10 text-amber-500" />
               Ranking del Curso
             </h1>
             <p className="text-neutral-400 mt-2">
               Clasificación basada en experiencia ganada
             </p>
           </div>
-          <Badge className="bg-[#D89216] text-black text-lg px-4 py-2">
+          <Badge className="bg-amber-500 text-black text-lg px-4 py-2">
             {ranking.length} participantes
           </Badge>
         </div>
@@ -187,7 +187,7 @@ export default function ScorePage() {
                 <Card
                   key={member.id}
                   className={`bg-[#1a1a1a] transition-all hover:scale-[1.02] ${
-                    isTopThree ? 'border-[#D89216]' : 'border-neutral-800'
+                    isTopThree ? 'border-amber-500' : 'border-neutral-800'
                   }`}
                 >
                   <CardContent className="p-4">

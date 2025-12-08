@@ -120,7 +120,7 @@ export default function InvitationsPage() {
           </div>
         </header>
         <div className="flex justify-center items-center h-[calc(100vh-4rem)]">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216]" />
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500" />
         </div>
       </div>
     );
@@ -136,7 +136,7 @@ export default function InvitationsPage() {
             <span>Volver al Dashboard</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-[#D89216]" />
+            <Mail className="h-5 w-5 text-amber-500" />
             <span className="text-neutral-100 font-semibold">Invitaciones</span>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function InvitationsPage() {
         <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-700/50">
           <CardHeader>
             <CardTitle className="text-3xl font-bold text-neutral-100 flex items-center gap-3">
-              <Mail className="h-8 w-8 text-[#D89216]" />
+              <Mail className="h-8 w-8 text-amber-500" />
               Mis Invitaciones
             </CardTitle>
             <CardDescription className="text-neutral-400 text-lg">
@@ -166,7 +166,7 @@ export default function InvitationsPage() {
               </CardDescription>
               <Button 
                 onClick={() => router.push('/dashboard')}
-                className="mt-6 bg-[#D89216] hover:bg-[#b6770f] text-black"
+                className="mt-6 bg-amber-500 hover:bg-[#b6770f] text-black"
               >
                 Volver al Dashboard
               </Button>
@@ -215,7 +215,7 @@ export default function InvitationsPage() {
                       <code className={`px-3 py-1 rounded font-mono border ${
                         invitation.used
                           ? 'bg-green-950/20 border-green-800/50 text-green-500'
-                          : 'bg-[#0a0a0a] border-neutral-800 text-[#D89216]'
+                          : 'bg-[#0a0a0a] border-neutral-800 text-amber-500'
                       }`}>
                         {invitation.code}
                       </code>

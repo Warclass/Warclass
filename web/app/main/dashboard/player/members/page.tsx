@@ -103,7 +103,7 @@ export default function MembersPage() {
       <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined}>
         <div className="flex h-full justify-center items-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto" />
             <p className="mt-4 text-neutral-400">Cargando miembros del grupo...</p>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function MembersPage() {
               </p>
               <Button 
                 onClick={() => router.push(`/main/dashboard/player?courseId=${courseId}`)}
-                className="w-full bg-[#D89216] hover:bg-[#b87a12]"
+                className="w-full bg-amber-500 hover:bg-[#b87a12]"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver al Dashboard
@@ -150,7 +150,7 @@ export default function MembersPage() {
             <h1 className="text-3xl font-bold text-neutral-100">Miembros de tu Grupo</h1>
             {groupName && (
               <p className="text-neutral-400 mt-1">
-                Grupo: <span className="text-[#D89216] font-semibold">{groupName}</span> • {members.length} miembro{members.length !== 1 ? 's' : ''}
+                Grupo: <span className="text-amber-500 font-semibold">{groupName}</span> • {members.length} miembro{members.length !== 1 ? 's' : ''}
               </p>
             )}
           </div>
@@ -167,7 +167,7 @@ export default function MembersPage() {
               : 1
             
             return (
-              <Card key={member.id} className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors">
+              <Card key={member.id} className="bg-[#1a1a1a] border-neutral-800 hover:border-amber-500 transition-colors">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -181,7 +181,7 @@ export default function MembersPage() {
                       )}
                     </div>
                     {member.character && (
-                      <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
+                      <Badge variant="outline" className="border-amber-500 text-amber-500">
                         Nv. {level}
                       </Badge>
                     )}
@@ -203,10 +203,10 @@ export default function MembersPage() {
                     <div className="h-8 w-px bg-neutral-800" />
 
                     <div className="flex items-center gap-2">
-                      <Coins className="h-5 w-5 text-[#D89216]" />
+                      <Coins className="h-5 w-5 text-amber-500" />
                       <div className="flex flex-col">
                         <span className="text-xs text-neutral-500">Oro</span>
-                        <span className="text-base font-bold text-[#D89216]">
+                        <span className="text-base font-bold text-amber-500">
                           {member.character?.gold || member.gold}
                         </span>
                       </div>

@@ -108,7 +108,7 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
             Enviar Invitación
           </DialogTitle>
           <DialogDescription className="text-neutral-400">
-            Curso: <span className="text-[#D89216] font-semibold">{courseName}</span>
+            Curso: <span className="text-amber-500 font-semibold">{courseName}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -146,7 +146,7 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
               <Button
                 type="submit"
                 disabled={isLoading || !name.trim()}
-                className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                className="bg-amber-500 hover:bg-[#b6770f] text-black"
               >
                 {isLoading ? (
                   <>
@@ -167,14 +167,14 @@ export function InvitationModal({ open, onOpenChange, courseId, courseName, user
             <div className="bg-[#0f0f0f] border border-neutral-800 rounded-lg p-6 space-y-4">
               <div className="text-center">
                 <p className="text-sm text-neutral-400 mb-2">Código de Invitación</p>
-                <div className="text-4xl font-bold text-[#D89216] tracking-wider font-mono">
+                <div className="text-4xl font-bold text-amber-500 tracking-wider font-mono">
                   {generatedCode}
                 </div>
               </div>
 
               <Button
                 onClick={handleCopyCode}
-                className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black"
+                className="w-full bg-amber-500 hover:bg-[#b6770f] text-black"
               >
                 {copied ? (
                   <>

@@ -105,7 +105,7 @@ export default function QuizzesPage() {
       <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
         <div className="flex h-full justify-center items-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto" />
             <p className="mt-4 text-neutral-400">Cargando quizzes...</p>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function QuizzesPage() {
                 return (
                   <div
                     key={quiz.id}
-                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center border border-neutral-800 rounded-lg p-4 hover:border-[#D89216] transition-colors gap-4"
+                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center border border-neutral-800 rounded-lg p-4 hover:border-amber-500 transition-colors gap-4"
                   >
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2">
@@ -236,7 +236,7 @@ export default function QuizzesPage() {
                     </div>
                     {!isCompleted ? (
                       <Link href={`/main/dashboard/player/quizzes/${quiz.id}/start?courseId=${courseId}`}>
-                        <Button className="bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold">
+                        <Button className="bg-amber-500 hover:bg-[#b6770f] text-black font-semibold">
                           Comenzar Quiz
                         </Button>
                       </Link>

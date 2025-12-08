@@ -208,14 +208,14 @@ export default function ProfilePage() {
           <TabsList className="grid w-full grid-cols-2 bg-[#1a1a1a] border border-neutral-800">
             <TabsTrigger 
               value="profile"
-              className="data-[state=active]:bg-[#D89216] data-[state=active]:text-black"
+              className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
             >
               <User className="h-4 w-4 mr-2" />
               Información Personal
             </TabsTrigger>
             <TabsTrigger 
               value="security"
-              className="data-[state=active]:bg-[#D89216] data-[state=active]:text-black"
+              className="data-[state=active]:bg-amber-500 data-[state=active]:text-black"
             >
               <Lock className="h-4 w-4 mr-2" />
               Seguridad
@@ -300,7 +300,7 @@ export default function ProfilePage() {
                   <Button
                     type="submit"
                     disabled={isLoadingProfile}
-                    className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
+                    className="w-full bg-amber-500 hover:bg-[#b6770f] text-black font-semibold"
                   >
                     {isLoadingProfile ? (
                       <>
@@ -423,7 +423,7 @@ export default function ProfilePage() {
                   <Button
                     type="submit"
                     disabled={isLoadingPassword}
-                    className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold"
+                    className="w-full bg-amber-500 hover:bg-[#b6770f] text-black font-semibold"
                   >
                     {isLoadingPassword ? (
                       <>

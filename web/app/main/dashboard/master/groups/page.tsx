@@ -289,7 +289,7 @@ export default function GroupsPage() {
       <MasterCourseLayout courseId={courseId} courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
             <p className="mt-4 text-neutral-400">Cargando grupos...</p>
           </div>
         </div>
@@ -313,7 +313,7 @@ export default function GroupsPage() {
 
           <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#D89216] hover:bg-[#b6770f] text-black">
+              <Button className="bg-amber-500 hover:bg-[#b6770f] text-black">
                 <Plus className="h-4 w-4 mr-2" />
                 Crear Grupo
               </Button>
@@ -348,7 +348,7 @@ export default function GroupsPage() {
                 </div>
                 <Button 
                   onClick={handleCreateGroup}
-                  className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black"
+                  className="w-full bg-amber-500 hover:bg-[#b6770f] text-black"
                 >
                   Crear Grupo
                 </Button>
@@ -373,7 +373,7 @@ export default function GroupsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {groups.map((group) => (
-              <Card key={group.id} className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors">
+              <Card key={group.id} className="bg-[#1a1a1a] border-neutral-800 hover:border-amber-500 transition-colors">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -398,7 +398,7 @@ export default function GroupsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-neutral-400">Miembros:</span>
-                      <Badge variant="outline" className="border-[#D89216] text-[#D89216]">
+                      <Badge variant="outline" className="border-amber-500 text-amber-500">
                         {group.members?.length || 0}
                       </Badge>
                     </div>
@@ -542,7 +542,7 @@ export default function GroupsPage() {
                 </Button>
                 <Button
                   onClick={handleAssignMembers}
-                  className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black"
+                  className="flex-1 bg-amber-500 hover:bg-[#b6770f] text-black"
                 >
                   Asignar {selectedMembers.length} miembro{selectedMembers.length !== 1 ? 's' : ''}
                 </Button>

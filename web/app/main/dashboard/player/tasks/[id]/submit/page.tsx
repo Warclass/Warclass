@@ -268,7 +268,7 @@ export default function SubmitTaskPage() {
           <Card className="bg-[#1a1a1a] border-neutral-800">
             <CardHeader>
               <CardTitle className="text-neutral-100 flex items-center gap-2">
-                <Upload className="h-5 w-5 text-[#D89216]" />
+                <Upload className="h-5 w-5 text-amber-500" />
                 Subir Archivo
               </CardTitle>
               <CardDescription className="text-neutral-400">
@@ -277,7 +277,7 @@ export default function SubmitTaskPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* File Input */}
-              <div className="border-2 border-dashed border-neutral-800 rounded-lg p-8 text-center hover:border-[#D89216] transition-colors">
+              <div className="border-2 border-dashed border-neutral-800 rounded-lg p-8 text-center hover:border-amber-500 transition-colors">
                 <input
                   type="file"
                   id="file-upload"
@@ -291,7 +291,7 @@ export default function SubmitTaskPage() {
                   className="cursor-pointer flex flex-col items-center gap-4"
                 >
                   <div className="p-4 bg-neutral-900 rounded-full">
-                    <FileText className="h-10 w-10 text-[#D89216]" />
+                    <FileText className="h-10 w-10 text-amber-500" />
                   </div>
                   <div>
                     <p className="text-neutral-100 font-medium">
@@ -308,7 +308,7 @@ export default function SubmitTaskPage() {
               {selectedFile && (
                 <div className="flex items-center justify-between p-4 bg-neutral-900 rounded-lg border border-neutral-800">
                   <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-[#D89216]" />
+                    <FileText className="h-5 w-5 text-amber-500" />
                     <div>
                       <p className="font-medium text-neutral-100">
                         {selectedFile.name}
@@ -334,7 +334,7 @@ export default function SubmitTaskPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={!selectedFile || isSubmitting}
-                className="w-full bg-[#D89216] hover:bg-[#B87A12] text-black font-semibold h-12 text-lg"
+                className="w-full bg-amber-500 hover:bg-[#B87A12] text-black font-semibold h-12 text-lg"
               >
                 {isSubmitting ? (
                   <>

@@ -52,7 +52,7 @@ export default function MasterLayout({
             </Button>
 
             <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-[#D89216]" />
+              <BookOpen className="h-5 w-5 text-amber-500" />
               <div>
                 <h2 className="text-sm font-bold text-neutral-100">
                   {courseName || 'Cargando...'}
@@ -97,7 +97,7 @@ export default function MasterLayout({
                 <Link href={buildUrl('/main/dashboard/master')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-neutral-800 hover:text-[#D89216]"
+                    className="w-full justify-start hover:bg-neutral-800 hover:text-amber-500"
                   >
                     <Home className="mr-2 h-4 w-4" />
                     Inicio
@@ -114,7 +114,7 @@ export default function MasterLayout({
                 <Link href={buildUrl('/main/dashboard/master/groups')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-neutral-800 hover:text-[#D89216]"
+                    className="w-full justify-start hover:bg-neutral-800 hover:text-amber-500"
                   >
                     <UsersRound className="mr-2 h-4 w-4" />
                     Grupos
@@ -125,7 +125,7 @@ export default function MasterLayout({
                 <Link href={buildUrl('/main/dashboard/master/members')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-neutral-800 hover:text-[#D89216]"
+                    className="w-full justify-start hover:bg-neutral-800 hover:text-amber-500"
                   >
                     <Users className="mr-2 h-4 w-4" />
                     Miembros
@@ -142,7 +142,7 @@ export default function MasterLayout({
                 <Link href={buildUrl('/main/dashboard/master/tasks')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-neutral-800 hover:text-[#D89216]"
+                    className="w-full justify-start hover:bg-neutral-800 hover:text-amber-500"
                   >
                     <FileText className="mr-2 h-4 w-4" />
                     Tareas
@@ -153,7 +153,7 @@ export default function MasterLayout({
                 <Link href={buildUrl('/main/dashboard/master/quizzes')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start hover:bg-neutral-800 hover:text-[#D89216]"
+                    className="w-full justify-start hover:bg-neutral-800 hover:text-amber-500"
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />
                     Exámenes

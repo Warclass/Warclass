@@ -143,7 +143,7 @@ export function CreateCourseModal({ open, onOpenChange, onSuccess, userId, token
             <Button
               type="submit"
               disabled={isLoading || !name.trim()}
-              className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+              className="bg-amber-500 hover:bg-[#b6770f] text-black"
             >
               {isLoading ? (
                 <>

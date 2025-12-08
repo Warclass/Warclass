@@ -154,7 +154,7 @@ export default function PlayerLayout({
 
   const scrollContent = (
     <>
-      <div className="bg-[#D89216] w-full flex justify-center border-b-2 border-neutral-800 rounded-t-md">
+      <div className="bg-amber-500 w-full flex justify-center border-b-2 border-neutral-800 rounded-t-md">
         <h1 className="text-center text-[#0a0a0a] text-xl font-bold py-2">
           Historial de Quizzes
         </h1>
@@ -169,13 +169,13 @@ export default function PlayerLayout({
             key={index}
             className="flex border-b border-neutral-800 p-3 items-center justify-between hover:bg-neutral-800/30 transition-colors"
           >
-            <p className="text-[#D89216] border-r border-neutral-700 flex-1 text-center font-medium">
+            <p className="text-amber-500 border-r border-neutral-700 flex-1 text-center font-medium">
               {item.character.name}
             </p>
             <p className="border-r border-neutral-700 flex-1 text-center text-neutral-300">
               {item.quiz}
             </p>
-            <p className="text-[#D89216] flex-1 text-center font-bold">
+            <p className="text-amber-500 flex-1 text-center font-bold">
               {item.score}%
             </p>
           </div>
@@ -201,7 +201,7 @@ export default function PlayerLayout({
             </Button>
 
             <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-[#D89216]" />
+              <BookOpen className="h-5 w-5 text-amber-500" />
               <div>
                 <h2 className="text-sm font-bold text-neutral-100">
                   {courseName || 'Curso'}
@@ -306,7 +306,7 @@ export default function PlayerLayout({
                 <Link href={buildUrl('/main/dashboard/player/character')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-neutral-400 hover:text-[#D89216] hover:bg-neutral-800/50 transition-colors"
+                    className="w-full justify-start text-neutral-400 hover:text-amber-500 hover:bg-neutral-800/50 transition-colors"
                   >
                     <User className="h-4 w-4 mr-3" />
                     Personaje
@@ -317,7 +317,7 @@ export default function PlayerLayout({
                 <Link href={buildUrl('/main/dashboard/player/quizzes')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-neutral-400 hover:text-[#D89216] hover:bg-neutral-800/50 transition-colors"
+                    className="w-full justify-start text-neutral-400 hover:text-amber-500 hover:bg-neutral-800/50 transition-colors"
                   >
                     <BookOpen className="h-4 w-4 mr-3" />
                     Exámenes
@@ -328,7 +328,7 @@ export default function PlayerLayout({
                 <Link href={buildUrl('/main/dashboard/player/tasks')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-neutral-400 hover:text-[#D89216] hover:bg-neutral-800/50 transition-colors"
+                    className="w-full justify-start text-neutral-400 hover:text-amber-500 hover:bg-neutral-800/50 transition-colors"
                   >
                     <FileText className="h-4 w-4 mr-3" />
                     Tareas
@@ -345,7 +345,7 @@ export default function PlayerLayout({
                 <Link href={buildUrl('/main/dashboard/player/groups')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-neutral-400 hover:text-[#D89216] hover:bg-neutral-800/50 transition-colors"
+                    className="w-full justify-start text-neutral-400 hover:text-amber-500 hover:bg-neutral-800/50 transition-colors"
                   >
                     <Layers className="h-4 w-4 mr-3" />
                     Grupos
@@ -355,7 +355,7 @@ export default function PlayerLayout({
                 <Link href={buildUrl('/main/dashboard/player/members')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-neutral-400 hover:text-[#D89216] hover:bg-neutral-800/50 transition-colors"
+                    className="w-full justify-start text-neutral-400 hover:text-amber-500 hover:bg-neutral-800/50 transition-colors"
                   >
                     <Users className="h-4 w-4 mr-3" />
                     Miembros
@@ -365,7 +365,7 @@ export default function PlayerLayout({
                 <Link href={buildUrl('/main/dashboard/player/score')}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-neutral-400 hover:text-[#D89216] hover:bg-neutral-800/50 transition-colors"
+                    className="w-full justify-start text-neutral-400 hover:text-amber-500 hover:bg-neutral-800/50 transition-colors"
                   >
                     <Trophy className="h-4 w-4 mr-3" />
                     Ranking

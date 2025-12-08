@@ -156,7 +156,7 @@ export default function DashboardPage() {
                         <p className="font-medium text-neutral-200">{item.description}</p>
                         <p className="text-xs text-neutral-500 mt-1">{item.course} • {item.time}</p>
                       </div>
-                      <Badge variant="outline" className="border-[#D89216] text-[#D89216]">{item.course}</Badge>
+                      <Badge variant="outline" className="border-amber-500 text-amber-500">{item.course}</Badge>
                     </div>
                   ))}
                 </div>

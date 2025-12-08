@@ -229,7 +229,7 @@ export default function MembersPage() {
       <MasterCourseLayout courseId={courseId} courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
             <p className="mt-4 text-neutral-400">Cargando miembros...</p>
           </div>
         </div>
@@ -258,7 +258,7 @@ export default function MembersPage() {
                 <CardTitle className="text-sm font-medium text-neutral-400">
                   Total Estudiantes
                 </CardTitle>
-                <Users className="h-4 w-4 text-[#D89216]" />
+                <Users className="h-4 w-4 text-amber-500" />
               </div>
             </CardHeader>
             <CardContent>
@@ -272,7 +272,7 @@ export default function MembersPage() {
                 <CardTitle className="text-sm font-medium text-neutral-400">
                   Experiencia Total
                 </CardTitle>
-                <Award className="h-4 w-4 text-[#D89216]" />
+                <Award className="h-4 w-4 text-amber-500" />
               </div>
             </CardHeader>
             <CardContent>
@@ -288,7 +288,7 @@ export default function MembersPage() {
                 <CardTitle className="text-sm font-medium text-neutral-400">
                   Oro Total
                 </CardTitle>
-                <Coins className="h-4 w-4 text-[#D89216]" />
+                <Coins className="h-4 w-4 text-amber-500" />
               </div>
             </CardHeader>
             <CardContent>
@@ -365,13 +365,13 @@ export default function MembersPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Award className="h-3 w-3 text-[#D89216]" />
+                            <Award className="h-3 w-3 text-amber-500" />
                             <span className="text-neutral-100">{member.experience}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Coins className="h-3 w-3 text-[#D89216]" />
+                            <Coins className="h-3 w-3 text-amber-500" />
                             <span className="text-neutral-100">{member.gold}</span>
                           </div>
                         </TableCell>

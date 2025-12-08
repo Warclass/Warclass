@@ -278,7 +278,7 @@ export default function CreateCharacterPage() {
     return (
       <div className="flex h-screen w-screen bg-[#0a0a0a] items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto" />
           <p className="text-neutral-400">Verificando autenticación...</p>
         </div>
       </div>
@@ -293,7 +293,7 @@ export default function CreateCharacterPage() {
           <div className="text-red-500 text-6xl">⚠️</div>
           <h2 className="text-2xl font-bold text-neutral-100">Error de Carga</h2>
           <p className="text-neutral-400">{loadError}</p>
-          <Button onClick={() => router.push('/main/dashboard/player')} className="bg-[#D89216] hover:bg-[#b6770f]">
+          <Button onClick={() => router.push('/main/dashboard/player')} className="bg-amber-500 hover:bg-[#b6770f]">
             Volver al Dashboard
           </Button>
         </div>
@@ -309,7 +309,7 @@ export default function CreateCharacterPage() {
             <ArrowLeft className="h-5 w-5" />
             <span>Volver al Dashboard</span>
           </Link>
-          <p className="text-[#D89216] font-bold text-lg">CREAR PERSONAJE</p>
+          <p className="text-amber-500 font-bold text-lg">CREAR PERSONAJE</p>
           <div className="w-40" /> {/* Spacer for centering */}
         </nav>
       </header>
@@ -319,7 +319,7 @@ export default function CreateCharacterPage() {
           {isLoading ? (
             <div className="h-full w-full bg-[#0a0a0a] flex justify-center items-center">
               <div className="text-center space-y-4">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto" />
                 <p className="text-neutral-400">Cargando personaje...</p>
               </div>
             </div>
@@ -366,12 +366,12 @@ export default function CreateCharacterPage() {
                 value={characterName}
                 onChange={(e) => setCharacterName(e.target.value)}
                 placeholder="Ingresa el nombre..."
-                className="bg-[#1a1a1a] text-neutral-100 border-neutral-700 focus:border-[#D89216]"
+                className="bg-[#1a1a1a] text-neutral-100 border-neutral-700 focus:border-amber-500"
                 required
               />
             </section>
 
-            <section className="border-[#D89216]/30 py-4">
+            <section className="border-amber-500/30 py-4">
               <div className="flex flex-row tall:flex-col items-center justify-center gap-4">
                 {characterClasses.map((charClass) => (
                   <Button
@@ -379,7 +379,7 @@ export default function CreateCharacterPage() {
                     type="button"
                     onClick={() => setSelectedClass(charClass.id)}
                     className={`w-16 h-16 text-2xl ${selectedClass === charClass.id
-                      ? 'bg-[#D89216] hover:bg-[#b6770f]'
+                      ? 'bg-amber-500 hover:bg-[#b6770f]'
                       : 'bg-[#1a1a1a] hover:bg-neutral-800'
                       }`}
                   >
@@ -389,7 +389,7 @@ export default function CreateCharacterPage() {
               </div>
             </section>
 
-            <section className="border-[#D89216]/30">
+            <section className="border-amber-500/30">
               <div className="flex flex-row justify-center space-x-4">
                 {genders.map((gender) => (
                   <Button
@@ -397,7 +397,7 @@ export default function CreateCharacterPage() {
                     type="button"
                     onClick={() => setSelectedGender(gender.id)}
                     className={`text-2xl px-8 py-6 ${selectedGender === gender.id
-                      ? 'bg-[#D89216] hover:bg-[#b6770f]'
+                      ? 'bg-amber-500 hover:bg-[#b6770f]'
                       : 'bg-[#1a1a1a] hover:bg-neutral-800'
                       }`}
                   >
@@ -415,7 +415,7 @@ export default function CreateCharacterPage() {
                     type="button"
                     onClick={handleHairColorPrev}
                     size="sm"
-                    className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                    className="bg-amber-500 hover:bg-[#b6770f] text-black"
                   >
                     ‹
                   </Button>
@@ -426,7 +426,7 @@ export default function CreateCharacterPage() {
                     type="button"
                     onClick={handleHairColorNext}
                     size="sm"
-                    className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                    className="bg-amber-500 hover:bg-[#b6770f] text-black"
                   >
                     ›
                   </Button>
@@ -440,7 +440,7 @@ export default function CreateCharacterPage() {
                     type="button"
                     onClick={handleSkinColorPrev}
                     size="sm"
-                    className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                    className="bg-amber-500 hover:bg-[#b6770f] text-black"
                   >
                     ‹
                   </Button>
@@ -451,7 +451,7 @@ export default function CreateCharacterPage() {
                     type="button"
                     onClick={handleSkinColorNext}
                     size="sm"
-                    className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                    className="bg-amber-500 hover:bg-[#b6770f] text-black"
                   >
                     ›
                   </Button>
@@ -465,7 +465,7 @@ export default function CreateCharacterPage() {
                     type="button"
                     onClick={() => setEyeColorIndex((prev) => (prev === 0 ? eyeColors.length - 1 : prev - 1))}
                     size="sm"
-                    className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                    className="bg-amber-500 hover:bg-[#b6770f] text-black"
                   >
                     ‹
                   </Button>
@@ -476,7 +476,7 @@ export default function CreateCharacterPage() {
                     type="button"
                     onClick={() => setEyeColorIndex((prev) => (prev === eyeColors.length - 1 ? 0 : prev + 1))}
                     size="sm"
-                    className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                    className="bg-amber-500 hover:bg-[#b6770f] text-black"
                   >
                     ›
                   </Button>
@@ -487,7 +487,7 @@ export default function CreateCharacterPage() {
             <Button
               type="button"
               onClick={handleRandomize}
-              className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black font-bold text-lg py-6 hidden short:block"
+              className="w-full bg-amber-500 hover:bg-[#b6770f] text-black font-bold text-lg py-6 hidden short:block"
             >
               🎲 Aleatorizar
             </Button>

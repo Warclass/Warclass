@@ -154,7 +154,7 @@ export default function MasterCourseDashboard() {
       <MasterCourseLayout courseId={courseId} courseName={courseInfo?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
             <p className="mt-4 text-neutral-400">Cargando datos del curso...</p>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function MasterCourseDashboard() {
               <CardTitle className="text-sm font-medium text-neutral-400">
                 Estudiantes
               </CardTitle>
-              <Users className="h-4 w-4 text-[#D89216]" />
+              <Users className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
@@ -199,7 +199,7 @@ export default function MasterCourseDashboard() {
               <CardTitle className="text-sm font-medium text-neutral-400">
                 Grupos
               </CardTitle>
-              <UsersRound className="h-4 w-4 text-[#D89216]" />
+              <UsersRound className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
@@ -216,7 +216,7 @@ export default function MasterCourseDashboard() {
               <CardTitle className="text-sm font-medium text-neutral-400">
                 Tareas
               </CardTitle>
-              <FileText className="h-4 w-4 text-[#D89216]" />
+              <FileText className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
@@ -233,7 +233,7 @@ export default function MasterCourseDashboard() {
               <CardTitle className="text-sm font-medium text-neutral-400">
                 Exámenes
               </CardTitle>
-              <ClipboardList className="h-4 w-4 text-[#D89216]" />
+              <ClipboardList className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-neutral-100">
@@ -248,11 +248,11 @@ export default function MasterCourseDashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
+          <Card className="bg-[#1a1a1a] border-neutral-800 hover:border-amber-500 transition-colors cursor-pointer"
                 onClick={() => router.push(`/main/dashboard/master/groups?courseId=${courseId}`)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UsersRound className="h-5 w-5 text-[#D89216]" />
+                <UsersRound className="h-5 w-5 text-amber-500" />
                 Gestionar Grupos
               </CardTitle>
               <CardDescription>
@@ -260,17 +260,17 @@ export default function MasterCourseDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black">
+              <Button className="w-full bg-amber-500 hover:bg-[#b6770f] text-black">
                 Ver Grupos
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
+          <Card className="bg-[#1a1a1a] border-neutral-800 hover:border-amber-500 transition-colors cursor-pointer"
                 onClick={() => router.push(`/main/dashboard/master/members?courseId=${courseId}`)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-[#D89216]" />
+                <Users className="h-5 w-5 text-amber-500" />
                 Gestionar Miembros
               </CardTitle>
               <CardDescription>
@@ -278,17 +278,17 @@ export default function MasterCourseDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black">
+              <Button className="w-full bg-amber-500 hover:bg-[#b6770f] text-black">
                 Ver Miembros
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
+          <Card className="bg-[#1a1a1a] border-neutral-800 hover:border-amber-500 transition-colors cursor-pointer"
                 onClick={() => router.push(`/main/dashboard/master/tasks?courseId=${courseId}`)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-[#D89216]" />
+                <FileText className="h-5 w-5 text-amber-500" />
                 Gestionar Tareas
               </CardTitle>
               <CardDescription>
@@ -296,17 +296,17 @@ export default function MasterCourseDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black">
+              <Button className="w-full bg-amber-500 hover:bg-[#b6770f] text-black">
                 Ver Tareas
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1a1a1a] border-neutral-800 hover:border-[#D89216] transition-colors cursor-pointer"
+          <Card className="bg-[#1a1a1a] border-neutral-800 hover:border-amber-500 transition-colors cursor-pointer"
                 onClick={() => router.push(`/main/dashboard/master/quizzes?courseId=${courseId}`)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-[#D89216]" />
+                <ClipboardList className="h-5 w-5 text-amber-500" />
                 Gestionar Exámenes
               </CardTitle>
               <CardDescription>
@@ -314,7 +314,7 @@ export default function MasterCourseDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black">
+              <Button className="w-full bg-amber-500 hover:bg-[#b6770f] text-black">
                 Ver Exámenes
               </Button>
             </CardContent>
@@ -328,7 +328,7 @@ export default function MasterCourseDashboard() {
         {/* <Card className="bg-[#1a1a1a] border-neutral-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-[#D89216]" />
+              <TrendingUp className="h-5 w-5 text-amber-500" />
               Actividad Reciente
             </CardTitle>
           </CardHeader>

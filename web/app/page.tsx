@@ -14,21 +14,11 @@ import GuestLayout from "@/app/layouts/GuestLayout";
 export default function HomePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // No carousel; we will render three informational cards at the end
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     try {
-      // Check if WebGL is available before initializing
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (!gl) {
-        console.warn('WebGL not supported. Hiding 3D canvas.');
-        canvas.style.display = 'none';
-        return;
-      }
-
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
       camera.position.set(0, 0, 10);
@@ -88,7 +78,6 @@ export default function HomePage() {
       animate();
 
       function resizeRenderer() {
-        // Reduce canvas size to lower the overall section height
         const size = Math.min(window.innerWidth * 0.36, 420);
         renderer.setSize(size, size);
         camera.aspect = 1;
@@ -105,7 +94,6 @@ export default function HomePage() {
       };
     } catch (error) {
       console.error('Error initializing 3D scene:', error);
-      // Hide canvas on error to prevent showing broken content
       if (canvas) {
         canvas.style.display = 'none';
       }
@@ -114,29 +102,34 @@ export default function HomePage() {
 
   return (
     <GuestLayout>
-      {/* Top info bar */}
       <div className="w-full bg-[#0f0f0f] text-xs text-neutral-300 py-2 px-4">
         <div className="max-w-7xl mx-auto text-center">
           ¿Deseas unirte como una institución?{' '}
-          <a href="#contacto" className="text-[#D89216] hover:underline">¡Contáctanos!</a>
+          <a href="#contacto" className="text-amber-500 hover:underline">¡Contáctanos!</a>
         </div>
       </div>
 
-      {/* Hero */}
       <header className="relative isolate w-full bg-[#151515]">
         <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
-            <div className="size-6 rounded-sm bg-[#D89216]" />
-            <span className="text-sm tracking-widest text-neutral-300">WORLD OF WARCLASS</span>
+            <Link href="/" aria-label="Volver al inicio">
+              <Image
+                src="assets/logo-wow.svg"
+                alt="Warclass logo"
+                width={48}
+                height={48}
+                className="h-10 w-10 sm:h-12 sm:w-12 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]"
+                priority
+              />
+            </Link>
           </div>
           <div className="flex items-center gap-5">
             <Link href="/auth/login" className="uppercase text-neutral-200 text-sm tracking-wide hover:text-white">Login</Link>
             <span className="h-4 w-px bg-neutral-700" />
-            <Link href="/auth/register" className="uppercase text-neutral-200 text-sm tracking-wide hover:text-white relative after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:bg-[#D89216] after:opacity-80">Register</Link>
+            <Link href="/auth/register" className="uppercase text-neutral-200 text-sm tracking-wide hover:text-white relative after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:bg-amber-500 after:opacity-80">Register</Link>
           </div>
         </nav>
 
-        {/* Image block + headline overlay to match reference */}
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-8 items-end px-6 pb-8">
           <div className="lg:col-span-8 min-h-[320px] lg:min-h-[480px] rounded-md overflow-hidden shadow-2xl relative">
             <Image
@@ -152,7 +145,7 @@ export default function HomePage() {
 
         <div className="absolute inset-x-0 bottom-0">
           <div className="max-w-7xl mx-auto px-6 pb-6 flex justify-end">
-            <div className="rounded-lg bg-[#D89216] shadow-xl">
+            <div className="rounded-lg bg-amber-500 shadow-xl">
               <div className="px-6 py-5">
                 <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">World of Warclass</h1>
                 <p className="mt-2 text-sm sm:text-base text-white/95">Transformando tareas en verdadero aprendizaje</p>
@@ -162,32 +155,31 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* ¿Qué es? */}
       <section className="bg-[#1a1a1a] text-neutral-100">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-6 px-6 py-8 lg:py-12 items-center">
           <div className="lg:col-span-6 self-center space-y-6">
             <div className="flex items-center gap-3">
-              <span className="inline-block h-1.5 w-10 rounded bg-[#D89216]" />
+              <span className="inline-block h-1.5 w-10 rounded bg-amber-500" />
               <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight text-neutral-100">¿Qué es "World of Warclass"?</h2>
             </div>
             <p className="max-w-2xl text-lg leading-relaxed text-neutral-300">
               Plataforma educativa innovadora que transforma tareas en misiones dentro de un mundo virtual 3D.
             </p>
             <div className="grid sm:grid-cols-2 gap-5 pt-1">
-              <div className="border-l-4 border-[#D89216] pl-4">
+              <div className="border-l-4 border-amber-500 pl-4">
                 <h3 className="text-base font-semibold text-neutral-100 mb-2">Nuestros Objetivos</h3>
                 <ul className="space-y-2 text-sm text-neutral-300">
-                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Incentivar el aprendizaje con misiones y recompensas.</li>
-                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Conectar contenidos con experiencias interactivas.</li>
-                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Fomentar el trabajo en equipo y la creatividad.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-amber-500 mt-[2px]" size={16} /> Incentivar el aprendizaje con misiones y recompensas.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-amber-500 mt-[2px]" size={16} /> Conectar contenidos con experiencias interactivas.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-amber-500 mt-[2px]" size={16} /> Fomentar el trabajo en equipo y la creatividad.</li>
                 </ul>
               </div>
-              <div className="border-l-4 border-[#D89216] pl-4">
+              <div className="border-l-4 border-amber-500 pl-4">
                 <h3 className="text-base font-semibold text-neutral-100 mb-2">Para Docentes</h3>
                 <ul className="space-y-2 text-sm text-neutral-300">
-                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Diseña tareas como misiones.</li>
-                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Seguimiento del progreso y feedback claro.</li>
-                  <li className="flex gap-2"><CheckCircle2 className="text-[#D89216] mt-[2px]" size={16} /> Aulas más activas y comprometidas.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-amber-500 mt-[2px]" size={16} /> Diseña tareas como misiones.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-amber-500 mt-[2px]" size={16} /> Seguimiento del progreso y feedback claro.</li>
+                  <li className="flex gap-2"><CheckCircle2 className="text-amber-500 mt-[2px]" size={16} /> Aulas más activas y comprometidas.</li>
                 </ul>
               </div>
             </div>
@@ -201,7 +193,7 @@ export default function HomePage() {
       </section>
 
       {/* Misión */}
-      <section className="relative isolate bg-[#D89216] text-black">
+      <section className="relative isolate bg-amber-500 text-black">
         <div className="absolute inset-0 pointer-events-none [mask-image:linear-gradient(to_bottom,black_70%,transparent)] opacity-20" />
         <div className="max-w-7xl mx-auto px-6 py-14 md:py-16 text-center">
           <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight">Nuestra misión</h3>
@@ -224,7 +216,7 @@ export default function HomePage() {
             <Card className="bg-[#121212] border-neutral-800">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-[#D89216]/20 text-[#D89216]"><Gamepad2 size={20} /></div>
+                  <div className="p-2 rounded-md bg-amber-500/20 text-amber-500"><Gamepad2 size={20} /></div>
                   <CardTitle className="text-lg">Misiones y retos</CardTitle>
                 </div>
               </CardHeader>
@@ -234,7 +226,7 @@ export default function HomePage() {
             <Card className="bg-[#121212] border-neutral-800">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-[#D89216]/20 text-[#D89216]"><Globe2 size={20} /></div>
+                  <div className="p-2 rounded-md bg-amber-500/20 text-amber-500"><Globe2 size={20} /></div>
                   <CardTitle className="text-lg">Mundo virtual 3D</CardTitle>
                 </div>
               </CardHeader>
@@ -244,7 +236,7 @@ export default function HomePage() {
             <Card className="bg-[#121212] border-neutral-800">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-[#D89216]/20 text-[#D89216]"><Trophy size={20} /></div>
+                  <div className="p-2 rounded-md bg-amber-500/20 text-amber-500"><Trophy size={20} /></div>
                   <CardTitle className="text-lg">Trabajo colaborativo</CardTitle>
                 </div>
               </CardHeader>
@@ -254,7 +246,7 @@ export default function HomePage() {
 
           <div className="mt-12 text-center">
             <Link href="/auth/register">
-              <Button size="lg" className="bg-[#D89216] hover:bg-[#b6770f] text-black font-semibold px-8">Comenzar ahora</Button>
+              <Button size="lg" className="bg-amber-500 hover:bg-[#b6770f] text-black font-semibold px-8">Comenzar ahora</Button>
             </Link>
           </div>
         </div>

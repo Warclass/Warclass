@@ -40,7 +40,7 @@ La plataforma está disponible como aplicación web responsive:
 
 \paragraph{Crear una cuenta}
 
-Los usuarios pueden registrarse utilizando su correo institucional o mediante autenticación OAuth2 con proveedores autorizados (Google Workspace, Microsoft 365).
+Los usuarios pueden registrarse utilizando su correo institucional. La plataforma planea incorporar autenticación OAuth2 con proveedores autorizados (Google Workspace, Microsoft 365) en futuras versiones.
 
 \textbf{Proceso de registro con correo institucional:}
 
@@ -62,14 +62,9 @@ Los usuarios pueden registrarse utilizando su correo institucional o mediante au
 	\label{fig:manual-registro}
 \end{figure}
 
-\textbf{Proceso de registro con OAuth2:}
+\textbf{Registro con OAuth2 (Próximamente):}
 
-\begin{enumerate}
-	\item Hacer clic en ``Iniciar sesión con Google'' o ``Iniciar sesión con Microsoft''
-	\item Autorizar el acceso a su cuenta institucional
-	\item Completar datos adicionales si es necesario
-	\item Confirmar creación de cuenta
-\end{enumerate}
+En futuras versiones, los usuarios podrán registrarse mediante proveedores OAuth2 como Google o Microsoft para mayor comodidad y seguridad.
 
 \begin{figure}[H]
 	\centering
@@ -523,19 +518,19 @@ El Manual del Sistema proporciona documentación técnica completa para el perso
 		\toprule
 		Componente & Tecnología \\
 		\midrule
-		Frontend Web & Next.js 15.5.4, React 18, TypeScript 5 \\
-		Diseño Responsive & CSS Modules, Tailwind CSS, Media Queries \\
-		Entorno 3D & Three.js R150+, WebGL 2.0 \\
+		Frontend Web & Next.js 15.5.4, React 19, TypeScript 5 \\
+		Diseño Responsive & CSS Modules, Tailwind CSS 3.x \\
+		Componentes UI & shadcn/ui, Radix UI \\
+		Entorno 3D & Three.js 0.180, React Three Fiber 9.3, Drei 10.7 \\
 		Backend API & Next.js API Routes (TypeScript) \\
 		Base de Datos & PostgreSQL 15+ \\
-		ORM & Prisma 5+ \\
-		Autenticación & NextAuth.js con OAuth2 (Google, Microsoft) \\
-		Almacenamiento & AWS S3 \\
-		Notificaciones & Sistema de notificaciones integrado \\
-		Analítica & Mixpanel / Google Analytics \\
+		ORM & Prisma 6.17 \\
+		Autenticación & JWT (jsonwebtoken + Passport.js) \\
+		Validación & Zod 4.1 \\
+		Gestión de Estado & Zustand 5.0 \\
+		Documentación API & Swagger (swagger-jsdoc, swagger-ui-react) \\
 		Contenedores & Docker 24+, Docker Compose \\
-		Orquestación & Kubernetes 1.28+ (opcional) \\
-		CI/CD & GitHub Actions, Vercel \\
+		CI/CD & GitHub Actions, Vercel (opcional) \\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -545,13 +540,13 @@ El Manual del Sistema proporciona documentación técnica completa para el perso
 El sistema se compone de los siguientes módulos principales:
 
 \begin{itemize}
-	\item \textbf{Cliente Web Responsive}: Aplicación Next.js con App Router que sirve la interfaz web adaptativa y renderiza el entorno 3D con Three.js. Compatible con escritorio, tablets y smartphones
-	\item \textbf{API Backend}: Next.js API Routes que implementan la lógica de negocio
-	\item \textbf{Módulo de Autenticación}: NextAuth.js para OAuth2 y gestión de sesiones JWT
-	\item \textbf{Base de Datos}: PostgreSQL con esquema gestionado por Prisma
-	\item \textbf{Servicio de Almacenamiento}: AWS S3 para archivos y modelos 3D
-	\item \textbf{Servicio de Notificaciones}: Sistema de notificaciones integrado en tiempo real
-	\item \textbf{Integraciones Externas}: Conectores para Canvas LMS y Discord
+	\item \textbf{Cliente Web Responsive}: Aplicación Next.js con App Router que sirve la interfaz web adaptativa. Utiliza React Three Fiber para renderizar el entorno 3D con Three.js. Compatible con escritorio, tablets y smartphones
+	\item \textbf{API Backend}: Next.js API Routes que implementan la lógica de negocio con TypeScript
+	\item \textbf{Módulo de Autenticación}: Sistema JWT con Passport.js para autenticación basada en tokens
+	\item \textbf{Base de Datos}: PostgreSQL con esquema gestionado por Prisma ORM
+	\item \textbf{Servicio de Almacenamiento}: Modelos 3D servidos estáticamente desde \texttt{public/}
+	\item \textbf{Validación de Datos}: Zod para validación de schemas en frontend y backend
+	\item \textbf{Integraciones Externas}: Webhooks de Discord para notificaciones (en desarrollo)
 \end{itemize}
 
 \subsubsection{5.2.2 Requisitos del servidor}
@@ -598,13 +593,15 @@ El sistema se compone de los siguientes módulos principales:
 \paragraph{Prerrequisitos}
 
 \begin{itemize}
-	\item Sistema operativo: Ubuntu 22.04 LTS o superior (recomendado)
+	\item Sistema operativo: Windows 10/11, Ubuntu 22.04 LTS, macOS 12+ o superior
 	\item Node.js 18+ y npm 9+
 	\item PostgreSQL 15+
-	\item Docker 24+ y Docker Compose (opcional pero recomendado)
+	\item Docker 24+ y Docker Compose (opcional, recomendado para producción)
 	\item Git para control de versiones
-	\item Certificado SSL/TLS válido
+	\item Certificado SSL/TLS válido (solo para producción)
 \end{itemize}
+
+\textbf{Nota importante:} La plataforma actualmente implementa autenticación JWT básica. Las integraciones OAuth2 (Google, Microsoft), AWS S3 y Canvas LMS mencionadas en este manual están planificadas para versiones futuras.
 
 \paragraph{Opción 1: Despliegue con Docker (Recomendado)}
 
@@ -617,38 +614,36 @@ cd warclass
 
 \textbf{Paso 2: Configurar variables de entorno}
 
-Crear archivo \texttt{.env} en el directorio \texttt{web/}:
+Crear archivo \texttt{.env} en el directorio \texttt{web/} basado en \texttt{.env.example}:
 
 \begin{verbatim}
 # Base de datos
-DATABASE_URL="postgresql://user:password@db:5432/warclass"
+DATABASE_URL="postgresql://warclass:warclass_password@db:5432/warclass?schema=public"
 
-# Autenticación
-NEXTAUTH_URL="https://warclass.institucion.edu"
-NEXTAUTH_SECRET="generate-random-secret-here"
+# Autenticación JWT
+JWT_SECRET="generate-random-secret-here-min-32-chars"
+JWT_EXPIRES_IN="7d"
 
-# OAuth2 Providers
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-MICROSOFT_CLIENT_ID="your-microsoft-client-id"
-MICROSOFT_CLIENT_SECRET="your-microsoft-client-secret"
+# Aplicación
+NODE_ENV="production"
+APP_PORT="3000"
 
-# Almacenamiento
-S3_ENDPOINT="https://s3.amazonaws.com"
-S3_BUCKET="warclass-storage"
-S3_ACCESS_KEY="your-access-key"
-S3_SECRET_KEY="your-secret-key"
-
-# Integraciones
-CANVAS_API_URL="https://canvas.institucion.edu/api/v1"
-CANVAS_API_KEY="your-canvas-api-key"
-DISCORD_BOT_TOKEN="your-discord-bot-token"
+# Docker
+POSTGRES_USER="warclass"
+POSTGRES_PASSWORD="warclass_password"
+POSTGRES_DB="warclass"
+POSTGRES_PORT="5432"
 \end{verbatim}
+
+\textbf{Nota:} Cambia \texttt{JWT\_SECRET} por un valor aleatorio seguro de al menos 32 caracteres.
 
 \textbf{Paso 3: Copiar modelos 3D}
 
+\textbf{Importante:} Este paso es crucial. Los modelos 3D deben estar en \texttt{public/} para que Next.js pueda servirlos.
+
 \begin{verbatim}
 cd web
+
 # Windows PowerShell
 .\scripts\copy-models.ps1
 
@@ -657,22 +652,35 @@ chmod +x scripts/copy-models.sh
 ./scripts/copy-models.sh
 \end{verbatim}
 
+Esto copiará los modelos desde \texttt{assets/} hacia \texttt{public/}.
+
 \textbf{Paso 4: Construir y ejecutar contenedores}
 
 \begin{verbatim}
+cd web
 docker-compose up -d
 \end{verbatim}
 
-\textbf{Paso 5: Ejecutar migraciones de base de datos}
+Esto construirá la imagen Docker, iniciará PostgreSQL y la aplicación Next.js.
+
+\textbf{Paso 5: Ejecutar migraciones y seed de base de datos}
+
+Las migraciones se ejecutan automáticamente al iniciar el contenedor. Si necesitas ejecutarlas manualmente:
 
 \begin{verbatim}
 docker-compose exec web npx prisma migrate deploy
-docker-compose exec web npx prisma db seed
+docker-compose exec web npm run db:seed
 \end{verbatim}
 
 \textbf{Paso 6: Verificar despliegue}
 
-Acceder a \texttt{https://warclass.institucion.edu} para verificar que la aplicación esté funcionando.
+Acceder a \texttt{http://localhost:3000} para verificar que la aplicación esté funcionando.
+
+Para ver los logs:
+
+\begin{verbatim}
+docker-compose logs -f web
+\end{verbatim}
 
 \paragraph{Opción 2: Despliegue manual}
 
@@ -691,12 +699,19 @@ sudo -u postgres createdb warclass -O warclass
 \textbf{Paso 2: Clonar y configurar aplicación}
 
 \begin{verbatim}
-git clone https://github.com/institucion/warclass.git
-cd warclass/web
+git clone https://github.com/AbelMSG89/Warclass.git
+cd Warclass/web
 npm install
 \end{verbatim}
 
-Configurar variables de entorno como en la opción Docker.
+Crear archivo \texttt{.env} basado en \texttt{.env.example} y configurar las variables:
+
+\begin{verbatim}
+DATABASE_URL="postgresql://warclass:password@localhost:5432/warclass?schema=public"
+JWT_SECRET="your-super-secret-jwt-key-change-this"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="production"
+\end{verbatim}
 
 \textbf{Paso 3: Copiar modelos 3D}
 
@@ -708,14 +723,21 @@ chmod +x scripts/copy-models.sh
 \textbf{Paso 4: Ejecutar migraciones}
 
 \begin{verbatim}
+npx prisma generate
 npx prisma migrate deploy
-npx prisma db seed
+npm run db:seed
 \end{verbatim}
 
 \textbf{Paso 5: Construir aplicación}
 
 \begin{verbatim}
 npm run build
+\end{verbatim}
+
+\textbf{Nota:} El proyecto usa Turbopack por defecto. Para producción estándar sin Turbopack:
+
+\begin{verbatim}
+npx next build
 \end{verbatim}
 
 \textbf{Paso 6: Configurar servicio systemd}
@@ -730,7 +752,7 @@ After=network.target postgresql.service
 [Service]
 Type=simple
 User=warclass
-WorkingDirectory=/opt/warclass/web
+WorkingDirectory=/home/warclass/Warclass/web
 Environment=NODE_ENV=production
 ExecStart=/usr/bin/npm start
 Restart=always
@@ -744,6 +766,7 @@ Activar servicio:
 \begin{verbatim}
 sudo systemctl enable warclass
 sudo systemctl start warclass
+sudo systemctl status warclass
 \end{verbatim}
 
 \textbf{Paso 7: Configurar Nginx como reverse proxy}
@@ -835,17 +858,32 @@ CREATE INDEX idx_progress_student_id ON progress(student_id);
 CREATE INDEX idx_progress_course_id ON progress(course_id);
 \end{verbatim}
 
-\paragraph{Configuración de almacenamiento S3}
+\paragraph{Configuración de almacenamiento de archivos}
 
-\textbf{Configurar bucket en AWS S3:}
+\textbf{Modelos 3D estáticos:}
 
-\begin{enumerate}
-	\item Acceder a la consola de AWS S3
-	\item Crear un nuevo bucket llamado \texttt{warclass-storage}
-	\item Configurar políticas de acceso y CORS
-	\item Generar credenciales de acceso (Access Key y Secret Key)
-	\item Configurar las credenciales en el archivo \texttt{.env}
-\end{enumerate}
+Los modelos 3D se sirven estáticamente desde \texttt{public/}. Asegúrate de que los modelos estén copiados correctamente:
+
+\begin{verbatim}
+# Verificar estructura
+ls public/character_scene/models/  # Linux/Mac
+dir public\character_scene\models\  # Windows
+
+# Debe contener:
+# - Ambience/
+# - Character/
+# - welcome_scene/
+\end{verbatim}
+
+\textbf{Archivos subidos por usuarios:}
+
+Actualmente, los archivos se almacenan en el sistema de archivos local. Para producción, considera implementar:
+
+\begin{itemize}
+	\item AWS S3 o compatible (MinIO, DigitalOcean Spaces)
+	\item Azure Blob Storage
+	\item Google Cloud Storage
+\end{itemize}
 
 \subsubsection{5.2.5 Mantenimiento y operaciones}
 
@@ -936,14 +974,24 @@ docker-compose down && docker-compose up -d
 
 \textbf{Problema: Modelos 3D no cargan (Error 404)}
 
-\textit{Causa:} Los modelos no fueron copiados a \texttt{public/}
+\textit{Causa:} Los modelos no fueron copiados de \texttt{assets/} a \texttt{public/}
 
 \textit{Solución:}
 \begin{verbatim}
 cd web
-./scripts/copy-models.sh  # Linux/Mac
-.\scripts\copy-models.ps1  # Windows
+
+# Windows PowerShell
+.\scripts\copy-models.ps1
+
+# Linux/Mac  
+chmod +x scripts/copy-models.sh
+./scripts/copy-models.sh
+
+# Reconstruir aplicación
 npm run build
+
+# Si usas Docker
+docker-compose restart web
 \end{verbatim}
 
 \textbf{Problema: Error de conexión a base de datos}
@@ -963,14 +1011,22 @@ psql -U warclass -d warclass -h localhost
 
 \textbf{Problema: Sesiones de usuarios expiran rápidamente}
 
-\textit{Causa:} Configuración incorrecta de NextAuth.js o tokens JWT
+\textit{Causa:} Configuración incorrecta de JWT o clave secreta
 
 \textit{Solución:}
 \begin{verbatim}
-# Verificar variable NEXTAUTH_SECRET en .env
-# Revisar configuración de expiración de tokens
+# Verificar variable JWT_SECRET en .env
+# Debe tener al menos 32 caracteres aleatorios
+JWT_SECRET="your-super-secret-jwt-key-min-32-chars"
+
+# Verificar expiración del token
+JWT_EXPIRES_IN="7d"  # 7 días
+
 # Revisar logs de la aplicación
-docker-compose logs web
+docker-compose logs web | grep -i "jwt\|token\|auth"
+
+# Reiniciar servicio
+docker-compose restart web
 \end{verbatim}
 
 \textbf{Problema: Rendimiento lento del entorno 3D}
@@ -1026,16 +1082,17 @@ docker-compose logs --tail=100 web
 \paragraph{Mejores prácticas de seguridad}
 
 \begin{itemize}
-	\item \textbf{HTTPS obligatorio}: Forzar HTTPS para todas las conexiones
-	\item \textbf{Firewall}: Configurar firewall para permitir solo puertos necesarios (80, 443)
-	\item \textbf{Actualizaciones}: Mantener sistema operativo y dependencias actualizadas
-	\item \textbf{Contraseñas}: Usar contraseñas fuertes y únicas para servicios
+	\item \textbf{HTTPS obligatorio}: Forzar HTTPS para todas las conexiones en producción
+	\item \textbf{Firewall}: Configurar firewall para permitir solo puertos necesarios (80, 443, 5432 solo local)
+	\item \textbf{Actualizaciones}: Mantener sistema operativo, Node.js y dependencias actualizadas
+	\item \textbf{Contraseñas}: Usar contraseñas fuertes para PostgreSQL y JWT\_SECRET aleatorio
 	\item \textbf{Backups}: Almacenar backups en ubicación separada y encriptada
 	\item \textbf{Auditoría}: Revisar logs regularmente en busca de actividad sospechosa
-	\item \textbf{Rate limiting}: Configurar límites de solicitudes para prevenir abuso
-	\item \textbf{CORS}: Configurar CORS apropiadamente en API routes
+	\item \textbf{Rate limiting}: Implementar límites de solicitudes en API routes
+	\item \textbf{CORS}: Configurar CORS apropiadamente en Next.js config
 	\item \textbf{CSP}: Implementar Content Security Policy headers
-	\item \textbf{Sanitización}: Validar y sanitizar todas las entradas de usuario
+	\item \textbf{Sanitización}: Validar con Zod todas las entradas de usuario
+	\item \textbf{JWT}: Usar tokens con expiración y renovación automática
 \end{itemize}
 
 \paragraph{Configuración de firewall}
@@ -1047,7 +1104,9 @@ sudo ufw default allow outgoing
 sudo ufw allow ssh
 sudo ufw allow http
 sudo ufw allow https
+# PostgreSQL solo accesible localmente (no abrir puerto 5432)
 sudo ufw enable
+sudo ufw status
 \end{verbatim}
 
 \paragraph{Certificados SSL/TLS}
@@ -1070,21 +1129,31 @@ Para manejar mayor carga de usuarios, se puede escalar horizontalmente:
 	\item \textbf{Load Balancer}: Configurar balanceador de carga (Nginx, HAProxy)
 	\item \textbf{Múltiples instancias}: Desplegar múltiples contenedores de la aplicación
 	\item \textbf{Base de datos replicada}: Configurar réplicas de lectura de PostgreSQL
-	\item \textbf{CDN}: Usar AWS CloudFront para servir assets estáticos y modelos 3D
-	\item \textbf{Auto-scaling}: Configurar auto-scaling en AWS para ajustar recursos según demanda
+	\item \textbf{CDN}: Usar Cloudflare o similar para servir assets estáticos y modelos 3D
+	\item \textbf{Caching}: Implementar Redis para caché de sesión y datos frecuentes
 \end{enumerate}
 
-\paragraph{Configuración con Kubernetes}
+\paragraph{Despliegue en la nube}
 
-Para entornos de producción grandes, se recomienda Kubernetes:
+El proyecto puede desplegarse fácilmente en:
+
+\begin{itemize}
+	\item \textbf{Vercel}: Despliegue automático desde GitHub (recomendado para Next.js)
+	\item \textbf{Railway}: Soporte nativo para PostgreSQL y Next.js
+	\item \textbf{DigitalOcean App Platform}: Con base de datos PostgreSQL administrada
+	\item \textbf{AWS}: EC2 + RDS PostgreSQL + CloudFront CDN
+	\item \textbf{Docker}: En cualquier servidor con Docker instalado
+\end{itemize}
+
+\textbf{Ejemplo con Vercel:}
 
 \begin{verbatim}
-# Desplegar con Helm
-helm repo add warclass https://charts.warclass.io
-helm install warclass warclass/warclass \
-  --set database.host=postgres.example.com \
-  --set s3.bucket=warclass-storage \
-  --set replicas=3
-\end{verbatim}
+# Instalar Vercel CLI
+npm i -g vercel
 
-El sistema se autoescalará según carga de CPU/memoria configurada en HPA (Horizontal Pod Autoscaler).
+# Desde web/
+vercel
+
+# Configurar variables de entorno en Vercel Dashboard
+# Conectar PostgreSQL (Vercel Postgres o externa)
+\end{verbatim}

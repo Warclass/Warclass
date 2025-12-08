@@ -79,7 +79,7 @@ export default function CharacterPage() {
             <PlayerLayout name={user?.name || 'Jugador'} token="temp-token" courseId={courseId || undefined} courseName={courseData?.name}>
                 <div className="flex h-full justify-center items-center">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto" />
+                        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto" />
                         <p className="mt-4 text-neutral-400">Cargando personaje...</p>
                     </div>
                 </div>
@@ -99,7 +99,7 @@ export default function CharacterPage() {
                             <p className="text-neutral-400 mb-4">{error}</p>
                             <Button 
                                 onClick={() => router.push('/dashboard')}
-                                className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black"
+                                className="w-full bg-amber-500 hover:bg-[#b6770f] text-black"
                             >
                                 Volver al Dashboard
                             </Button>
@@ -129,7 +129,7 @@ export default function CharacterPage() {
                             <p className="text-neutral-400 mb-4">Datos del personaje incompletos</p>
                             <Button 
                                 onClick={() => router.push('/dashboard')}
-                                className="w-full bg-[#D89216] hover:bg-[#b6770f] text-black"
+                                className="w-full bg-amber-500 hover:bg-[#b6770f] text-black"
                             >
                                 Volver al Dashboard
                             </Button>
@@ -326,7 +326,7 @@ export default function CharacterPage() {
                         <Card className="bg-[#121212] border-neutral-800">
                             <CardContent className="py-3 px-3">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-[#D89216]">
+                                    <div className="flex items-center gap-2 text-amber-500">
                                         <Coins className="h-4 w-4" aria-hidden="true" />
                                         <span className="text-xs text-neutral-400">Oro</span>
                                     </div>
@@ -353,7 +353,7 @@ export default function CharacterPage() {
                     <Card className="bg-[#1a1a1a] border-neutral-800">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Sword className="h-5 w-5 text-[#D89216]" />
+                                <Sword className="h-5 w-5 text-amber-500" />
                                 Habilidades
                             </CardTitle>
                             <CardDescription>
@@ -453,7 +453,7 @@ export default function CharacterPage() {
                         <Card className="bg-[#1a1a1a] border-neutral-800">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Shield className="h-5 w-5 text-[#D89216]" />
+                                    <Shield className="h-5 w-5 text-amber-500" />
                                     Información de Clase
                                 </CardTitle>
                             </CardHeader>

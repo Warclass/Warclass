@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: warclass-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-warclass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-warclass_password}
+      POSTGRES_DB: ${POSTGRES_DB:-warclass}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-warclass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Aplicación Next.js
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: warclass-web
+    restart: always
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-warclass}:${POSTGRES_PASSWORD:-warclass_password}@db:5432/${POSTGRES_DB:-warclass}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        npx prisma migrate deploy &&
+        npx prisma db seed &&
+        node server.js
+      "
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: warclass-network

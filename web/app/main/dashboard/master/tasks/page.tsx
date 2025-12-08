@@ -270,7 +270,7 @@ export default function TasksPage() {
       <MasterCourseLayout courseId={courseId} courseName={courseData?.name}>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
             <p className="mt-4 text-neutral-400">Cargando tareas...</p>
           </div>
         </div>
@@ -294,7 +294,7 @@ export default function TasksPage() {
 
           <Button 
             onClick={openCreateModal}
-            className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+            className="bg-amber-500 hover:bg-[#b6770f] text-black"
           >
             <Plus className="h-4 w-4 mr-2" />
             Crear Tarea
@@ -524,7 +524,7 @@ export default function TasksPage() {
                 </Button>
                 <Button
                   onClick={handleCreateTask}
-                  className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black"
+                  className="flex-1 bg-amber-500 hover:bg-[#b6770f] text-black"
                 >
                   Crear Tarea
                 </Button>
@@ -615,7 +615,7 @@ export default function TasksPage() {
                 </Button>
                 <Button
                   onClick={handleEditTask}
-                  className="flex-1 bg-[#D89216] hover:bg-[#b6770f] text-black"
+                  className="flex-1 bg-amber-500 hover:bg-[#b6770f] text-black"
                 >
                   Guardar Cambios
                 </Button>

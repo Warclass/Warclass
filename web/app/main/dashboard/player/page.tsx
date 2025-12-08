@@ -66,7 +66,7 @@ export default function PlayerDashboardPage({}: PlayerDashboardProps) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D89216] mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-500 mx-auto"></div>
           <p className="mt-4 text-neutral-400 text-lg">Cargando tu aventura...</p>
         </div>
       </div>
@@ -227,7 +227,7 @@ export default function PlayerDashboardPage({}: PlayerDashboardProps) {
               </CardDescription>
               <Button 
                 onClick={() => router.push('/dashboard')}
-                className="bg-[#D89216] hover:bg-[#b6770f] text-black"
+                className="bg-amber-500 hover:bg-[#b6770f] text-black"
               >
                 Ir al Dashboard
               </Button>

@@ -75,7 +75,7 @@ export default function TeacherInvitationsPage() {
             <span>Volver al Dashboard</span>
           </Link>
           <div className='flex items-center gap-2'>
-            <Mail className='h-5 w-5 text-[#D89216]' />
+            <Mail className='h-5 w-5 text-amber-500' />
             <span className='text-neutral-100 font-semibold'>Invitaciones de Mis Cursos</span>
           </div>
         </div>
@@ -92,7 +92,7 @@ export default function TeacherInvitationsPage() {
         {loading && (
           <Card className='bg-[#1a1a1a] border-neutral-800'>
             <CardContent className='py-12 flex flex-col items-center'>
-              <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#D89216] mb-4'></div>
+              <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mb-4'></div>
               <p className='text-neutral-400'>Cargando invitaciones...</p>
             </CardContent>
           </Card>
@@ -109,7 +109,7 @@ export default function TeacherInvitationsPage() {
             <CardContent className='py-12 text-center space-y-2'>
               <p className='text-neutral-300 font-semibold'>No hay invitaciones creadas.</p>
               <p className='text-neutral-500 text-sm'>Genera invitaciones desde la pestaña "Enseñando" de un curso.</p>
-              <Button asChild className='mt-4 bg-[#D89216] hover:bg-[#b6770f] text-black'>
+              <Button asChild className='mt-4 bg-amber-500 hover:bg-[#b6770f] text-black'>
                 <Link href='/dashboard'>Ir al Dashboard</Link>
               </Button>
             </CardContent>
@@ -151,7 +151,7 @@ export default function TeacherInvitationsPage() {
                     <tbody>
                       {courseInvs.map((inv) => (
                         <tr key={inv.id} className='border-t border-neutral-800 hover:bg-neutral-800/40'>
-                          <td className='px-3 py-2 font-mono text-[#D89216]'>{inv.code}</td>
+                          <td className='px-3 py-2 font-mono text-amber-500'>{inv.code}</td>
                           <td className='px-3 py-2 text-neutral-200'>{inv.name}</td>
                           <td className='px-3 py-2 text-neutral-400'>
                             {inv.userEmail ? (
