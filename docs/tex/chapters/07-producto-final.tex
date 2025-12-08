@@ -12,11 +12,10 @@ La plataforma Warclass es una aplicación educativa 3D que transforma las tareas
 
 \paragraph{Acceso a la plataforma}
 
-La plataforma está disponible en versión web y móvil:
+La plataforma está disponible como aplicación web responsive:
 
 \begin{itemize}
-	\item \textbf{Versión Web}: Accesible desde cualquier navegador moderno (Chrome, Firefox, Safari, Edge) en la URL proporcionada por su institución educativa.
-	\item \textbf{Versión Móvil}: Aplicación nativa disponible para Android e iOS, descargable desde las tiendas oficiales.
+	\item \textbf{Versión Web}: Accesible desde cualquier navegador moderno (Chrome, Firefox, Safari, Edge) en la URL proporcionada por su institución educativa. La aplicación se adapta automáticamente a cualquier dispositivo (escritorio, tablet, smartphone) sin necesidad de instalaciones adicionales.
 \end{itemize}
 
 \paragraph{Requisitos del sistema}
@@ -32,7 +31,7 @@ La plataforma está disponible en versión web y móvil:
 		Conexión Internet & Mínimo 5 Mbps (10 Mbps recomendado) \\
 		Resolución & 1366x768 mínimo (1920x1080 recomendado) \\
 		Hardware & CPU: Dual Core 2.0 GHz, RAM: 4GB, GPU: Compatible WebGL 2.0 \\
-		Sistema Operativo Móvil & Android 9.0+ o iOS 13.0+ \\
+		Dispositivos Móviles & Navegador móvil actualizado en smartphones y tablets \\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -525,8 +524,8 @@ El Manual del Sistema proporciona documentación técnica completa para el perso
 		Componente & Tecnología \\
 		\midrule
 		Frontend Web & Next.js 15.5.4, React 18, TypeScript 5 \\
+		Diseño Responsive & CSS Modules, Tailwind CSS, Media Queries \\
 		Entorno 3D & Three.js R150+, WebGL 2.0 \\
-		Frontend Móvil & React Native (Expo) \\
 		Backend API & Next.js API Routes (TypeScript) \\
 		Base de Datos & PostgreSQL 15+ \\
 		ORM & Prisma 5+ \\
@@ -546,8 +545,7 @@ El Manual del Sistema proporciona documentación técnica completa para el perso
 El sistema se compone de los siguientes módulos principales:
 
 \begin{itemize}
-	\item \textbf{Cliente Web}: Aplicación Next.js con App Router que sirve la interfaz web y renderiza el entorno 3D con Three.js
-	\item \textbf{Cliente Móvil}: Aplicación React Native (Expo) para Android e iOS
+	\item \textbf{Cliente Web Responsive}: Aplicación Next.js con App Router que sirve la interfaz web adaptativa y renderiza el entorno 3D con Three.js. Compatible con escritorio, tablets y smartphones
 	\item \textbf{API Backend}: Next.js API Routes que implementan la lógica de negocio
 	\item \textbf{Módulo de Autenticación}: NextAuth.js para OAuth2 y gestión de sesiones JWT
 	\item \textbf{Base de Datos}: PostgreSQL con esquema gestionado por Prisma

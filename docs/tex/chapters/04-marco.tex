@@ -102,8 +102,8 @@ Angular es un framework front-end desarrollado por Google, diseñado para la cre
 \paragraph{Next.js}
 Next.js es un framework construido sobre React que facilita el renderizado híbrido (SSR/SSG), generación de páginas estáticas y enrutamiento automático \cite{nextjs_docs2024}. Ofrece optimizaciones de rendimiento, manejo de rutas y capacidades de API que son útiles para construir portales educativos, dashboards y páginas con requisitos SEO y carga rápida sin sacrificar la interactividad del frontend.
 
-\paragraph{Expo}
-Expo es una plataforma y conjunto de herramientas para desarrollar aplicaciones móviles con React Native de forma rápida y con menos configuración \cite{expo_docs2023}. Permite prototipado ágil, despliegues OTA (over-the-air) y compatibilidad con Expo Go para pruebas en dispositivos reales, lo que facilita construir versiones móviles de la plataforma educativa para estudiantes y docentes.
+\paragraph{Diseño Web Responsive}
+El diseño web responsive es un enfoque de desarrollo que permite que las aplicaciones web se adapten automáticamente a diferentes tamaños de pantalla y dispositivos mediante CSS flexible, media queries y layouts fluidos. Este enfoque elimina la necesidad de aplicaciones nativas específicas para cada plataforma, permitiendo que estudiantes y docentes accedan a la plataforma educativa desde cualquier dispositivo con un navegador web moderno, sin requerir instalaciones adicionales ni actualizaciones manuales.
 
 \subsubsection{Sistemas de Base de Datos}
 
@@ -277,10 +277,10 @@ NestJS obtiene la mejor puntuación debido a su arquitectura modular, excelente 
 
 % --- Evaluación de frameworks frontend (descripción antes de tablas) ---
 \subsubsection{2.4.3 Evaluación de frameworks frontend}
-Se evalúan tres frameworks (y alternativas relacionadas) para el desarrollo del frontend: React, Vue.js, Angular, Next.js y Expo.
+Se evalúan frameworks y enfoques para el desarrollo del frontend: React, Vue.js, Angular, Next.js y aplicación web responsive (diseño adaptativo multiplataforma).
 
 \paragraph{Criterios de evaluación}
-Curva de aprendizaje, rendimiento, ecosistema, integración 3D.
+Curva de aprendizaje, rendimiento, ecosistema, integración 3D, compatibilidad multiplataforma.
 % A continuación se muestran las tablas de ponderación y satisfacción para la evaluación de frameworks frontend:
 % Tabla 7
 \begin{table}[ht]
@@ -294,6 +294,7 @@ Curva de aprendizaje & 4 \\
 Rendimiento & 5 \\
 Ecosistema & 4 \\
 Integración 3D & 5 \\
+Compatibilidad multiplataforma & 5 \\
 \hline
 \end{tabular}
 \end{table}
@@ -305,12 +306,13 @@ Integración 3D & 5 \\
 \caption{Nivel de satisfacción frameworks frontend (Estimaciones del autor basadas en documentación técnica)}
 \begin{tabular}{l c c c c c}
 \hline
-Criterios & React & Vue.js & Angular & Next.js & Expo \\
+Criterios & React & Vue.js & Angular & Next.js & Web Responsive \\
 \hline
 Curva de aprendizaje & 7 & 9 & 5 & 7 & 8 \\
-Rendimiento & 8 & 8 & 7 & 9 & 6 \\
-Ecosistema & 9 & 7 & 8 & 9 & 6 \\
-Integración 3D & 9 & 6 & 7 & 9 & 5 \\
+Rendimiento & 8 & 8 & 7 & 9 & 8 \\
+Ecosistema & 9 & 7 & 8 & 9 & 9 \\
+Integración 3D & 9 & 6 & 7 & 9 & 9 \\
+Compatibilidad multiplataforma & 7 & 7 & 7 & 9 & 10 \\
 \hline
 \end{tabular}
 \end{table}
@@ -322,21 +324,26 @@ Integración 3D & 9 & 6 & 7 & 9 & 5 \\
 \caption{Comparación de frameworks frontend}
 \begin{tabular}{l c c c c c c}
 \hline
-Criterios & Ponderación & React & Vue.js & Angular & Next.js & Expo \\
+Criterios & Ponderación & React & Vue.js & Angular & Next.js & Web Responsive \\
 \hline
-Curva de aprendizaje & 4 & 7 & 9 & 5 & 6 & 8 \\
-Rendimiento & 5 & 8 & 8 & 7 & 9 & 6 \\
-Ecosistema & 4 & 9 & 7 & 8 & 8 & 6 \\
-Integración 3D & 5 & 9 & 6 & 7 & 9 & 5 \\
+Curva de aprendizaje & 4 & 7 & 9 & 5 & 7 & 8 \\
+Rendimiento & 5 & 8 & 8 & 7 & 9 & 8 \\
+Ecosistema & 4 & 9 & 7 & 8 & 9 & 9 \\
+Integración 3D & 5 & 9 & 6 & 7 & 9 & 9 \\
+Compatibilidad multiplataforma & 5 & 7 & 7 & 7 & 9 & 10 \\
 \hline
-Puntaje & - & 149 & 134 & 122 & 154 & 111 \\
+Puntaje & - & 181 & 159 & 147 & 206 & 203 \\
 \hline
 \end{tabular}
 \end{table}
 \FloatBarrier
 % --- Resultado para frameworks frontend (colocado después de sus tablas) ---
 \subsubsection{2.4.3.1 Resultado de análisis de frameworks frontend}
-Según los resultados del análisis multicriterio \cite{belton2002}, Next.js \cite{nextjs_docs2024} es la opción recomendada para el frontend en este proyecto debido a su excelente integración con bibliotecas 3D (cuando se usa junto a React/Three.js), sus capacidades de renderizado híbrido (SSR/SSG), y sus optimizaciones de rendimiento para páginas con requisitos SEO y cargas iniciales rápidas. React sigue siendo una opción sólida y más generalista, pero en función de los criterios y ponderaciones utilizadas, Next.js obtiene el puntaje más alto. Expo \cite{expo_docs2023} mantiene utilidad para prototipado y versiones móviles, pero queda por detrás en la integración 3D.
+Según los resultados del análisis multicriterio \cite{belton2002}, Next.js \cite{nextjs_docs2024} es la opción recomendada para el frontend en este proyecto debido a su excelente integración con bibliotecas 3D (cuando se usa junto a React/Three.js), sus capacidades de renderizado híbrido (SSR/SSG), y sus optimizaciones de rendimiento para páginas con requisitos SEO y cargas iniciales rápidas.
+
+El enfoque de aplicación web responsive obtiene un puntaje muy cercano, destacando especialmente en compatibilidad multiplataforma al permitir acceso desde cualquier dispositivo (escritorio, tablet, smartphone) sin necesidad de instalación de aplicaciones nativas. Esta característica es crucial para maximizar la adopción institucional y eliminar barreras de acceso tecnológico.
+
+La decisión final es implementar Next.js con diseño web responsive, combinando así las fortalezas de ambos enfoques: el framework obtiene el mejor rendimiento y capacidades técnicas, mientras que el diseño responsive garantiza accesibilidad universal desde navegadores web sin requerir descargas o instalaciones adicionales.
 
 % --- Evaluación de sistemas de base de datos (descripción antes de tablas) ---
 \subsubsection{2.4.4 Evaluación de sistemas de base de datos}
