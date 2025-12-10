@@ -40,17 +40,30 @@ export default function HomePage() {
       scene.add(mainLight);
 
       let mixer: THREE.AnimationMixer | null = null;
+      let idleAction: THREE.AnimationAction | null = null;
+      let flyAction: THREE.AnimationAction | null = null;
+      let dragonObject: THREE.Group | null = null;
+      let isAnimating = false;
+
       const loader = new FBXLoader();
       loader.load(
         "/models/welcome_scene/Dragon_WoWc.fbx",
         (object) => {
           object.scale.set(0.02, 0.02, 0.02);
           object.position.set(0, -4, 0);
+          dragonObject = object;
+          
           mixer = new THREE.AnimationMixer(object);
           if (object.animations && object.animations.length > 0) {
-            const action = mixer.clipAction(object.animations[0]);
-            action.setLoop(THREE.LoopPingPong, Infinity);
-            action.play();
+            idleAction = mixer.clipAction(object.animations[0]);
+            idleAction.setLoop(THREE.LoopPingPong, Infinity);
+            idleAction.play();
+
+            if (object.animations.length > 1) {
+              flyAction = mixer.clipAction(object.animations[1]);
+              flyAction.setLoop(THREE.LoopOnce, 1);
+              flyAction.clampWhenFinished = true;
+            }
           }
           scene.add(object);
         },
@@ -91,9 +104,63 @@ export default function HomePage() {
       window.addEventListener("resize", resizeRenderer);
       resizeRenderer();
 
+      const playFlyAnimationAndRedirect = (url: string) => {
+        if (flyAction && idleAction && mixer && !isAnimating) {
+          isAnimating = true;
+          idleAction.fadeOut(0.3);
+          
+          flyAction.reset();
+          flyAction.fadeIn(0.3);
+          flyAction.play();
+
+          const onAnimationFinished = (e: any) => {
+            if (e.action === flyAction) {
+              mixer?.removeEventListener('finished', onAnimationFinished);
+              isAnimating = false;
+              window.location.href = url;
+            }
+          };
+          mixer.addEventListener('finished', onAnimationFinished);
+        } else if (!flyAction || !idleAction || !mixer) {
+          window.location.href = url;
+        }
+      };
+
+      const playFlyAnimationAndReturn = () => {
+        if (flyAction && idleAction && mixer && !isAnimating) {
+          isAnimating = true;
+          idleAction.fadeOut(0.3);
+          
+          flyAction.reset();
+          flyAction.fadeIn(0.3);
+          flyAction.play();
+
+          const onAnimationFinished = (e: any) => {
+            if (e.action === flyAction) {
+              mixer?.removeEventListener('finished', onAnimationFinished);
+              
+              // Volver a la animación idle
+              if (flyAction && idleAction) {
+                flyAction.fadeOut(0.3);
+                idleAction.reset();
+                idleAction.fadeIn(0.3);
+                idleAction.play();
+              }
+              isAnimating = false;
+            }
+          };
+          mixer.addEventListener('finished', onAnimationFinished);
+        }
+      };
+
+      (window as any).playDragonAnimation = playFlyAnimationAndRedirect;
+      (window as any).playDragonAnimationHover = playFlyAnimationAndReturn;
+
       return () => {
         document.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("resize", resizeRenderer);
+        delete (window as any).playDragonAnimation;
+        delete (window as any).playDragonAnimationHover;
         renderer.dispose();
         scene.clear();
       };
@@ -129,9 +196,19 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="flex items-center gap-5">
-            <Link href="/auth/login" className="uppercase text-neutral-200 text-sm tracking-wide hover:text-white">Login</Link>
+            <button 
+              onClick={() => (window as any).playDragonAnimation?.('/auth/login')}
+              className="uppercase text-neutral-200 text-sm tracking-wide hover:text-white cursor-pointer bg-transparent border-none"
+            >
+              Login
+            </button>
             <span className="h-4 w-px bg-neutral-700" />
-            <Link href="/auth/register" className="uppercase text-neutral-200 text-sm tracking-wide hover:text-white relative after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:bg-amber-500 after:opacity-80">Register</Link>
+            <button 
+              onClick={() => (window as any).playDragonAnimation?.('/auth/register')}
+              className="uppercase text-neutral-200 text-sm tracking-wide hover:text-white relative after:absolute after:-bottom-2 after:left-0 after:h-0.5 after:w-full after:bg-amber-500 after:opacity-80 cursor-pointer bg-transparent border-none"
+            >
+              Register
+            </button>
           </div>
         </nav>
 
@@ -198,7 +275,10 @@ export default function HomePage() {
       </section>
 
       {/* Misión */}
-      <section className="relative isolate bg-amber-500 text-black">
+      <section 
+        className="relative isolate bg-amber-500 text-black"
+        onMouseEnter={() => (window as any).playDragonAnimationHover?.()}
+      >
         <div className="absolute inset-0 pointer-events-none [mask-image:linear-gradient(to_bottom,black_70%,transparent)] opacity-20" />
         <div className="max-w-7xl mx-auto px-6 py-14 md:py-16 text-center">
           <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight">Nuestra misión</h3>
@@ -209,9 +289,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tenemos esto para ti - 3 tarjetas */}
       <section className="bg-[#1a1a1a] text-neutral-100">
-        <div className="max-w-7xl mx-auto px-6 py-16">
+        <div 
+          className="max-w-7xl mx-auto px-6 py-16"
+          onMouseEnter={() => (window as any).playDragonAnimationHover?.()}
+        >
           <div className="text-center max-w-3xl mx-auto mb-10">
             <h3 className="text-2xl font-semibold text-neutral-200">Tenemos esto para ti</h3>
             <p className="mt-2 text-neutral-400">Sé parte de nuestra comunidad y accede a los servicios digitales de nuestra plataforma.</p>
@@ -250,9 +332,12 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 text-center">
-            <Link href="/auth/register">
-              <Button size="lg" className="bg-amber-500 hover:bg-[#b6770f] text-black font-semibold px-8">Comenzar ahora</Button>
-            </Link>
+            <button 
+              onClick={() => (window as any).playDragonAnimation?.('/auth/register')}
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-amber-500 hover:bg-[#b6770f] text-black h-11 px-8 font-semibold cursor-pointer border-none"
+            >
+              Comenzar ahora
+            </button>
           </div>
         </div>
       </section>
