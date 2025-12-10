@@ -84,17 +84,63 @@ export class TaskService {
   }
 
   /**
-   * @deprecated Usar getTasksByGroupForCharacter para obtener info de tareas por personaje
+   * Actualizar una tarea existente
    */
   static async updateTask(taskId: string, data: UpdateTaskDTO): Promise<TaskWithAssignments> {
-    throw new Error('updateTask está deprecado');
+    try {
+      const task = await prisma.tasks.update({
+        where: { id: taskId },
+        data: {
+          name: data.name,
+          description: data.description,
+          experience: data.experience,
+          gold: data.gold,
+          health: data.health,
+          energy: data.energy,
+        },
+      });
+
+      return {
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        experience: task.experience,
+        gold: task.gold,
+        health: task.health,
+        energy: task.energy,
+        createdAt: task.created_at,
+        updatedAt: task.updated_at,
+        assignedGroups: [],
+        completedCount: 0,
+        totalAssigned: 0,
+      };
+    } catch (error: any) {
+      console.error('Error updating task:', error);
+      if (error.code === 'P2025') {
+        throw new Error('Tarea no encontrada');
+      }
+      throw error;
+    }
   }
 
   /**
-   * @deprecated No se usa en la nueva arquitectura
+   * Eliminar una tarea y sus referencias
    */
   static async deleteTask(taskId: string): Promise<void> {
-    throw new Error('deleteTask está deprecado');
+    try {
+      // Limpiar referencias FK antes de eliminar la tarea
+      await prisma.$transaction([
+        prisma.characters_tasks.deleteMany({ where: { task_id: taskId } }),
+        prisma.teachers_courses_tasks.deleteMany({ where: { task_id: taskId } }),
+        prisma.tasks.delete({ where: { id: taskId } }),
+      ]);
+    } catch (error: any) {
+      console.error('Error deleting task:', error);
+      if (error.code === 'P2025') {
+        throw new Error('Tarea no encontrada');
+      }
+      throw error;
+    }
   }
 
   /**

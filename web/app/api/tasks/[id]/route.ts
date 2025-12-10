@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TaskService } from '@/backend/services/task/task.service';
 import { UpdateTaskSchema } from '@/backend/validators/task.validator';
 import { authenticateToken } from '@/backend/middleware/auth/auth.middleware';
+import { prisma } from '@/backend/config/prisma';
 
 interface RouteParams {
   params: {
     id: string;
   };
 }
+// NOTE: Handlers use TaskService and auth middleware
 
 /**
  * @swagger
@@ -165,6 +167,42 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 }
 
+// Optional PATCH handler mirroring PUT to support partial updates
+export async function PATCH(req: NextRequest, { params }: RouteParams) {
+  try {
+    const authError = await authenticateToken(req);
+    if (authError) {
+      return authError;
+    }
+
+    const userId = req.headers.get('x-user-id');
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const validation = UpdateTaskSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Datos inválidos', details: validation.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const task = await TaskService.updateTask(params.id, validation.data);
+    return NextResponse.json({ task }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error in PATCH /api/tasks/[id]:', error);
+    if (error.message === 'Tarea no encontrada') {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+    return NextResponse.json(
+      { error: error.message || 'Error al actualizar tarea' },
+      { status: 500 }
+    );
+  }
+}
+
 /**
  * @swagger
  * /api/tasks/{id}:
@@ -202,6 +240,18 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const userId = req.headers.get('x-user-id');
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+    // Clean FK references if task id is in junction tables to prevent constraint errors
+    try {
+      await prisma.teachers_courses_tasks.deleteMany({ where: { task_id: params.id as any } });
+    } catch (e) {
+      console.warn('FK cleanup teachers_courses_tasks failed (may be ok):', e);
+    }
+    try {
+      // If characters_tasks exists in client, clean it
+      await prisma.characters_tasks?.deleteMany({ where: { task_id: params.id as any } });
+    } catch (e) {
+      console.warn('FK cleanup characters_tasks failed (may be ok):', e);
     }
 
     await TaskService.deleteTask(params.id);
