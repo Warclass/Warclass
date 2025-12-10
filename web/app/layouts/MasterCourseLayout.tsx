@@ -80,17 +80,23 @@ export default function MasterLayout({
       </header>
 
       <main className="flex flex-row flex-grow relative h-full w-full max-h-full max-w-full">
+        {/* Backdrop para móvil */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden top-16"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#0f0f0f] border-r border-neutral-800 transition-all duration-300 z-40",
-            sidebarOpen ? "w-64" : "w-0"
+            "fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#0f0f0f] border-r border-neutral-800 transition-transform duration-300 z-40",
+            "lg:translate-x-0",
+            sidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 lg:w-0"
           )}
         >
-          <div className={cn(
-            "h-full overflow-y-auto",
-            !sidebarOpen && "hidden"
-          )}>
+          <div className="h-full overflow-y-auto">
             <div className='flex flex-col justify-between h-full p-4'>
               <div className="space-y-1">
                 {/* Inicio */}
@@ -179,8 +185,9 @@ export default function MasterLayout({
 
         {/* Main Content */}
         <div className={cn(
-          "flex-grow p-6 overflow-auto transition-all duration-300 bg-[#0a0a0a]",
-          sidebarOpen ? "ml-64" : "ml-0"
+          "flex-grow p-6 overflow-auto transition-all duration-300 bg-[#0a0a0a] w-full",
+          "lg:ml-0",
+          sidebarOpen && "lg:ml-64"
         )}>
           {children}
         </div>
