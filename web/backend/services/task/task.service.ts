@@ -12,15 +12,39 @@ import { notifyTaskCompleted } from '@/backend/services/discord/discord-webhook.
 export class TaskService {
   static async createTask(data: CreateTaskDTO): Promise<TaskWithAssignments> {
     try {
-      const task = await prisma.tasks.create({
-        data: {
-          name: data.name,
-          description: data.description,
-          experience: data.experience || 0,
-          gold: data.gold || 0,
-          health: data.health || 0,
-          energy: data.energy || 0,
-        },
+      // Buscar la relación teacher_course para este curso
+      const teacherCourse = await prisma.teachers_courses.findFirst({
+        where: {
+          course_id: data.courseId
+        }
+      });
+
+      if (!teacherCourse) {
+        throw new Error('No se encontró una relación profesor-curso para este curso');
+      }
+
+      // Crear la tarea y su relación con el curso en una transacción
+      const task = await prisma.$transaction(async (tx) => {
+        const newTask = await tx.tasks.create({
+          data: {
+            name: data.name,
+            description: data.description,
+            experience: data.experience || 0,
+            gold: data.gold || 0,
+            health: data.health || 0,
+            energy: data.energy || 0,
+          },
+        });
+
+        // Crear la relación en teachers_courses_tasks
+        await tx.teachers_courses_tasks.create({
+          data: {
+            teacher_course_id: teacherCourse.id,
+            task_id: newTask.id,
+          },
+        });
+
+        return newTask;
       });
 
       return {
@@ -242,20 +266,34 @@ export class TaskService {
   }
 
   /**
-   * @deprecated Usar getTasksByGroupForCharacter en su lugar
+   * Obtener tareas del curso al que pertenece el grupo
    */
   static async getTasksByGroup(groupId: string): Promise<TaskWithAssignments[]> {
     try {
       const group = await prisma.groups.findUnique({
         where: { id: groupId },
-        include: { characters: true },
+        include: { 
+          characters: true,
+          course: true 
+        },
       });
 
       if (!group) {
         throw new Error('Grupo no encontrado');
       }
 
-      const tasks = await prisma.tasks.findMany();
+      // Obtener tareas asignadas al curso del grupo a través de teachers_courses_tasks
+      const tasks = await prisma.tasks.findMany({
+        where: {
+          teachers_courses_tasks: {
+            some: {
+              teacher_course: {
+                course_id: group.course_id
+              }
+            }
+          }
+        }
+      });
 
       return tasks.map((task) => ({
         id: task.id,
@@ -304,6 +342,7 @@ export class TaskService {
         where: { id: groupId },
         include: {
           characters: true,
+          course: true
         },
       });
 
@@ -311,8 +350,17 @@ export class TaskService {
         throw new Error('Grupo no encontrado');
       }
 
-      // Obtener todas las tareas con su estado de completitud para este personaje
+      // Obtener tareas del curso del grupo con estado de completitud para este personaje
       const tasks = await prisma.tasks.findMany({
+        where: {
+          teachers_courses_tasks: {
+            some: {
+              teacher_course: {
+                course_id: group.course_id
+              }
+            }
+          }
+        },
         include: {
           characters_tasks: {
             where: {

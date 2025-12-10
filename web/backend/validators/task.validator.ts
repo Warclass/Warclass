@@ -7,6 +7,7 @@ export const CreateTaskSchema = z.object({
   gold: z.number().int().min(0, 'El oro debe ser positivo').default(0),
   health: z.number().int().default(0),
   energy: z.number().int().default(0),
+  courseId: z.string().uuid('ID de curso inválido'),
 });
 
 export const UpdateTaskSchema = z.object({

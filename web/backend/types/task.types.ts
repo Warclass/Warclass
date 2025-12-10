@@ -28,6 +28,7 @@ export interface CreateTaskDTO {
   gold?: number;
   health?: number;
   energy?: number;
+  courseId: string; // UUID del curso al que pertenece la tarea
 }
 
 export interface UpdateTaskDTO {

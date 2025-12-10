@@ -115,12 +115,17 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Obtener todas las tareas que pertenecen al curso a través de teachers_courses_tasks
-    // O si no hay relación directa, obtener todas las tareas del sistema
-    // (Por ahora vamos a obtener todas las tareas ya que no hay relación directa curso-tarea)
-    
-    // OPCIÓN 1: Si quieres mostrar TODAS las tareas del sistema
+    // Obtener solo las tareas asignadas a este curso a través de teachers_courses_tasks
     const allTasks = await prisma.tasks.findMany({
+      where: {
+        teachers_courses_tasks: {
+          some: {
+            teacher_course: {
+              course_id: courseId
+            }
+          }
+        }
+      },
       orderBy: {
         created_at: 'desc'
       }

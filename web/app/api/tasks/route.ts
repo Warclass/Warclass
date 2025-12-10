@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const task = await TaskService.createTask(validation.data);
+    const task = await TaskService.createTask(validation.data as any);
 
     return NextResponse.json({ task }, { status: 201 });
   } catch (error: any) {

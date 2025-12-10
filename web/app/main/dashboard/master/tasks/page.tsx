@@ -65,7 +65,8 @@ export default function TasksPage() {
     experience: 0,
     gold: 0,
     health: 0,
-    energy: 0
+    energy: 0,
+    courseId: courseId || ''
   });
 
   useEffect(() => {
@@ -74,6 +75,8 @@ export default function TasksPage() {
       return;
     }
 
+    // Actualizar courseId en el formulario
+    setTaskForm(prev => ({ ...prev, courseId }));
     fetchTasks();
   }, [courseId, user?.id, token, router]);
 
@@ -136,7 +139,7 @@ export default function TasksPage() {
           title: 'Éxito',
           description: 'Tarea creada correctamente'
         });
-        setTaskForm({ name: '', description: '', experience: 0, gold: 0, health: 0, energy: 0 });
+        setTaskForm({ name: '', description: '', experience: 0, gold: 0, health: 0, energy: 0, courseId: courseId || '' });
         setCreateModalOpen(false);
         fetchTasks();
       } else {
@@ -240,7 +243,7 @@ export default function TasksPage() {
   };
 
   const openCreateModal = () => {
-    setTaskForm({ name: '', description: '', experience: 0, gold: 0, health: 0, energy: 0 });
+    setTaskForm({ name: '', description: '', experience: 0, gold: 0, health: 0, energy: 0, courseId: courseId || '' });
     setCreateModalOpen(true);
   };
 
@@ -252,7 +255,8 @@ export default function TasksPage() {
       experience: task.experience,
       gold: task.gold,
       health: task.health,
-      energy: task.energy
+      energy: task.energy,
+      courseId: courseId || ''
     });
     setEditModalOpen(true);
   };
